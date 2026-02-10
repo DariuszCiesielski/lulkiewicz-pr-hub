@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-10)
 
 **Core value:** AI analizuje tysiace maili i generuje raport oceniajacy jakosc komunikacji administracji osiedli z mieszkancami
-**Current focus:** Phase 2 IN PROGRESS — plans 02-01, 02-02, 02-03 complete, 02-04 next
+**Current focus:** Phase 2 IN PROGRESS — 02-04 checkpoint pending approval
 
 ## Current Position
 
 Phase: 2 of 6 — IN PROGRESS
-Plan: 3 of 4 complete (02-01, 02-02, 02-03)
-Status: Wave 3 ready — 02-04 (Sync UI) is last plan
-Last activity: 2026-02-10 — Completed 02-02-PLAN.md (Mailbox CRUD + UI, checkpoint approved)
+Plan: 3 of 4 complete (02-01, 02-02, 02-03), 02-04 in progress
+Status: 02-04 tasks 1-2 committed, checkpoint (human-verify) NOT YET APPROVED
+Last activity: 2026-02-10 — Executed 02-04 tasks 1-2 (useSyncJob hook, SyncProgress, UI integration)
 
-Progress: [##########..........] 50% (Phase 1 complete, Phase 2: 3/4 plans done)
+Progress: [##########..........] 50% (Phase 1 complete, Phase 2: 3/4 plans done, 02-04 pending checkpoint)
 
 ## Planning Status
 
@@ -28,6 +28,8 @@ Progress: [##########..........] 50% (Phase 1 complete, Phase 2: 3/4 plans done)
 - [x] 02-02-PLAN.md (Wave 2, checkpoint) — Mailbox CRUD API + test connection + UI (c7560f5, 95f07ae, 41dc226, d1930f2)
 - [x] 02-03-PLAN.md (Wave 2, autonomous) — Sync engine: email fetcher, parser, API routes (540fd72, 45e9adc)
 - [ ] 02-04-PLAN.md (Wave 3, checkpoint) — useSyncJob hook, progress bar, full+delta sync UI
+  - Tasks 1-2 DONE: 2f22a50, 5b92531
+  - Task 3 (checkpoint:human-verify): PENDING — user musi przetestować sync flow end-to-end
 
 ## Accumulated Context
 
@@ -47,7 +49,6 @@ Progress: [##########..........] 50% (Phase 1 complete, Phase 2: 3/4 plans done)
 - [02-01]: sync_status zmieniony z PostgreSQL enum na TEXT (elastycznosc)
 - [02-01]: organization_id/name/provider w mailboxes nullable
 - [02-01]: Stare org-based RLS policies zastapione admin-based (app_allowed_users)
-- [02-01]: Istniejace kolumny emails zachowane (external_id, thread_id) + nowe dodane obok
 - [02-01]: Migracje SQL via Management API, pliki w supabase/migrations/ jako dokumentacja
 - [02-02]: Redirect /email-analyzer → /mailboxes (brak dedykowanej strony glownej modulu)
 - [02-02]: comingSoon pattern w sidebarze dla niezaimplementowanych stron
@@ -56,12 +57,14 @@ Progress: [##########..........] 50% (Phase 1 complete, Phase 2: 3/4 plans done)
 - [02-03]: 100 messages per batch via Graph API $top=100
 - [02-03]: Delta link stored on mailbox for incremental sync
 - [02-03]: No $select on @odata.nextLink (already contains params)
+- [02-04]: Stale closure fix — onComplete notification via useEffect watching status, not useCallback
 
 ### Blockers/Concerns
 
-- [Phase 2]: Azure App Registration needed — user must configure AZURE_TENANT_ID + AZURE_CLIENT_ID
+- [Phase 2]: Azure App Registration needed — user must configure AZURE_TENANT_ID + AZURE_CLIENT_ID in .env.local
 - [Phase 4]: DPA z OpenAI moze byc wymagane
-- [Security]: Wyciekly token sbp_ zrotowany, nowy token NIE zapisywac w plikach repo
+- [Security]: Wyciekly token sbp_ zrotowany (2026-02-10), nowy token NIE zapisywac w plikach repo
+- [DB cleanup]: Fantomowa skrzynka dariusz.ciesielski@o2.pl w bazie — do usunięcia przez usera
 
 ## Infrastructure
 
@@ -82,6 +85,11 @@ organizations, organization_members, **mailboxes** (extended: +8 cols, sync_stat
 ## Session Continuity
 
 Last session: 2026-02-10
-Stopped at: Completed 02-02-PLAN.md (checkpoint approved), proceeding to Wave 3 (02-04)
+Stopped at: 02-04 tasks 1-2 done, checkpoint pending user approval
 Resume file: None
-Next: Execute 02-04-PLAN.md (Sync UI) — last plan in Phase 2
+Next:
+  1. User approves 02-04 checkpoint (test sync flow) → "approved" lub opisz problemy
+  2. Create 02-04-SUMMARY.md
+  3. Phase 2 verification (gsd-verifier)
+  4. Update ROADMAP.md → Phase 2 complete
+  5. Offer Phase 3 planning
