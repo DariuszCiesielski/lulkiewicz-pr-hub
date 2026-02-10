@@ -2,17 +2,19 @@ import { createClient } from '@supabase/supabase-js';
 import { createClient as createServerClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
-const adminClient = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getAdminClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 async function verifyAdmin() {
   const supabase = await createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user?.email) return false;
 
-  const { data } = await adminClient
+  const { data } = await getAdminClient()
     .from('app_allowed_users')
     .select('role')
     .eq('email', user.email)
@@ -26,6 +28,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
+  const adminClient = getAdminClient();
   const body = await request.json();
   const { email, displayName, role, allowedTools, method, password } = body;
 
