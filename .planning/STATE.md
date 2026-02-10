@@ -11,49 +11,60 @@ See: .planning/PROJECT.md (updated 2026-02-10)
 
 Phase: 1 of 6 (Hub Shell & Fundament)
 Plan: 0 of 3 in current phase
-Status: Ready to plan
-Last activity: 2026-02-10 — Roadmap created (6 phases, 57 requirements mapped)
+Status: PLANS CREATED — need revision before execution
+Last activity: 2026-02-10 — 3 plans created, checker found 3 blockers, revision pending
 
 Progress: [....................] 0%
 
-## Performance Metrics
+## Planning Status
 
-**Velocity:**
-- Total plans completed: 0
-- Average duration: -
-- Total execution time: 0 hours
+**Phase 1 plans created (3 plans, 2 waves):**
+- 01-01-PLAN.md (Wave 1) — Scaffold Next.js + Supabase Auth
+- 01-02-PLAN.md (Wave 2) — System rol admin/user + panel admina
+- 01-03-PLAN.md (Wave 2) — Hub UI: grid, sidebar, design system, footer
 
-**By Phase:**
+**Plan checker found 3 BLOCKERS that need fixing:**
 
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| - | - | - | - |
+1. **BLOCKER: Supabase project creation missing from 01-01**
+   - Supabase project is TBD (not created yet)
+   - Plan 01-01 uses NEXT_PUBLIC_SUPABASE_URL but doesn't create the project
+   - Plan 01-02 has "if not exists, create" but it's too late (01-01 needs it first)
+   - FIX: Add Supabase project creation to 01-01 Task 1 (beginning). Use Management API with region eu-central-1 (Frankfurt, GDPR). Remove creation logic from 01-02.
 
-**Recent Trend:**
-- Last 5 plans: -
-- Trend: -
+2. **BLOCKER: Incomplete verification in 01-02 Task 1**
+   - <verify> doesn't check if Supabase project works or if credentials are in .env.local
+   - FIX: Add curl check to Supabase URL, test connection, verify credentials
 
-*Updated after each plan completion*
+3. **BLOCKER: No first admin INSERT**
+   - SQL has comment "add first admin" but no actual INSERT instruction
+   - Without admin record, nobody can access admin panel
+   - FIX: Add explicit INSERT step for first admin user after table creation
+
+**1 WARNING (optional):**
+- Plan 01-02 Task 1 has wide scope (Supabase + SQL + TypeScript). Consider splitting.
 
 ## Accumulated Context
 
 ### Decisions
 
-Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
-
 - [Roadmap]: 6 faz sekwencyjnych — Hub Shell -> Email Connection -> Threading -> AI Analysis -> Reports -> Dashboard
 - [Roadmap]: Discovery call z klientem (typ skrzynki O365 vs on-premise) jest pierwszym zadaniem Phase 2
+- [Planning]: Next.js App Router (nie Vite) — API routes potrzebne server-side
+- [Planning]: @supabase/ssr (nie stary auth-helpers) — nowoczesny pattern
+- [Planning]: Wlasny ThemeContext (nie next-themes) — 6 motywow, nie tylko dark/light
+- [Planning]: Jezyk TYLKO PL — brak i18n, hardcoded polskie teksty
+- [Planning]: Supabase CLI broken — migracje przez Management API
 
 ### Pending Todos
 
-None yet.
+- Fix 3 blockers in Phase 1 plans (run planner revision)
 
 ### Blockers/Concerns
 
-- [Phase 2]: Typ skrzynki (O365 vs on-premise Exchange) nieznany — wymaga discovery call z administratorem PRZED rozpoczeciem implementacji email
-- [Phase 2]: GDPR — Supabase EU region (Frankfurt) musi byc ustawiony przed tworzeniem schema
-- [Phase 4]: DPA z OpenAI moze byc wymagane przed analiza AI na danych osobowych mieszkancow
+- [Phase 1]: Supabase project needs EU region (Frankfurt) — must be created before any code
+- [Phase 2]: Typ skrzynki (O365 vs on-premise Exchange) nieznany — wymaga discovery call
+- [Phase 2]: GDPR — Supabase EU region musi byc ustawiony
+- [Phase 4]: DPA z OpenAI moze byc wymagane
 
 ## Infrastructure
 
@@ -61,13 +72,21 @@ None yet.
 |---------|------|----------|
 | GitHub | lulkiewicz-pr-hub | https://github.com/DariuszCiesielski/lulkiewicz-pr-hub |
 | Vercel | lulkiewicz-pr-hub | Project ID: `prj_plqtl56Fo28Jlr3PNXKFozq2E91s` |
-| Supabase | TBD | TBD — EU region (Frankfurt) wymagany |
+| Supabase | TBD | TBD — EU region (Frankfurt) wymagany dla GDPR |
 
 - **Branch:** `master`
 - **Auto-deploy:** GitHub → Vercel (połączony)
+- **Supabase access token:** `sbp_bc8b108c92b88684245186533762101587b8f1bd`
+- **Supabase org ID:** `5a14ce6c-2103-4ff0-b3a9-919aa7ef84f2`
 
 ## Session Continuity
 
-Last session: 2026-02-10
-Stopped at: Infrastructure created (GitHub + Vercel), ready to plan Phase 1
-Resume file: None
+Last session: 2026-02-10 (sesja 8)
+Stopped at: Phase 1 plans created but need revision (3 blockers from plan checker)
+Resume with: Fix blockers in plans, then /gsd:execute-phase 1
+
+### What to do on resume:
+1. Read the 3 PLAN files in .planning/phases/01-hub-shell-fundament/
+2. Fix the 3 blockers listed above (targeted edits, NOT full replan)
+3. Run plan checker again (or skip if fixes are obvious)
+4. Then: /gsd:execute-phase 1
