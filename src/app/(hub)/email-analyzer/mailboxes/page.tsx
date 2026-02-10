@@ -8,6 +8,7 @@ import MailboxList from '@/components/email/MailboxList';
 import MailboxForm from '@/components/email/MailboxForm';
 import type { MailboxListItem } from '@/components/email/MailboxList';
 import type { MailboxFormData } from '@/types/email';
+import { useSyncJob } from '@/hooks/useSyncJob';
 
 export default function MailboxesPage() {
   const { isAdmin, isLoading: authLoading } = useAuth();
@@ -17,6 +18,10 @@ export default function MailboxesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+
+  // Sync state
+  const [activeSyncMailboxId, setActiveSyncMailboxId] = useState<string | null>(null);
+  const [syncNotification, setSyncNotification] = useState<string | null>(null);
 
   // Redirect non-admin users
   useEffect(() => {
@@ -32,16 +37,19 @@ export default function MailboxesPage() {
       const res = await fetch('/api/mailboxes');
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || 'Nie udało się pobrać skrzynek');
+        throw new Error(data.error || 'Nie udalo sie pobrac skrzynek');
       }
       const data = await res.json();
       setMailboxes(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Błąd');
+      setError(err instanceof Error ? err.message : 'Blad');
     } finally {
       setIsLoading(false);
     }
   }, []);
+
+  // useSyncJob with onComplete callback to refresh mailbox list
+  const syncJob = useSyncJob(fetchMailboxes);
 
   useEffect(() => {
     if (isAdmin) {
@@ -58,7 +66,7 @@ export default function MailboxesPage() {
 
     if (!res.ok) {
       const data = await res.json();
-      throw new Error(data.error || 'Nie udało się dodać skrzynki');
+      throw new Error(data.error || 'Nie udalo sie dodac skrzynki');
     }
 
     await fetchMailboxes();
@@ -74,16 +82,66 @@ export default function MailboxesPage() {
     const res = await fetch(`/api/mailboxes/${id}`, { method: 'DELETE' });
     if (!res.ok) {
       const data = await res.json();
-      throw new Error(data.error || 'Nie udało się usunąć skrzynki');
+      throw new Error(data.error || 'Nie udalo sie usunac skrzynki');
     }
     await fetchMailboxes();
   };
+
+  const handleStartSync = useCallback((mailboxId: string) => {
+    setActiveSyncMailboxId(mailboxId);
+    setSyncNotification(null);
+    syncJob.startSync(mailboxId, 'full');
+  }, [syncJob]);
+
+  const handleDeltaSync = useCallback((mailboxId: string) => {
+    setActiveSyncMailboxId(mailboxId);
+    setSyncNotification(null);
+    syncJob.startSync(mailboxId, 'delta');
+  }, [syncJob]);
+
+  const handleRetrySync = useCallback(() => {
+    if (activeSyncMailboxId && syncJob.syncType) {
+      syncJob.startSync(activeSyncMailboxId, syncJob.syncType);
+    }
+  }, [activeSyncMailboxId, syncJob]);
+
+  // Show notification and auto-clear sync state when completed
+  useEffect(() => {
+    if (syncJob.status === 'completed') {
+      // Show notification with actual fetched count
+      setSyncNotification(
+        `Synchronizacja zakonczona: ${syncJob.progress.fetched} wiadomosci`
+      );
+      // Auto-clear notification after 5s
+      const notifTimer = setTimeout(() => setSyncNotification(null), 5000);
+      // Auto-clear active sync after a delay so user sees the completed state
+      const resetTimer = setTimeout(() => {
+        setActiveSyncMailboxId(null);
+        syncJob.reset();
+      }, 3000);
+      return () => {
+        clearTimeout(notifTimer);
+        clearTimeout(resetTimer);
+      };
+    }
+  }, [syncJob.status, syncJob.progress.fetched, syncJob]);
+
+  // Build sync state object to pass to MailboxList
+  const syncState = activeSyncMailboxId
+    ? {
+        mailboxId: activeSyncMailboxId,
+        status: syncJob.status,
+        progress: syncJob.progress,
+        error: syncJob.error,
+        syncType: syncJob.syncType,
+      }
+    : null;
 
   // Loading state while checking auth
   if (authLoading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <p style={{ color: 'var(--text-muted)' }}>Ładowanie...</p>
+        <p style={{ color: 'var(--text-muted)' }}>Ladowanie...</p>
       </div>
     );
   }
@@ -96,7 +154,7 @@ export default function MailboxesPage() {
         <div className="flex items-center gap-3">
           <Mail className="h-6 w-6" style={{ color: 'var(--text-muted)' }} />
           <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-            Zarządzanie skrzynkami
+            Zarzadzanie skrzynkami
           </h1>
         </div>
         <div className="flex gap-2">
@@ -109,7 +167,7 @@ export default function MailboxesPage() {
             }}
           >
             <RefreshCw className="h-4 w-4" />
-            Odśwież
+            Odswiez
           </button>
           <button
             onClick={() => setShowForm(true)}
@@ -117,10 +175,24 @@ export default function MailboxesPage() {
             style={{ backgroundColor: 'var(--accent-primary)' }}
           >
             <Plus className="h-4 w-4" />
-            Dodaj skrzynkę
+            Dodaj skrzynke
           </button>
         </div>
       </div>
+
+      {/* Sync notification */}
+      {syncNotification && (
+        <div
+          className="mb-4 rounded-md border p-3 text-sm"
+          style={{
+            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+            borderColor: 'rgba(34, 197, 94, 0.3)',
+            color: '#22c55e',
+          }}
+        >
+          {syncNotification}
+        </div>
+      )}
 
       {error && (
         <div
@@ -137,13 +209,17 @@ export default function MailboxesPage() {
 
       {isLoading ? (
         <p className="text-center py-8" style={{ color: 'var(--text-muted)' }}>
-          Ładowanie skrzynek...
+          Ladowanie skrzynek...
         </p>
       ) : (
         <MailboxList
           mailboxes={mailboxes}
           onTestConnection={handleTestConnection}
           onDelete={handleDelete}
+          onStartSync={handleStartSync}
+          onDeltaSync={handleDeltaSync}
+          onRetrySync={handleRetrySync}
+          syncState={syncState}
         />
       )}
 
