@@ -2,16 +2,70 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0f172a;
-  --foreground: #f1f5f9;
+  /* Fallback values from glass theme */
+  --bg-primary: #0f172a;
+  --bg-secondary: rgba(30, 41, 59, 0.8);
+  --bg-tertiary: rgba(51, 65, 85, 0.6);
+  --bg-accent: rgba(71, 85, 105, 0.5);
+
+  --sidebar-bg: rgba(2, 6, 23, 0.9);
+  --sidebar-text: #94a3b8;
+  --sidebar-hover: rgba(30, 41, 59, 0.8);
+  --sidebar-active: #3b82f6;
+
+  --header-bg: rgba(2, 6, 23, 0.8);
+  --header-gradient: linear-gradient(135deg, rgba(2,6,23,0.9) 0%, rgba(15,23,42,0.8) 50%, rgba(23,37,84,0.9) 100%);
+  --header-text: #f1f5f9;
+
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #64748b;
+  --text-inverse: #0f172a;
+
+  --border-primary: rgba(148, 163, 184, 0.2);
+  --border-secondary: rgba(148, 163, 184, 0.3);
+  --border-accent: #60a5fa;
+
+  --accent-primary: #3b82f6;
+  --accent-hover: #60a5fa;
+  --accent-light: rgba(59, 130, 246, 0.2);
+
+  --success: #34d399;
+  --success-light: rgba(52, 211, 153, 0.2);
+  --warning: #fbbf24;
+  --warning-light: rgba(251, 191, 36, 0.2);
+  --error: #f87171;
+  --error-light: rgba(248, 113, 113, 0.2);
+  --info: #60a5fa;
+  --info-light: rgba(96, 165, 250, 0.2);
+
+  --shadow: 0 8px 32px rgba(0,0,0,0.3);
+  --shadow-lg: 0 25px 50px -12px rgba(0,0,0,0.5);
+  --overlay: rgba(0, 0, 0, 0.6);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg-primary);
+  color: var(--text-primary);
   font-family: 'DM Sans', sans-serif;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Space Grotesk', sans-serif;
+}
+
+/* Smooth theme transitions */
+* {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.15s ease;
+}
+
+/* Glass effect classes */
+.theme-glass .glass-card {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.theme-gradient .glass-card {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
