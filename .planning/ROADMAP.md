@@ -31,12 +31,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Admin widzi panel admina z lista uzytkownikow, moze dodawac uzytkownikow, edytowac role (admin/user) i kontrolowac dostep do narzedzi
   4. Dashboard wyswietla grid 6 kart narzedziowych — Analizator Email aktywny, pozostale 5 jako "Coming Soon" — z sidebar nawigacja i footer
   5. Aplikacja wyglada spojnie na desktop, tablet i mobile z Unified Design System (6 motywow, przelacznik w menu uzytkownika)
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 01-01: Scaffold Next.js + Supabase Auth (rejestracja, logowanie, sesja, protected routes)
-- [ ] 01-02: System rol admin/user + panel admina (user management, tool access control)
-- [ ] 01-03: Hub UI — grid narzedziowy, sidebar, Unified Design System, footer, responsywnosc
+- [ ] 01-01-PLAN.md — Scaffold Next.js + Supabase Auth (rejestracja, logowanie, sesja, protected routes)
+- [ ] 01-02-PLAN.md — System rol admin/user + panel admina (user management, tool access control)
+- [ ] 01-03-PLAN.md — Hub UI: grid narzedziowy, sidebar, Unified Design System, footer, responsywnosc
 
 ### Phase 2: Email Connection & Fetching
 **Goal**: Uzytkownik moze podlaczyc skrzynke Outlook i pobrac z niej tysiace maili do bazy danych z widocznym progressem
@@ -125,7 +125,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Hub Shell & Fundament | 0/3 | Not started | - |
+| 1. Hub Shell & Fundament | 0/3 | Planned | - |
 | 2. Email Connection & Fetching | 0/4 | Not started | - |
 | 3. Email Threading & Browsing | 0/2 | Not started | - |
 | 4. AI Analysis, Prompty & Kryteria Oceny | 0/4 | Not started | - |
