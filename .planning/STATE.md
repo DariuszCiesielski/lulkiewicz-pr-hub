@@ -76,8 +76,7 @@ Progress: [....................] 0%
 
 - **Branch:** `master`
 - **Auto-deploy:** GitHub → Vercel (połączony)
-- **Supabase access token:** `sbp_bc8b108c92b88684245186533762101587b8f1bd`
-- **Supabase org ID:** `5a14ce6c-2103-4ff0-b3a9-919aa7ef84f2`
+- **Supabase:** TBD — projekt do utworzenia (EU region Frankfurt). Access token i org ID do pobrania z konta Supabase.
 
 ## Session Continuity
 
