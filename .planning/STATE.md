@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-10)
 
 **Core value:** AI analizuje tysiace maili i generuje raport oceniajacy jakosc komunikacji administracji osiedli z mieszkancami
-**Current focus:** Phase 2 IN PROGRESS — plan 02-01 complete
+**Current focus:** Phase 2 IN PROGRESS — plans 02-01 and 02-03 complete
 
 ## Current Position
 
 Phase: 2 of 6 — IN PROGRESS
-Plan: 1 of 4 complete
-Status: Plan 02-01 (Fundament Emailowy) complete, ready for 02-02 and 02-03
-Last activity: 2026-02-10 — Completed 02-01-PLAN.md (npm deps, types, encrypt, DB migration, Graph auth)
+Plan: 2 of 4 complete (02-01, 02-03)
+Status: Plans 02-01 (Fundament) and 02-03 (Sync Engine) complete, 02-02 in progress, 02-04 waiting
+Last activity: 2026-02-10 — Completed 02-03-PLAN.md (email parser, email fetcher, sync API routes)
 
-Progress: [#####...............] 25% (Phase 1 complete, Phase 2: 1/4 plans done)
+Progress: [########............] 40% (Phase 1 complete, Phase 2: 2/4 plans done)
 
 ## Planning Status
 
@@ -26,7 +26,7 @@ Progress: [#####...............] 25% (Phase 1 complete, Phase 2: 1/4 plans done)
 **Phase 2 plans (4 plans, 3 waves) — IN PROGRESS:**
 - [x] 02-01-PLAN.md (Wave 1, autonomous) — Fundament emailowy (b12e7b1, 1e5e4fe, 6602942)
 - [ ] 02-02-PLAN.md (Wave 2, checkpoint) — Mailbox CRUD API + test connection + UI
-- [ ] 02-03-PLAN.md (Wave 2, autonomous) — Sync engine: email fetcher, parser, API routes
+- [x] 02-03-PLAN.md (Wave 2, autonomous) — Sync engine: email fetcher, parser, API routes (540fd72, 45e9adc)
 - [ ] 02-04-PLAN.md (Wave 3, checkpoint) — useSyncJob hook, progress bar, full+delta sync UI
 
 ## Accumulated Context
@@ -49,6 +49,11 @@ Progress: [#####...............] 25% (Phase 1 complete, Phase 2: 1/4 plans done)
 - [02-01]: Stare org-based RLS policies zastapione admin-based (app_allowed_users)
 - [02-01]: Istniejace kolumny emails zachowane (external_id, thread_id) + nowe dodane obok
 - [02-01]: Migracje SQL via Management API, pliki w supabase/migrations/ jako dokumentacja
+- [02-03]: Upsert ON CONFLICT (mailbox_id, internet_message_id) dla deduplikacji emaili
+- [02-03]: Safety timeout 50s (Vercel limit 60s, 10s bufor)
+- [02-03]: 100 messages per batch via Graph API $top=100
+- [02-03]: Delta link stored on mailbox for incremental sync
+- [02-03]: No $select on @odata.nextLink (already contains params)
 
 ### Blockers/Concerns
 
@@ -74,6 +79,6 @@ organizations, organization_members, **mailboxes** (extended: +8 cols, sync_stat
 ## Session Continuity
 
 Last session: 2026-02-10
-Stopped at: Completed 02-01-PLAN.md (3 tasks, 3 commits)
+Stopped at: Completed 02-03-PLAN.md (2 tasks, 2 commits)
 Resume file: None
-Next: Execute 02-02-PLAN.md (Mailbox CRUD + UI) and/or 02-03-PLAN.md (Sync engine) — Wave 2, can run in parallel
+Next: Complete 02-02-PLAN.md (Mailbox CRUD + UI), then 02-04-PLAN.md (Sync UI) — Wave 3
