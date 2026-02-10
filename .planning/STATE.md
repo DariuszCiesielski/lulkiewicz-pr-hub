@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-10)
 
 **Core value:** AI analizuje tysiace maili i generuje raport oceniajacy jakosc komunikacji administracji osiedli z mieszkancami
-**Current focus:** Phase 2 IN PROGRESS — plans 02-01 and 02-03 complete
+**Current focus:** Phase 2 IN PROGRESS — plans 02-01, 02-02, 02-03 complete, 02-04 next
 
 ## Current Position
 
 Phase: 2 of 6 — IN PROGRESS
-Plan: 2 of 4 complete (02-01, 02-03)
-Status: Plans 02-01 (Fundament) and 02-03 (Sync Engine) complete, 02-02 in progress, 02-04 waiting
-Last activity: 2026-02-10 — Completed 02-03-PLAN.md (email parser, email fetcher, sync API routes)
+Plan: 3 of 4 complete (02-01, 02-02, 02-03)
+Status: Wave 3 ready — 02-04 (Sync UI) is last plan
+Last activity: 2026-02-10 — Completed 02-02-PLAN.md (Mailbox CRUD + UI, checkpoint approved)
 
-Progress: [########............] 40% (Phase 1 complete, Phase 2: 2/4 plans done)
+Progress: [##########..........] 50% (Phase 1 complete, Phase 2: 3/4 plans done)
 
 ## Planning Status
 
@@ -25,7 +25,7 @@ Progress: [########............] 40% (Phase 1 complete, Phase 2: 2/4 plans done)
 
 **Phase 2 plans (4 plans, 3 waves) — IN PROGRESS:**
 - [x] 02-01-PLAN.md (Wave 1, autonomous) — Fundament emailowy (b12e7b1, 1e5e4fe, 6602942)
-- [ ] 02-02-PLAN.md (Wave 2, checkpoint) — Mailbox CRUD API + test connection + UI
+- [x] 02-02-PLAN.md (Wave 2, checkpoint) — Mailbox CRUD API + test connection + UI (c7560f5, 95f07ae, 41dc226, d1930f2)
 - [x] 02-03-PLAN.md (Wave 2, autonomous) — Sync engine: email fetcher, parser, API routes (540fd72, 45e9adc)
 - [ ] 02-04-PLAN.md (Wave 3, checkpoint) — useSyncJob hook, progress bar, full+delta sync UI
 
@@ -45,10 +45,12 @@ Progress: [########............] 40% (Phase 1 complete, Phase 2: 2/4 plans done)
 - [Phase 2 research]: Azure App Registration required (tenant_id + client_id)
 - [Vercel fix]: Admin client MUST use lazy init (getAdminClient()), never top-level
 - [02-01]: sync_status zmieniony z PostgreSQL enum na TEXT (elastycznosc)
-- [02-01]: organization_id/name/provider w mailboxes nullable (nowe mailboxy Phase 2 nie wymagaja org)
+- [02-01]: organization_id/name/provider w mailboxes nullable
 - [02-01]: Stare org-based RLS policies zastapione admin-based (app_allowed_users)
 - [02-01]: Istniejace kolumny emails zachowane (external_id, thread_id) + nowe dodane obok
 - [02-01]: Migracje SQL via Management API, pliki w supabase/migrations/ jako dokumentacja
+- [02-02]: Redirect /email-analyzer → /mailboxes (brak dedykowanej strony glownej modulu)
+- [02-02]: comingSoon pattern w sidebarze dla niezaimplementowanych stron
 - [02-03]: Upsert ON CONFLICT (mailbox_id, internet_message_id) dla deduplikacji emaili
 - [02-03]: Safety timeout 50s (Vercel limit 60s, 10s bufor)
 - [02-03]: 100 messages per batch via Graph API $top=100
@@ -57,8 +59,9 @@ Progress: [########............] 40% (Phase 1 complete, Phase 2: 2/4 plans done)
 
 ### Blockers/Concerns
 
-- [Phase 2]: Azure App Registration needed — user must create before 02-02 checkpoint
+- [Phase 2]: Azure App Registration needed — user must configure AZURE_TENANT_ID + AZURE_CLIENT_ID
 - [Phase 4]: DPA z OpenAI moze byc wymagane
+- [Security]: Wyciekly token sbp_ zrotowany, nowy token NIE zapisywac w plikach repo
 
 ## Infrastructure
 
@@ -70,7 +73,7 @@ Progress: [########............] 40% (Phase 1 complete, Phase 2: 2/4 plans done)
 
 - **Branch:** `master`
 - **Auto-deploy:** GitHub -> Vercel
-- **Supabase Access Token:** (usunięty — użyj Supabase Dashboard → Account → Access Tokens)
+- **Supabase Access Token:** (NIE zapisywać w repo — użyj Supabase Dashboard → Account → Access Tokens)
 
 ## Supabase Tables (Phase 2 updated)
 
@@ -79,6 +82,6 @@ organizations, organization_members, **mailboxes** (extended: +8 cols, sync_stat
 ## Session Continuity
 
 Last session: 2026-02-10
-Stopped at: Completed 02-03-PLAN.md (2 tasks, 2 commits)
+Stopped at: Completed 02-02-PLAN.md (checkpoint approved), proceeding to Wave 3 (02-04)
 Resume file: None
-Next: Complete 02-02-PLAN.md (Mailbox CRUD + UI), then 02-04-PLAN.md (Sync UI) — Wave 3
+Next: Execute 02-04-PLAN.md (Sync UI) — last plan in Phase 2
