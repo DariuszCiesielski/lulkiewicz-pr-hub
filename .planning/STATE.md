@@ -5,43 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-10)
 
 **Core value:** AI analizuje tysiace maili i generuje raport oceniajacy jakosc komunikacji administracji osiedli z mieszkancami
-**Current focus:** Phase 1 — Hub Shell & Fundament
+**Current focus:** Phase 1 — Hub Shell & Fundament (Wave 1 complete, Wave 2 in progress)
 
 ## Current Position
 
 Phase: 1 of 6 (Hub Shell & Fundament)
-Plan: 0 of 3 in current phase
-Status: PLANS CREATED — need revision before execution
-Last activity: 2026-02-10 — 3 plans created, checker found 3 blockers, revision pending
+Plan: 1 of 3 in current phase (01-01 COMPLETE)
+Status: EXECUTING — Wave 1 done, Wave 2 next (01-02 + 01-03)
+Last activity: 2026-02-10 — Plan 01-01 executed (2 tasks, 2 commits)
 
-Progress: [....................] 0%
+Progress: [######..............] 33%
 
 ## Planning Status
 
-**Phase 1 plans created (3 plans, 2 waves):**
-- 01-01-PLAN.md (Wave 1) — Scaffold Next.js + Supabase Auth
-- 01-02-PLAN.md (Wave 2) — System rol admin/user + panel admina
-- 01-03-PLAN.md (Wave 2) — Hub UI: grid, sidebar, design system, footer
-
-**Plan checker found 3 BLOCKERS that need fixing:**
-
-1. **BLOCKER: Supabase project creation missing from 01-01**
-   - Supabase project is TBD (not created yet)
-   - Plan 01-01 uses NEXT_PUBLIC_SUPABASE_URL but doesn't create the project
-   - Plan 01-02 has "if not exists, create" but it's too late (01-01 needs it first)
-   - FIX: Add Supabase project creation to 01-01 Task 1 (beginning). Use Management API with region eu-central-1 (Frankfurt, GDPR). Remove creation logic from 01-02.
-
-2. **BLOCKER: Incomplete verification in 01-02 Task 1**
-   - <verify> doesn't check if Supabase project works or if credentials are in .env.local
-   - FIX: Add curl check to Supabase URL, test connection, verify credentials
-
-3. **BLOCKER: No first admin INSERT**
-   - SQL has comment "add first admin" but no actual INSERT instruction
-   - Without admin record, nobody can access admin panel
-   - FIX: Add explicit INSERT step for first admin user after table creation
-
-**1 WARNING (optional):**
-- Plan 01-02 Task 1 has wide scope (Supabase + SQL + TypeScript). Consider splitting.
+**Phase 1 plans (3 plans, 2 waves):**
+- [x] 01-01-PLAN.md (Wave 1) — Scaffold Next.js + Supabase Auth ✓ (f6e644a, 1a4150e)
+- [ ] 01-02-PLAN.md (Wave 2) — System rol admin/user + panel admina
+- [ ] 01-03-PLAN.md (Wave 2) — Hub UI: grid, sidebar, design system, footer
 
 ## Accumulated Context
 
@@ -54,16 +34,21 @@ Progress: [....................] 0%
 - [Planning]: Wlasny ThemeContext (nie next-themes) — 6 motywow, nie tylko dark/light
 - [Planning]: Jezyk TYLKO PL — brak i18n, hardcoded polskie teksty
 - [Planning]: Supabase CLI broken — migracje przez Management API
+- [01-01]: Tailwind CSS v4 (nie v3) — default create-next-app dla Next.js 16
+- [01-01]: Next.js 16 middleware deprecation warning — non-blocking, proxy migration later
+- [01-01]: Istniejace tabele Supabase (organizations, emails, threads, etc.) zachowane dla pozniejszych faz
 
 ### Pending Todos
 
-- Fix 3 blockers in Phase 1 plans (run planner revision)
+- ~~Fix 3 blockers in Phase 1 plans~~ DONE
+- ~~Execute plan 01-01~~ DONE
+- Execute plans 01-02 + 01-03 (Wave 2)
 
 ### Blockers/Concerns
 
-- [Phase 1]: Supabase project needs EU region (Frankfurt) — must be created before any code
+- ~~[Phase 1]: Supabase project needs EU region — RESOLVED (eu-north-1 Stockholm)~~
 - [Phase 2]: Typ skrzynki (O365 vs on-premise Exchange) nieznany — wymaga discovery call
-- [Phase 2]: GDPR — Supabase EU region musi byc ustawiony
+- [Phase 2]: GDPR — Supabase EU region ustawiony (eu-north-1)
 - [Phase 4]: DPA z OpenAI moze byc wymagane
 
 ## Infrastructure
@@ -72,20 +57,19 @@ Progress: [....................] 0%
 |---------|------|----------|
 | GitHub | lulkiewicz-pr-hub | https://github.com/DariuszCiesielski/lulkiewicz-pr-hub |
 | Vercel | lulkiewicz-pr-hub | Project ID: `prj_plqtl56Fo28Jlr3PNXKFozq2E91s` |
-| Supabase | TBD | TBD — EU region (Frankfurt) wymagany dla GDPR |
+| Supabase | Lulkiewicz PR | ref: `zyqewiqtnxrhkaladoah`, region: eu-north-1 |
 
 - **Branch:** `master`
 - **Auto-deploy:** GitHub → Vercel (połączony)
-- **Supabase:** TBD — projekt do utworzenia (EU region Frankfurt). Access token i org ID do pobrania z konta Supabase.
+- **Supabase URL:** https://zyqewiqtnxrhkaladoah.supabase.co
 
 ## Session Continuity
 
-Last session: 2026-02-10 (sesja 8)
-Stopped at: Phase 1 plans created but need revision (3 blockers from plan checker)
-Resume with: Fix blockers in plans, then /gsd:execute-phase 1
+Last session: 2026-02-10 (sesja 9)
+Stopped at: Plan 01-01 complete, Wave 2 next
+Resume with: Continue executing Wave 2 (01-02 + 01-03)
 
 ### What to do on resume:
-1. Read the 3 PLAN files in .planning/phases/01-hub-shell-fundament/
-2. Fix the 3 blockers listed above (targeted edits, NOT full replan)
-3. Run plan checker again (or skip if fixes are obvious)
-4. Then: /gsd:execute-phase 1
+1. Execute plan 01-02 (system rol + panel admina) — needs app_allowed_users table + API routes + admin UI
+2. Execute plan 01-03 (Hub UI) — needs design system, sidebar, grid, footer [has checkpoint]
+3. Both are Wave 2 — can run in parallel
