@@ -70,7 +70,7 @@ Progress: [########............] 40% (Phase 1 complete, Phase 2: 2/4 plans done)
 
 - **Branch:** `master`
 - **Auto-deploy:** GitHub -> Vercel
-- **Supabase Access Token:** sbp_719245360655623f2bd4b851f58f305360bdad17
+- **Supabase Access Token:** (usunięty — użyj Supabase Dashboard → Account → Access Tokens)
 
 ## Supabase Tables (Phase 2 updated)
 

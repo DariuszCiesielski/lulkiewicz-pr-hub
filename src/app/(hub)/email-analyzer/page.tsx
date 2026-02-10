@@ -1,0 +1,18 @@
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+
+export default function EmailAnalyzerPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace('/email-analyzer/mailboxes');
+  }, [router]);
+
+  return (
+    <div className="flex min-h-[50vh] items-center justify-center">
+      <p style={{ color: 'var(--text-muted)' }}>Przekierowanie...</p>
+    </div>
+  );
+}
