@@ -24,6 +24,7 @@ interface NavItem {
   icon: LucideIcon;
   badge?: string;
   adminOnly?: boolean;
+  comingSoon?: boolean;
   children?: SubNavItem[];
 }
 
@@ -39,7 +40,7 @@ const NAV_ITEMS: NavItem[] = [
     ],
   },
   { href: '/admin', label: 'Panel admina', icon: Shield, adminOnly: true },
-  { href: '/settings', label: 'Ustawienia', icon: Settings },
+  { href: '/settings', label: 'Ustawienia', icon: Settings, comingSoon: true },
 ];
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
@@ -81,6 +82,27 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
           return (
             <div key={item.href}>
+              {item.comingSoon ? (
+                <span
+                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium cursor-not-allowed"
+                  style={{
+                    color: 'var(--sidebar-text)',
+                    opacity: 0.4,
+                  }}
+                >
+                  <Icon className="h-5 w-5 shrink-0" />
+                  <span className="flex-1">{item.label}</span>
+                  <span
+                    className="rounded-full px-2 py-0.5 text-xs font-medium"
+                    style={{
+                      backgroundColor: 'var(--sidebar-hover)',
+                      color: 'var(--sidebar-text)',
+                    }}
+                  >
+                    Wkrótce
+                  </span>
+                </span>
+              ) : (
               <Link
                 href={item.href}
                 onClick={onClose}
@@ -110,6 +132,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   </span>
                 )}
               </Link>
+              )}
 
               {/* Sub-navigation items */}
               {visibleChildren && visibleChildren.length > 0 && isActive && (
