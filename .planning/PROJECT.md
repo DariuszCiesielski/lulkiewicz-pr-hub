@@ -59,6 +59,18 @@ Analizator Komunikacji Email automatycznie ściąga tysiące maili ze skrzynek a
   - `brand-elements` — favicon, Footer
   - `supabase-auth-rls` — SECURITY DEFINER, RLS policies
 
+## Infrastructure
+
+| Service | Name | URL / ID |
+|---------|------|----------|
+| GitHub | lulkiewicz-pr-hub | https://github.com/DariuszCiesielski/lulkiewicz-pr-hub |
+| Vercel | lulkiewicz-pr-hub | Project ID: `prj_plqtl56Fo28Jlr3PNXKFozq2E91s` |
+| Supabase | TBD | TBD — EU region (Frankfurt) wymagany dla GDPR |
+
+- **Branch:** `master`
+- **Auto-deploy:** GitHub → Vercel (połączony)
+- **Vercel Team:** `team_wump0nNx40hMZqj8aowjblSw`
+
 ## Constraints
 
 - **Stack**: Next.js (App Router), TypeScript, Tailwind CSS, shadcn/ui, Supabase (Auth + DB + RLS), Vercel
@@ -83,4 +95,4 @@ Analizator Komunikacji Email automatycznie ściąga tysiące maili ze skrzynek a
 | Email sync batchowany | Vercel timeout 60s, tysiące maili — konieczna paginacja | — Pending |
 
 ---
-*Last updated: 2026-02-10 after initialization*
+*Last updated: 2026-02-10 — added Infrastructure (GitHub + Vercel)*

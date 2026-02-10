@@ -55,8 +55,19 @@ None yet.
 - [Phase 2]: GDPR — Supabase EU region (Frankfurt) musi byc ustawiony przed tworzeniem schema
 - [Phase 4]: DPA z OpenAI moze byc wymagane przed analiza AI na danych osobowych mieszkancow
 
+## Infrastructure
+
+| Service | Name | URL / ID |
+|---------|------|----------|
+| GitHub | lulkiewicz-pr-hub | https://github.com/DariuszCiesielski/lulkiewicz-pr-hub |
+| Vercel | lulkiewicz-pr-hub | Project ID: `prj_plqtl56Fo28Jlr3PNXKFozq2E91s` |
+| Supabase | TBD | TBD — EU region (Frankfurt) wymagany |
+
+- **Branch:** `master`
+- **Auto-deploy:** GitHub → Vercel (połączony)
+
 ## Session Continuity
 
 Last session: 2026-02-10
-Stopped at: Roadmap created, ready to plan Phase 1
+Stopped at: Infrastructure created (GitHub + Vercel), ready to plan Phase 1
 Resume file: None
