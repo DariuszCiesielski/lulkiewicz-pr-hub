@@ -48,13 +48,13 @@ Plans:
   3. Uzytkownik moze uruchomic bulk sync maili i widziec progress bar (pobrane/calkowite) — sync obsluguje tysiace maili bez timeout
   4. Uzytkownik moze odswiezyc skrzynke (delta sync — tylko nowe maile od ostatniego pobrania)
   5. Pobrane maile sa poprawnie sparsowane (nadawca, odbiorca, data, temat, Message-ID, In-Reply-To, References, tresc w czystym tekscie z poprawnymi polskimi znakami)
-**Plans**: TBD
+**Plans:** 4 plans
 
 Plans:
-- [ ] 02-01: Discovery call + architektura email (Graph API vs IMAP), migracja Supabase (mailboxes, emails, sync_jobs)
-- [ ] 02-02: Konfiguracja skrzynki UI + bezpieczne przechowywanie credentials (AES-256) + test polaczenia
-- [ ] 02-03: Bulk sync z paginacja (chunked job queue + polling) + progress bar + delta sync
-- [ ] 02-04: Parsowanie naglowkow i tresci (charset detection, HTML to plaintext, polskie znaki)
+- [ ] 02-01-PLAN.md — Fundament: DB migration (mailboxes, sync_jobs, emails), typy TS, AES-256 encrypt, Graph API auth + client
+- [ ] 02-02-PLAN.md — Mailbox CRUD API + test polaczenia + UI zarzadzania skrzynkami (formularz, lista, statusy)
+- [ ] 02-03-PLAN.md — Sync engine: email fetcher (pagination), parser (HTML to text, threading headers), sync API routes
+- [ ] 02-04-PLAN.md — Sync UI: useSyncJob hook, progress bar, full sync + delta sync integracja z UI
 
 ### Phase 3: Email Threading & Browsing
 **Goal**: Uzytkownik moze przegladac maile pogrupowane w watki (sprawy) z filtrowaniem i wyborem zakresu czasowego
@@ -126,7 +126,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Hub Shell & Fundament | 3/3 | **COMPLETE** | 2026-02-10 |
-| 2. Email Connection & Fetching | 0/4 | Not started | - |
+| 2. Email Connection & Fetching | 0/4 | **PLANNED** | - |
 | 3. Email Threading & Browsing | 0/2 | Not started | - |
 | 4. AI Analysis, Prompty & Kryteria Oceny | 0/4 | Not started | - |
 | 5. Report Generation & Export | 0/3 | Not started | - |
