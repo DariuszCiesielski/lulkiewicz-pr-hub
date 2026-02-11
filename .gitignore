@@ -41,3 +41,9 @@ next-env.d.ts
 
 # claude
 .claude
+
+# n8n
+.n8n/
+
+# windows artifacts
+nul

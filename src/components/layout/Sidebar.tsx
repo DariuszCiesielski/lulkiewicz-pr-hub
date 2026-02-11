@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, Mail, Shield, Settings, X, Inbox } from 'lucide-react';
+import { LayoutDashboard, Mail, Shield, Settings, X, Inbox, MessageSquare, Brain, FileText, Cog, ClipboardList, BarChart3 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import type { LucideIcon } from 'lucide-react';
 
@@ -36,7 +36,13 @@ const NAV_ITEMS: NavItem[] = [
     icon: Mail,
     badge: 'Aktywny',
     children: [
+      { href: '/email-analyzer/dashboard', label: 'Dashboard', icon: BarChart3, adminOnly: true },
       { href: '/email-analyzer/mailboxes', label: 'Skrzynki', icon: Inbox, adminOnly: true },
+      { href: '/email-analyzer/threads', label: 'Wątki', icon: MessageSquare, adminOnly: true },
+      { href: '/email-analyzer/analyze', label: 'Analiza AI', icon: Brain, adminOnly: true },
+      { href: '/email-analyzer/reports', label: 'Raporty', icon: ClipboardList, adminOnly: true },
+      { href: '/email-analyzer/prompts', label: 'Prompty', icon: FileText, adminOnly: true },
+      { href: '/email-analyzer/settings', label: 'Ustawienia AI', icon: Cog, adminOnly: true },
     ],
   },
   { href: '/admin', label: 'Panel admina', icon: Shield, adminOnly: true },

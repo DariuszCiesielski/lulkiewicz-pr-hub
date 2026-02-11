@@ -56,6 +56,8 @@ Requirements for MVP release. Each maps to roadmap phases.
 - [ ] **AI-06**: Map-Reduce pipeline: analiza per-wątek → agregacja w sekcje raportu
 - [ ] **AI-07**: Progress bar analizy AI z informacją o aktualnie przetwarzanym wątku
 - [ ] **AI-08**: Konfiguracja AI: wybór providera (OpenAI/Anthropic/Google), klucz API, model
+- [ ] **AI-09**: Automatyczna anonimizacja danych osobowych przed wysłaniem treści do AI (imiona, nazwiska, adresy email, telefony, adresy zamieszkania, PESEL, inne identyfikatory)
+- [ ] **AI-10**: Raporty AI nie zawierają danych osobowych — użycie zanonimizowanych identyfikatorów (np. "Mieszkaniec #1", "Pracownik #3")
 
 ### Custom Evaluation Criteria
 
@@ -176,6 +178,8 @@ Deferred to future releases. Tracked but not in current roadmap.
 | AI-06 | Phase 4 | Pending |
 | AI-07 | Phase 4 | Pending |
 | AI-08 | Phase 4 | Pending |
+| AI-09 | Phase 4 | Pending |
+| AI-10 | Phase 4 | Pending |
 | EVAL-01 | Phase 4 | Pending |
 | EVAL-02 | Phase 4 | Pending |
 | EVAL-03 | Phase 4 | Pending |
@@ -200,8 +204,8 @@ Deferred to future releases. Tracked but not in current roadmap.
 | DASH-04 | Phase 6 | Pending |
 
 **Coverage:**
-- v1 requirements: 57 total
-- Mapped to phases: 57
+- v1 requirements: 59 total
+- Mapped to phases: 59
 - Unmapped: 0
 
 ---

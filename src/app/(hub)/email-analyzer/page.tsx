@@ -7,7 +7,7 @@ export default function EmailAnalyzerPage() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace('/email-analyzer/mailboxes');
+    router.replace('/email-analyzer/dashboard');
   }, [router]);
 
   return (

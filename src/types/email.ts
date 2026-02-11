@@ -90,6 +90,33 @@ export interface ClientCredentialsConfig {
 
 export type MailboxCredentials = ROPCCredentials | ClientCredentialsConfig;
 
+// --- Thread types (Phase 3) ---
+
+export type ThreadStatus = 'open' | 'closed' | 'pending';
+
+export interface EmailThread {
+  id: string;
+  mailbox_id: string;
+  subject_normalized: string;
+  first_message_at: string;
+  last_message_at: string;
+  message_count: number;
+  participant_addresses: string[];
+  status: ThreadStatus;
+  avg_response_time_minutes: number | null;
+  created_at: string;
+  updated_at: string;
+  // Joined data (optional)
+  mailbox?: Pick<Mailbox, 'display_name' | 'email_address'>;
+}
+
+export interface EmailWithThread extends Email {
+  thread_id: string | null;
+  subject_normalized: string | null;
+  is_incoming: boolean;
+  response_time_minutes: number | null;
+}
+
 // --- Form data (UI → API) ---
 
 export interface MailboxFormData {
