@@ -14,7 +14,8 @@ Plan: —
 Status: Defining requirements
 Last activity: 2026-02-11 — Milestone v1.1 started
 
-Progress: [##########..........] 50% (Phase 1 complete, Phase 2: 3/4 plans done, 02-04 pending checkpoint)
+Progress (v1.0 Email Analyzer): [##########..........] 50% (Phase 1 complete, Phase 2: 3/4 plans done, 02-04 pending checkpoint)
+Progress (v1.1 FB Analyzer): [....................] 0% (milestone started, research pending)
 
 ## Planning Status
 
@@ -58,6 +59,11 @@ Progress: [##########..........] 50% (Phase 1 complete, Phase 2: 3/4 plans done,
 - [02-03]: Delta link stored on mailbox for incremental sync
 - [02-03]: No $select on @odata.nextLink (already contains params)
 - [02-04]: Stale closure fix — onComplete notification via useEffect watching status, not useCallback
+- [v1.1 milestone]: FB Analyzer = tool-2 w ToolId, fazy 7-13
+- [v1.1 milestone]: Apify Actor: curious_coder/facebook-post-scraper (bezposrednio z PR Hub, bez n8n)
+- [v1.1 milestone]: Supabase only (bez Airtable), reuse ai-provider.ts, reuse encrypt.ts
+- [v1.1 milestone]: 6 tabel: fb_groups, fb_posts, fb_comments, fb_scrape_jobs, fb_analysis_jobs, fb_reports
+- [v1.1 milestone]: Wzorce z Clicklease Hub (batch ops, filters, report generator) i Hotel Notera (export DOCX, analytics)
 
 ### Blockers/Concerns
 
@@ -84,12 +90,32 @@ organizations, organization_members, **mailboxes** (extended: +8 cols, sync_stat
 
 ## Session Continuity
 
-Last session: 2026-02-10
-Stopped at: 02-04 tasks 1-2 done, checkpoint pending user approval
+Last session: 2026-02-11
+Stopped at: Milestone v1.1 started, research pending
 Resume file: None
-Next:
+
+### How to resume (v1.1 FB Analyzer):
+
+Run `/gsd:resume-work` and follow these steps:
+
+1. **Research (4 parallel agents)** — GSD new-milestone flow Phase 7
+   - Stack research: Apify Actor API (curious_coder/facebook-post-scraper), response format, rate limits
+   - Features research: FB group monitoring, sentiment analysis for Polish residential admin context
+   - Architecture research: Apify → Next.js API routes → Supabase integration, polling job pattern
+   - Pitfalls research: FB scraping legal/ToS, Apify cookie expiration, Polish sentiment accuracy
+
+2. **Define requirements** — scope FB Analyzer features, create REQUIREMENTS.md (FB-* IDs)
+
+3. **Create roadmap** — Phases 7-13 appended to ROADMAP.md (continuing from email-analyzer Phase 6)
+
+4. **Plan Phase 7** — `/gsd:plan-phase 7` (Fundament: DB + Types + Navigation)
+
+### Reference plan:
+See: `C:\Users\dariu\.claude\plans\lexical-marinating-blossom.md` — full architecture plan
+
+### Parallel track (v1.0 Email Analyzer — PAUSED):
   1. User approves 02-04 checkpoint (test sync flow) → "approved" lub opisz problemy
   2. Create 02-04-SUMMARY.md
   3. Phase 2 verification (gsd-verifier)
   4. Update ROADMAP.md → Phase 2 complete
-  5. Offer Phase 3 planning
+  5. Phase 3 planning
