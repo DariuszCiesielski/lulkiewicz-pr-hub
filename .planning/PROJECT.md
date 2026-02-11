@@ -2,7 +2,7 @@
 
 ## What This Is
 
-Wewnętrzna platforma narzędziowa (hub) dla agencji PR Lulkiewicz, obsługującej deweloperów nieruchomości. Hub zawiera 6 aplikacji/automatyzacji (wzorzec Poltel — grid kart narzędzi). Pierwszym i kluczowym narzędziem jest **Analizator Komunikacji Email** — aplikacja pobierająca wiadomości ze skrzynek Outlook administracji osiedli, a następnie generująca za pomocą AI szczegółowe raporty oceniające jakość komunikacji z mieszkańcami.
+Wewnętrzna platforma narzędziowa (hub) dla agencji PR Lulkiewicz, obsługującej deweloperów nieruchomości. Hub zawiera 6 aplikacji/automatyzacji (wzorzec Poltel — grid kart narzędzi). Pierwszym narzędziem jest **Analizator Komunikacji Email** — aplikacja pobierająca wiadomości ze skrzynek Outlook administracji osiedli i generująca AI raporty oceniające jakość komunikacji. Drugim narzędziem jest **Analizator Grup FB** — monitoring grup Facebookowych osiedli mieszkaniowych, wychwytywanie pozytywnych/negatywnych uwag o administracji, analiza sentymentu AI i raportowanie dla deweloperów.
 
 ## Core Value
 
@@ -35,7 +35,7 @@ Analizator Komunikacji Email automatycznie ściąga tysiące maili ze skrzynek a
 
 ### Out of Scope
 
-- Pozostałe 5 aplikacji w hubie — v2+, po walidacji Analizatora Email
+- Pozostałe 4 aplikacje w hubie (tool-3..tool-6) — v2+, po walidacji Email + FB Analyzer
 - Automatyczny sync maili (cron/realtime) — MVP: manualne odświeżanie
 - Odpowiadanie na maile z poziomu aplikacji — tylko analiza read-only
 - Integracja z innymi dostawcami poczty (Gmail, Yahoo) — na razie tylko Outlook
@@ -93,6 +93,21 @@ Analizator Komunikacji Email automatycznie ściąga tysiące maili ze skrzynek a
 | Dwa szablony raportów | Agencja potrzebuje pełnego raportu wewnętrznego i okrojonego dla klienta | — Pending |
 | Edytowalne prompty per sekcja | Każdy raport może wymagać innej struktury — elastyczność bez zmian w kodzie | — Pending |
 | Email sync batchowany | Vercel timeout 60s, tysiące maili — konieczna paginacja | — Pending |
+| FB Analyzer: Apify bez n8n | Pełna kontrola z PR Hub, bez pośredników. Apify Actor: curious_coder/facebook-post-scraper | — Pending |
+| FB Analyzer: Supabase only (bez Airtable) | Jeden storage, prostsze, spójne z resztą projektu | — Pending |
+| FB Analyzer: Reuse ai-provider.ts | Ten sam system AI co email-analyzer, wspólna konfiguracja | — Pending |
+
+## Current Milestone: v1.1 Analizator Grup FB
+
+**Goal:** Monitoring grup Facebookowych osiedli mieszkaniowych — wychwytywanie pozytywnych/negatywnych uwag o administracji, analiza sentymentu AI, raportowanie dla deweloperów.
+
+**Target features:**
+- Zarządzanie grupami FB (CRUD)
+- Scrapowanie postów z grup przez Apify Actor API
+- Przeglądanie postów z filtrami (sentyment, relevance, data, grupa)
+- Analiza AI sentymentu (positive/negative/neutral + relevance + categories)
+- Dashboard z KPI i alertami o negatywnych postach
+- Generowanie raportów AI + eksport DOCX
 
 ---
-*Last updated: 2026-02-10 — added Infrastructure (GitHub + Vercel)*
+*Last updated: 2026-02-11 — started milestone v1.1 FB Analyzer*

@@ -4,15 +4,15 @@
 
 See: .planning/PROJECT.md (updated 2026-02-10)
 
-**Core value:** AI analizuje tysiace maili i generuje raport oceniajacy jakosc komunikacji administracji osiedli z mieszkancami
-**Current focus:** Phase 2 IN PROGRESS — 02-04 checkpoint pending approval
+**Core value:** Hub narzędziowy — AI analizuje maile (email-analyzer) i posty z grup FB (fb-analyzer) dla audytu komunikacji administracji osiedli
+**Current focus:** Milestone v1.1 — FB Analyzer (defining requirements)
 
 ## Current Position
 
-Phase: 2 of 6 — IN PROGRESS
-Plan: 3 of 4 complete (02-01, 02-02, 02-03), 02-04 in progress
-Status: 02-04 tasks 1-2 committed, checkpoint (human-verify) NOT YET APPROVED
-Last activity: 2026-02-10 — Executed 02-04 tasks 1-2 (useSyncJob hook, SyncProgress, UI integration)
+Phase: Not started (defining requirements for v1.1 FB Analyzer)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-11 — Milestone v1.1 started
 
 Progress: [##########..........] 50% (Phase 1 complete, Phase 2: 3/4 plans done, 02-04 pending checkpoint)
 
