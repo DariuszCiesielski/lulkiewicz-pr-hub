@@ -36,8 +36,8 @@ export async function loadAIConfig(supabase: SupabaseClient): Promise<AIConfig> 
   if (apiKey && !apiKey.startsWith('sk-')) {
     try {
       apiKey = decrypt(apiKey);
-    } catch {
-      throw new Error('Nie udało się odszyfrować klucza API.');
+    } catch (err) {
+      throw new Error(`Błąd deszyfrowania klucza API: ${err instanceof Error ? err.message : 'Nieznany błąd'}`);
     }
   }
 

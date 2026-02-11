@@ -60,25 +60,46 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
-  let body: { analysisJobId?: string; templateType?: string; title?: string };
+  let body: { analysisJobId?: string; mailboxId?: string; templateType?: string; title?: string };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: 'Nieprawidłowy format danych' }, { status: 400 });
   }
 
-  if (!body.analysisJobId) {
-    return NextResponse.json({ error: 'analysisJobId jest wymagany' }, { status: 400 });
-  }
-
   const templateType = body.templateType === 'client' ? 'client' : 'internal';
   const adminClient = getAdminClient();
+
+  // Resolve analysisJobId — accept directly or find latest completed job for mailbox
+  let analysisJobId = body.analysisJobId;
+
+  if (!analysisJobId && body.mailboxId) {
+    const { data: latestJob } = await adminClient
+      .from('analysis_jobs')
+      .select('id')
+      .eq('mailbox_id', body.mailboxId)
+      .eq('status', 'completed')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (latestJob) {
+      analysisJobId = latestJob.id;
+    }
+  }
+
+  if (!analysisJobId) {
+    return NextResponse.json(
+      { error: 'Wymagany analysisJobId lub mailboxId z ukończoną analizą' },
+      { status: 400 }
+    );
+  }
 
   // Load analysis job
   const { data: job, error: jobError } = await adminClient
     .from('analysis_jobs')
     .select('*')
-    .eq('id', body.analysisJobId)
+    .eq('id', analysisJobId)
     .single();
 
   if (jobError || !job) {
@@ -102,7 +123,7 @@ export async function POST(request: NextRequest) {
   const { data: results } = await adminClient
     .from('analysis_results')
     .select('section_key, result_data, thread_id')
-    .eq('analysis_job_id', body.analysisJobId)
+    .eq('analysis_job_id', analysisJobId)
     .order('created_at', { ascending: true });
 
   if (!results || results.length === 0) {
@@ -132,7 +153,7 @@ export async function POST(request: NextRequest) {
     .from('reports')
     .insert({
       mailbox_id: job.mailbox_id,
-      analysis_job_id: body.analysisJobId,
+      analysis_job_id: analysisJobId,
       template_type: templateType,
       title,
       date_range_from: job.date_range_from,

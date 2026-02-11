@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 export type AnalysisUIStatus = 'idle' | 'starting' | 'processing' | 'completed' | 'error';
 
@@ -149,11 +149,18 @@ export function useAnalysisJob(onComplete?: () => void): UseAnalysisJobReturn {
 
   const reset = useCallback(() => {
     clearBatchTimeout();
-    mountedRef.current = false;
     setJobId(null);
     setStatus('idle');
     setProgress({ processedThreads: 0, totalThreads: 0, percentage: 0 });
     setError(null);
+  }, [clearBatchTimeout]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      clearBatchTimeout();
+    };
   }, [clearBatchTimeout]);
 
   return { startAnalysis, status, progress, error, jobId, reset };

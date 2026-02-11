@@ -42,11 +42,11 @@ export async function GET() {
   // Thread stats
   const { count: totalThreads } = await adminClient
     .from('email_threads')
-    .select('id', { count: 'exact', head: true });
+    .select('*', { count: 'exact', head: true });
 
   const { count: pendingThreads } = await adminClient
     .from('email_threads')
-    .select('id', { count: 'exact', head: true })
+    .select('*', { count: 'exact', head: true })
     .eq('status', 'pending');
 
   // Average response time across all threads
@@ -64,7 +64,7 @@ export async function GET() {
   // Email count
   const { count: totalEmails } = await adminClient
     .from('emails')
-    .select('id', { count: 'exact', head: true })
+    .select('*', { count: 'exact', head: true })
     .eq('is_deleted', false);
 
   // Recent reports

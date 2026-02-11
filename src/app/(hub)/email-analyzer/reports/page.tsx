@@ -90,11 +90,6 @@ export default function ReportsPage() {
     setError(null);
 
     try {
-      // Find latest completed analysis job for this mailbox
-      const jobsRes = await fetch(`/api/analysis?mailboxId=${selectedMailboxId}`);
-      // We don't have a list endpoint for jobs, so we'll search directly
-      // For now, use the reports API which takes analysisJobId
-      // Quick workaround: get analysis_jobs from supabase directly via a helper
       const res = await fetch('/api/reports', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
