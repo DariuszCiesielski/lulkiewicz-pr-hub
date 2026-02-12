@@ -1,27 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
-import { createClient as createServerClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-
-function getAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
-
-async function verifyAdmin() {
-  const supabase = await createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user?.email) return false;
-
-  const { data } = await getAdminClient()
-    .from('app_allowed_users')
-    .select('role')
-    .eq('email', user.email)
-    .single();
-
-  return data?.role === 'admin';
-}
+import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
 
 const MAILBOX_SELECT_COLUMNS = 'id, email_address, display_name, connection_type, tenant_id, client_id, sync_status, last_sync_at, total_emails, delta_link, created_at, updated_at';
 

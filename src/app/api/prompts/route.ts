@@ -1,28 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
-import { createClient as createServerClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { DEFAULT_PROMPTS } from '@/lib/ai/default-prompts';
-
-function getAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
-
-async function verifyAdmin() {
-  const supabase = await createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user?.email) return false;
-
-  const { data } = await getAdminClient()
-    .from('app_allowed_users')
-    .select('role')
-    .eq('email', user.email)
-    .single();
-
-  return data?.role === 'admin';
-}
+import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
 
 /** GET /api/prompts — list all prompts (merges defaults with DB overrides) */
 export async function GET() {

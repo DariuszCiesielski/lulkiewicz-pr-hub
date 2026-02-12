@@ -1,5 +1,3 @@
-import { createClient } from '@supabase/supabase-js';
-import { createClient as createServerClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import { decrypt } from '@/lib/crypto/encrypt';
 import { getAccessToken } from '@/lib/email/graph-auth';
@@ -11,6 +9,7 @@ import {
   upsertEmails,
   getMailboxMessageCount,
 } from '@/lib/email/email-fetcher';
+import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
 import type { MailboxCredentials, SyncJobStatus } from '@/types/email';
 
 // Vercel function timeout — max 60s for processing a batch
@@ -18,27 +17,6 @@ export const maxDuration = 60;
 
 // Safety timeout: stop processing if approaching Vercel limit
 const SAFETY_TIMEOUT_MS = 50_000;
-
-function getAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
-
-async function verifyAdmin() {
-  const supabase = await createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user?.email) return false;
-
-  const { data } = await getAdminClient()
-    .from('app_allowed_users')
-    .select('role')
-    .eq('email', user.email)
-    .single();
-
-  return data?.role === 'admin';
-}
 
 /**
  * POST /api/sync/process — Process the next batch of a sync job.

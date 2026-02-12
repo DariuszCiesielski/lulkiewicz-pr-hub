@@ -1,34 +1,12 @@
-import { createClient } from '@supabase/supabase-js';
-import { createClient as createServerClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { decrypt } from '@/lib/crypto/encrypt';
 import { getAccessToken, parseGraphAuthError } from '@/lib/email/graph-auth';
 import { createGraphClient } from '@/lib/email/graph-client';
+import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
 import type { MailboxCredentials } from '@/types/email';
 
 // Allow up to 30s for connection test (auth + Graph API call)
 export const maxDuration = 30;
-
-function getAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
-
-async function verifyAdmin() {
-  const supabase = await createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user?.email) return false;
-
-  const { data } = await getAdminClient()
-    .from('app_allowed_users')
-    .select('role')
-    .eq('email', user.email)
-    .single();
-
-  return data?.role === 'admin';
-}
 
 export async function POST(
   _request: NextRequest,
