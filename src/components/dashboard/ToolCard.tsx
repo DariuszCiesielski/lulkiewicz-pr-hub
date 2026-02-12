@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import type { LucideIcon } from 'lucide-react';
-import { Mail, Wrench, BarChart3, FileText, Users, Settings2, Lock } from 'lucide-react';
+import { Mail, Wrench, BarChart3, FileText, Users, Settings2, Lock, Share2, Send, MessageSquare } from 'lucide-react';
 import type { ToolConfig } from '@/config/tools';
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -12,6 +12,9 @@ const ICON_MAP: Record<string, LucideIcon> = {
   FileText,
   Users,
   Settings2,
+  Share2,
+  Send,
+  MessageSquare,
 };
 
 interface ToolCardProps {

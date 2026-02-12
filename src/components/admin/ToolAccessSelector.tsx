@@ -5,10 +5,10 @@ import type { ToolId } from '@/types';
 const TOOL_NAMES: Record<ToolId, string> = {
   'email-analyzer': 'Analizator Email',
   'fb-analyzer': 'Analizator Grup FB',
-  'tool-3': 'Narzędzie 3',
-  'tool-4': 'Narzędzie 4',
-  'tool-5': 'Narzędzie 5',
-  'tool-6': 'Narzędzie 6',
+  'social-media': 'Social Media Manager',
+  'article-generator': 'Generator Artykułów',
+  'cold-mailing': 'Cold Mailing',
+  'campaign-analyzer': 'Analizator Kampanii',
 };
 
 const ALL_TOOLS: ToolId[] = Object.keys(TOOL_NAMES) as ToolId[];
