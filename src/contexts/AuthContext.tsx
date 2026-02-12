@@ -34,7 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .from('app_allowed_users')
       .select('role, allowed_tools')
       .eq('email', userEmail)
-      .single();
+      .single() as { data: { role: string; allowed_tools: string[] } | null };
 
     if (data) {
       setUserRole(data.role as UserRole);
@@ -71,6 +71,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
+    // Timeout safety net — if getSession() hangs (Web Locks), force loading to end
+    const timeout = setTimeout(() => {
+      setIsLoading(false);
+    }, 5000);
+
     supabase.auth.getSession()
       .then(async ({ data: { session } }: { data: { session: Session | null } }) => {
         setSession(session);
@@ -83,6 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('getSession error:', err);
       })
       .finally(() => {
+        clearTimeout(timeout);
         setIsLoading(false);
       });
 
