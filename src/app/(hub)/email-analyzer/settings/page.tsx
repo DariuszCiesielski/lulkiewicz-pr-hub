@@ -14,13 +14,35 @@ interface AIConfigState {
   has_api_key: boolean;
 }
 
+const modelsByProvider: Record<string, { value: string; label: string }[]> = {
+  openai: [
+    { value: 'gpt-5.2', label: 'GPT-5.2 (najnowszy)' },
+    { value: 'gpt-4.1', label: 'GPT-4.1' },
+    { value: 'gpt-4.1-mini', label: 'GPT-4.1 Mini' },
+    { value: 'gpt-4.1-nano', label: 'GPT-4.1 Nano (najtańszy)' },
+    { value: 'gpt-4o', label: 'GPT-4o' },
+    { value: 'gpt-4o-mini', label: 'GPT-4o Mini' },
+  ],
+  anthropic: [
+    { value: 'claude-opus-4-6', label: 'Claude Opus 4.6' },
+    { value: 'claude-sonnet-4-5-20250929', label: 'Claude Sonnet 4.5' },
+    { value: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5 (najtańszy)' },
+  ],
+  azure: [
+    { value: 'gpt-5.2', label: 'GPT-5.2 (najnowszy)' },
+    { value: 'gpt-4.1', label: 'GPT-4.1' },
+    { value: 'gpt-4.1-mini', label: 'GPT-4.1 Mini' },
+    { value: 'gpt-4o', label: 'GPT-4o' },
+  ],
+};
+
 export default function AISettingsPage() {
   const { isAdmin, isLoading: authLoading } = useAuth();
   const router = useRouter();
 
   const [config, setConfig] = useState<AIConfigState>({
     provider: 'openai',
-    model: 'gpt-4o-mini',
+    model: 'gpt-5.2',
     temperature: 0.3,
     max_tokens: 4096,
     api_key: '',
@@ -133,7 +155,11 @@ export default function AISettingsPage() {
           </label>
           <select
             value={config.provider}
-            onChange={(e) => setConfig({ ...config, provider: e.target.value })}
+            onChange={(e) => {
+              const newProvider = e.target.value;
+              const firstModel = modelsByProvider[newProvider]?.[0]?.value || '';
+              setConfig({ ...config, provider: newProvider, model: firstModel });
+            }}
             className="rounded-md border px-3 py-2 text-sm outline-none"
             style={{
               borderColor: 'var(--border-primary)',
@@ -152,8 +178,7 @@ export default function AISettingsPage() {
           <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
             Model
           </label>
-          <input
-            type="text"
+          <select
             value={config.model}
             onChange={(e) => setConfig({ ...config, model: e.target.value })}
             className="rounded-md border px-3 py-2 text-sm outline-none"
@@ -162,8 +187,11 @@ export default function AISettingsPage() {
               backgroundColor: 'var(--bg-primary)',
               color: 'var(--text-primary)',
             }}
-            placeholder="gpt-4o-mini"
-          />
+          >
+            {(modelsByProvider[config.provider] || modelsByProvider.openai).map((m) => (
+              <option key={m.value} value={m.value}>{m.label}</option>
+            ))}
+          </select>
         </div>
 
         {/* API Key */}
