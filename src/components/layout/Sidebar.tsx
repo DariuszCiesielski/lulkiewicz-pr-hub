@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, Mail, Shield, Settings, X, Inbox, MessageSquare, Brain, FileText, Cog, ClipboardList, BarChart3, Users } from 'lucide-react';
+import { LayoutDashboard, Mail, Shield, Settings, X, Inbox, MessageSquare, Brain, FileText, Cog, ClipboardList, BarChart3, Users, Share2, Send } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import type { LucideIcon } from 'lucide-react';
 
@@ -22,6 +22,7 @@ interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon;
+  color?: string;
   badge?: string;
   adminOnly?: boolean;
   comingSoon?: boolean;
@@ -34,6 +35,7 @@ const NAV_ITEMS: NavItem[] = [
     href: '/email-analyzer',
     label: 'Analizator Email',
     icon: Mail,
+    color: '#3b82f6',
     badge: 'Aktywny',
     children: [
       { href: '/email-analyzer/dashboard', label: 'Dashboard', icon: BarChart3, adminOnly: true },
@@ -49,6 +51,7 @@ const NAV_ITEMS: NavItem[] = [
     href: '/fb-analyzer',
     label: 'Analizator Grup FB',
     icon: MessageSquare,
+    color: '#8b5cf6',
     badge: 'Aktywny',
     children: [
       { href: '/fb-analyzer/dashboard', label: 'Dashboard', icon: BarChart3, adminOnly: true },
@@ -59,8 +62,11 @@ const NAV_ITEMS: NavItem[] = [
       { href: '/fb-analyzer/settings', label: 'Ustawienia', icon: Cog, adminOnly: true },
     ],
   },
+  { href: '#', label: 'Social Media Manager', icon: Share2, color: '#ec4899', comingSoon: true },
+  { href: '#', label: 'Generator Artykułów', icon: FileText, color: '#10b981', comingSoon: true },
+  { href: '#', label: 'Cold Mailing', icon: Send, color: '#f59e0b', comingSoon: true },
+  { href: '#', label: 'Analizator Kampanii', icon: BarChart3, color: '#06b6d4', comingSoon: true },
   { href: '/admin', label: 'Panel admina', icon: Shield, adminOnly: true },
-  { href: '/settings', label: 'Ustawienia', icon: Settings, comingSoon: true },
 ];
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
@@ -107,16 +113,16 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium cursor-not-allowed"
                   style={{
                     color: 'var(--sidebar-text)',
-                    opacity: 0.4,
+                    opacity: 0.5,
                   }}
                 >
-                  <Icon className="h-5 w-5 shrink-0" />
+                  <Icon className="h-5 w-5 shrink-0" style={{ color: item.color }} />
                   <span className="flex-1">{item.label}</span>
                   <span
                     className="rounded-full px-2 py-0.5 text-xs font-medium"
                     style={{
-                      backgroundColor: 'var(--sidebar-hover)',
-                      color: 'var(--sidebar-text)',
+                      backgroundColor: item.color ? `${item.color}25` : 'var(--sidebar-hover)',
+                      color: item.color || 'var(--sidebar-text)',
                     }}
                   >
                     Wkrótce
@@ -138,7 +144,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   if (!isActive) e.currentTarget.style.backgroundColor = 'transparent';
                 }}
               >
-                <Icon className="h-5 w-5 shrink-0" />
+                <Icon className="h-5 w-5 shrink-0" style={{ color: isActive ? '#ffffff' : item.color }} />
                 <span className="flex-1">{item.label}</span>
                 {item.badge && (
                   <span
