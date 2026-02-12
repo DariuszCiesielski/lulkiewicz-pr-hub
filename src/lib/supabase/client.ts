@@ -1,4 +1,4 @@
-import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
 
 // Custom lock function — bypasses Web Locks API which can hang
 // indefinitely when a lock is not properly released (browser crash,
@@ -11,22 +11,20 @@ const customLockFunction = async <T>(
   return fn();
 };
 
-let client: ReturnType<typeof createSupabaseClient> | null = null;
+let client: ReturnType<typeof createBrowserClient> | null = null;
 
 export function createClient() {
   if (client) return client;
-  client = createSupabaseClient(
+  client = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       auth: {
-        lock: customLockFunction,
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
-        storageKey: 'lulkiewicz-pr-hub-auth',
-        flowType: 'pkce',
-      },
+        lock: customLockFunction,
+      } as Record<string, unknown>,
     }
   );
   return client;
