@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-10)
 
 **Core value:** Hub narzędziowy — AI analizuje maile (email-analyzer) i posty z grup FB (fb-analyzer) dla audytu komunikacji administracji osiedli
-**Current focus:** Milestone v1.1 — FB Analyzer (roadmap ready, planning phase 7)
+**Current focus:** Milestone v1.1 — FB Analyzer (phase 7 in progress)
 
 ## Current Position
 
-Phase: Phase 7 (FB Foundation) — planning
-Plan: —
-Status: Milestone v1.1 FB Analyzer — roadmap DONE (phases 7-12), ready for /gsd:plan-phase 7
-Last activity: 2026-02-12 — Roadmap v1.1 created and approved
+Phase: Phase 7 (FB Foundation) — in progress
+Plan: 01 of 3
+Status: Plan 07-01 COMPLETE — fundament danych (SQL + typy TS)
+Last activity: 2026-02-12 — Completed 07-01-PLAN.md (migracja SQL + typy FB)
 
 Progress (v1.0 Email Analyzer): [##################..] ~90% (Phases 1-6 complete, known gaps: eval criteria UI, Azure consent)
-Progress (v1.1 FB Analyzer): [#...................] 5% (roadmap done, phase 7 planning next)
+Progress (v1.1 FB Analyzer): [##..................] 10% (phase 7: plan 01/03 complete)
 
 ## Planning Status
 
@@ -47,6 +47,11 @@ Progress (v1.1 FB Analyzer): [#...................] 5% (roadmap done, phase 7 pl
 
 **Phase 6 plans — COMPLETE (fast-tracked in 1f853d6 + fix 48582a0, 2026-02-11):**
 - [x] 06-01: Dashboard — KPI tiles, podsumowania per skrzynka, quick actions, ostatnie raporty
+
+**Phase 7 plans (3 plans, 1 wave) — IN PROGRESS:**
+- [x] 07-01-PLAN.md (Wave 1, autonomous) — Fundament danych: migracja SQL 6 tabel FB + typy TS (de508e7, d27709d)
+- [ ] 07-02-PLAN.md — Konfiguracja narzedzia FB Analyzer (tools config, sidebar, routing)
+- [ ] 07-03-PLAN.md — API CRUD dla fb_groups
 
 ## Accumulated Context
 
@@ -80,6 +85,9 @@ Progress (v1.1 FB Analyzer): [#...................] 5% (roadmap done, phase 7 pl
 - [v1.1 milestone]: Supabase only (bez Airtable), reuse ai-provider.ts, reuse encrypt.ts
 - [v1.1 milestone]: 6 tabel: fb_groups, fb_posts, fb_comments, fb_scrape_jobs, fb_analysis_jobs, fb_reports
 - [v1.1 milestone]: Wzorce z Clicklease Hub (batch ops, filters, report generator) i Hotel Notera (export DOCX, analytics)
+- [07-01]: Status/sentiment jako TEXT z CHECK (nie enum) — wzorzec z email-analyzer
+- [07-01]: UNIQUE(group_id, facebook_post_id) na fb_posts — deduplikacja scrapowanych postow
+- [07-01]: updated_at trigger (CREATE OR REPLACE) na fb_groups, fb_posts, fb_reports
 
 ### Blockers/Concerns
 
@@ -100,13 +108,13 @@ Progress (v1.1 FB Analyzer): [#...................] 5% (roadmap done, phase 7 pl
 - **Auto-deploy:** GitHub -> Vercel
 - **Supabase Access Token:** (NIE zapisywać w repo — użyj Supabase Dashboard → Account → Access Tokens)
 
-## Supabase Tables (Phase 2 updated)
+## Supabase Tables (Phase 7 updated)
 
-organizations, organization_members, **mailboxes** (extended: +8 cols, sync_status TEXT), mailbox_credentials, **emails** (extended: +13 cols, UNIQUE mailbox+internet_message_id), threads, reports, report_sections, section_templates, schedules, messages, app_allowed_users, **sync_jobs** (new: status, job_type, page_token, emails_fetched), **email_threads** (Phase 3: Union-Find threading), **analysis_jobs** (Phase 4: AI analysis jobs), **analysis_results** (Phase 4: per-thread results), **prompt_templates** (Phase 4: customizable prompts), **evaluation_criteria** (Phase 4: scoring rubrics, no UI yet)
+organizations, organization_members, **mailboxes** (extended: +8 cols, sync_status TEXT), mailbox_credentials, **emails** (extended: +13 cols, UNIQUE mailbox+internet_message_id), threads, reports, report_sections, section_templates, schedules, messages, app_allowed_users, **sync_jobs** (new: status, job_type, page_token, emails_fetched), **email_threads** (Phase 3: Union-Find threading), **analysis_jobs** (Phase 4: AI analysis jobs), **analysis_results** (Phase 4: per-thread results), **prompt_templates** (Phase 4: customizable prompts), **evaluation_criteria** (Phase 4: scoring rubrics, no UI yet), **fb_groups** (Phase 7: grupy FB do monitorowania), **fb_posts** (Phase 7: posty z grup, UNIQUE group+facebook_post_id), **fb_comments** (Phase 7: komentarze do postow), **fb_scrape_jobs** (Phase 7: zadania scrapowania Apify), **fb_analysis_jobs** (Phase 7: zadania analizy AI postow), **fb_reports** (Phase 7: raporty z analizy grup FB)
 
 ## Session Continuity
 
-Last session: 2026-02-12
-Stopped at: Roadmap v1.1 approved — next: /gsd:plan-phase 7
-Resume file: docs/HANDOFF-2026-02-12-v2.md
+Last session: 2026-02-12T15:57Z
+Stopped at: Completed 07-01-PLAN.md — next: execute 07-02-PLAN.md
+Resume file: .planning/phases/07-fb-foundation/07-01-SUMMARY.md
 Reference plan: C:\Users\dariu\.claude\plans\lexical-marinating-blossom.md
