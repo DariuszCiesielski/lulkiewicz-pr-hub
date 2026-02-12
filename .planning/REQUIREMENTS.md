@@ -1,213 +1,164 @@
 # Requirements: Lulkiewicz PR Hub
 
 **Defined:** 2026-02-10
-**Core Value:** AI analizuje tysiące maili i generuje raport oceniający jakość komunikacji administracji osiedli z mieszkańcami
+**Core Value:** Hub narzędziowy — AI analizuje maile i posty z grup FB dla audytu komunikacji administracji osiedli
 
-## v1 Requirements
+## v1.0 Requirements (Email Analyzer) — COMPLETE
 
-Requirements for MVP release. Each maps to roadmap phases.
+Phases 1-6 complete. See ROADMAP.md for details.
 
-### Hub Shell
+### Hub Shell (Phase 1) — Complete
+- [x] **HUB-01** through **HUB-10**: Auth, roles, design system, grid, sidebar, responsive
 
-- [ ] **HUB-01**: Użytkownik może się zarejestrować (email + hasło) i zalogować
-- [ ] **HUB-02**: Sesja utrzymuje się po odświeżeniu przeglądarki
-- [ ] **HUB-03**: Niezalogowany użytkownik jest przekierowany na stronę logowania
-- [ ] **HUB-04**: System ról admin/user — admin zarządza użytkownikami i narzędziami
-- [ ] **HUB-05**: Panel admina: lista użytkowników, dodawanie, edycja ról, kontrola dostępu do narzędzi
-- [ ] **HUB-06**: Grid 6 narzędzi na dashboardzie: 1 aktywne (Analizator Email) + 5 Coming Soon
-- [ ] **HUB-07**: Sidebar z nawigacją do narzędzi i sekcji
-- [ ] **HUB-08**: Unified Design System: 6 motywów z przełącznikiem w menu użytkownika
-- [ ] **HUB-09**: Footer z prawami autorskimi (wzorzec brand-elements)
-- [ ] **HUB-10**: Responsywność na mobile i tablet
+### Email Connection & Fetching (Phase 2) — Complete
+- [x] **MAIL-01** through **MAIL-05**: Mailbox CRUD, test connection, credentials encryption
+- [x] **FETCH-01** through **FETCH-07**: Bulk sync, pagination, progress, delta sync, parsing
 
-### Email Connection
+### Email Threading (Phase 3) — Complete
+- [x] **THREAD-01** through **THREAD-05**: Threading, thread view, filters, date range
 
-- [ ] **MAIL-01**: Formularz konfiguracji skrzynki: adres email, login, hasło (lub OAuth), typ serwera
-- [ ] **MAIL-02**: Test połączenia ze skrzynką z informacją o wyniku (sukces/błąd z opisem)
-- [ ] **MAIL-03**: Obsługa wielu skrzynek (multi-mailbox) — lista skrzynek z możliwością dodawania/usuwania
-- [ ] **MAIL-04**: Bezpieczne przechowywanie credentials (szyfrowanie AES-256, deszyfrowanie server-side)
-- [ ] **MAIL-05**: Auto-detekcja typu serwera (O365 vs IMAP) lub ręczny wybór
+### AI Analysis & Prompts (Phase 4) — Complete
+- [x] **AI-01** through **AI-10**: AI analysis, Map-Reduce, config, anonymization
+- [x] **PROMPT-01** through **PROMPT-05**: Editable prompts, 3-tier resolution
+- [ ] **EVAL-01** through **EVAL-04**: Evaluation criteria (DB exists, UI not built — known gap)
 
-### Email Fetching
+### Reports & Export (Phase 5) — Complete
+- [x] **REPORT-01** through **REPORT-06**: Report generation, templates, preview, edit, history
+- [x] **EXPORT-01**: Clipboard copy
+- [x] **EXPORT-02**: DOCX export
+- [ ] **EXPORT-03**: PDF export (deferred — known gap)
 
-- [ ] **FETCH-01**: Jednorazowe pobranie wszystkich maili ze skrzynki do bazy (bulk download)
-- [ ] **FETCH-02**: Paginowany/chunked sync — obsługuje tysiące maili bez timeout (Vercel limit)
-- [ ] **FETCH-03**: Progress bar pobierania z liczbą pobranych/całkowitych maili
-- [ ] **FETCH-04**: Manualne odświeżanie — przycisk "Pobierz nowe" (delta sync)
-- [ ] **FETCH-05**: Parsowanie nagłówków: From, To, Cc, Date, Subject, In-Reply-To, References, Message-ID
-- [ ] **FETCH-06**: Parsowanie treści: HTML → plaintext, obsługa polskich znaków (charset detection)
-- [ ] **FETCH-07**: Migracja Supabase: tabele emails, mailboxes, sync_jobs
+### Dashboard (Phase 6) — Complete
+- [x] **DASH-01** through **DASH-04**: KPI tiles, per-mailbox summary, quick actions, recent reports
 
-### Email Threading
+---
 
-- [ ] **THREAD-01**: Automatyczne grupowanie maili w wątki (In-Reply-To, References, Subject fallback)
-- [ ] **THREAD-02**: Widok wątków: lista wątków z liczbą wiadomości, datą, uczestnikami
-- [ ] **THREAD-03**: Drill-down w wątek: chronologiczny widok maili w wątku
-- [ ] **THREAD-04**: Filtrowanie wątków: po dacie, nadawcy, statusie (otwarty/zamknięty), słowach kluczowych
-- [ ] **THREAD-05**: Wybór zakresu czasowego analizy (1-3 miesiące) z uwzględnieniem starszych otwartych spraw
+## v1.1 Requirements (FB Analyzer)
 
-### AI Analysis
+Requirements for milestone v1.1. Each maps to roadmap phases 7+.
 
-- [ ] **AI-01**: AI analiza ogólna: jakość komunikacji, kultura wypowiedzi, zasady grzecznościowe
-- [ ] **AI-02**: AI analiza per wątek: czas reakcji, status sprawy (otwarta/zamknięta), skuteczność rozwiązania
-- [ ] **AI-03**: AI ocena: obecność danych kontaktowych i informacji o osobach realizujących sprawę
-- [ ] **AI-04**: AI ocena: przestrzeganie RODO w treści maili (wykrywanie naruszeń)
-- [ ] **AI-05**: AI analiza: sugestie działań naprawczych + co jest robione dobrze
-- [ ] **AI-06**: Map-Reduce pipeline: analiza per-wątek → agregacja w sekcje raportu
-- [ ] **AI-07**: Progress bar analizy AI z informacją o aktualnie przetwarzanym wątku
-- [ ] **AI-08**: Konfiguracja AI: wybór providera (OpenAI/Anthropic/Google), klucz API, model
-- [ ] **AI-09**: Automatyczna anonimizacja danych osobowych przed wysłaniem treści do AI (imiona, nazwiska, adresy email, telefony, adresy zamieszkania, PESEL, inne identyfikatory)
-- [ ] **AI-10**: Raporty AI nie zawierają danych osobowych — użycie zanonimizowanych identyfikatorów (np. "Mieszkaniec #1", "Pracownik #3")
+### Fundament & Nawigacja
 
-### Custom Evaluation Criteria
+- [ ] **FBNAV-01**: ToolId `fb-analyzer` aktywny na hub grid (zastępuje Coming Soon)
+- [ ] **FBNAV-02**: Sidebar nawigacja FB Analyzer z children (Dashboard, Grupy, Posty, Analiza, Raporty, Ustawienia)
+- [ ] **FBNAV-03**: Layout FB Analyzer + strony shell
+- [ ] **FBNAV-04**: Migracja Supabase: tabele fb_groups, fb_posts, fb_comments, fb_scrape_jobs, fb_analysis_jobs, fb_reports + RLS admin-only + indeksy
+- [ ] **FBNAV-05**: Typy TypeScript domeny FB (FbGroup, FbPost, FbComment, FbScrapeJob, FbAnalysisJob, FbReport)
+- [ ] **FBNAV-06**: Ekstrakcja verifyAdmin()/getAdminClient() do shared module (src/lib/api/admin.ts)
 
-- [ ] **EVAL-01**: Użytkownik może definiować checklisty (punkty do sprawdzenia tak/nie) — AI ocenia każdy
-- [ ] **EVAL-02**: Użytkownik może definiować scoring rubrics (kryteria + wagi + skala np. 1-5)
-- [ ] **EVAL-03**: Domyślny zestaw kryteriów oceny z możliwością pełnej customizacji
-- [ ] **EVAL-04**: Wyniki scoringu widoczne w raporcie z wizualnymi wskaźnikami (progress bars, oceny)
+### Zarządzanie Grupami FB
 
-### Prompt Management
+- [ ] **FBGRP-01**: CRUD grup FB z polem deweloper (grupowanie) + URL Facebooka
+- [ ] **FBGRP-02**: Status grupy (active/paused) — wstrzymanie monitoringu
+- [ ] **FBGRP-03**: Lista grup z metadanymi (deweloper, ostatni scrape, liczba postów, status)
+- [ ] **FBGRP-04**: Konfiguracja Apify: token API (szyfrowany AES-256) + Facebook session cookies
 
-- [ ] **PROMPT-01**: Domyślne prompty per sekcja raportu (z kodu)
-- [ ] **PROMPT-02**: Edytowalne prompty — użytkownik może modyfikować treść promptu dla każdej sekcji
-- [ ] **PROMPT-03**: Podgląd side-by-side: domyślny prompt vs edytowany
-- [ ] **PROMPT-04**: Reset promptu do domyślnego jednym klikiem
-- [ ] **PROMPT-05**: 3-tier resolution: domyślny z kodu → globalny → per-raport (wzorzec Marketing Hub)
+### Scrapowanie Postów
 
-### Report Generation
+- [ ] **FBSCR-01**: Trigger scrapowania per grupa przez Apify Actor API (natywny fetch, bez apify-client)
+- [ ] **FBSCR-02**: Dwufazowa architektura: start Apify run → poll status co 5s → fetch wyników (mieści się w Vercel 60s)
+- [ ] **FBSCR-03**: useScrapeJob hook z progress bar (wzorzec useSyncJob)
+- [ ] **FBSCR-04**: Upsert postów z deduplikacją ON CONFLICT (group_id, facebook_post_id)
+- [ ] **FBSCR-05**: Rate limiting między grupami (min. 3 min przerwy, losowe opóźnienia)
+- [ ] **FBSCR-06**: Error handling: logowanie błędów, retry, informacja w UI o statusie
+- [ ] **FBSCR-07**: Ochrona konta FB: dedykowane konto, Apify Proxy, losowe opóźnienia, limit dzienny scrapowań, cookie health check przed scrapowaniem
 
-- [ ] **REPORT-01**: Generowanie raportu AI na podstawie analizy maili i wybranych kryteriów
-- [ ] **REPORT-02**: Dwa szablony raportów: wewnętrzny (pełny) i kliencki (filtrowany)
-- [ ] **REPORT-03**: Podgląd raportu w aplikacji z markdown rendering
-- [ ] **REPORT-04**: Edycja wygenerowanego raportu przed eksportem
-- [ ] **REPORT-05**: Historia raportów — lista wygenerowanych raportów z datami
-- [ ] **REPORT-06**: Migracja Supabase: tabele reports, report_templates, prompts, evaluation_criteria
+### Analiza AI
 
-### Export
+- [ ] **FBAI-01**: Kwalifikacja per post: istotny/nieistotny + sentyment (positive/negative/neutral) + kategoria + AI snippet — 1 wywołanie AI, structured JSON
+- [ ] **FBAI-02**: Domyślny prompt AI: "szukaj opinii mieszkańców dotyczących administracji osiedla i dewelopera"
+- [ ] **FBAI-03**: Edytowalny prompt przez admina (reuse prompt_templates z email-analyzer)
+- [ ] **FBAI-04**: Konfigurowalne słowa kluczowe / tematy do monitorowania (per grupa lub globalnie)
+- [ ] **FBAI-05**: Batch processing z useFbAnalysisJob hook + progress bar
+- [ ] **FBAI-06**: Predefiniowane kategorie: opłaty, naprawy, czystość, bezpieczeństwo, zieleń, komunikacja, finanse, prawo, sąsiedzi, pochwały, inne
 
-- [ ] **EXPORT-01**: Kopiowanie raportu do schowka (jeden klik)
-- [ ] **EXPORT-02**: Eksport do .docx (Word) z formatowaniem
-- [ ] **EXPORT-03**: Eksport do .pdf z formatowaniem
+### Widok Istotnych Postów
 
-### Dashboard
+- [ ] **FBVIEW-01**: Lista TYLKO istotnych postów (AI-flagowanych) z sentymentem, snippet, **linkiem do postu na FB**
+- [ ] **FBVIEW-02**: Filtrowanie: per deweloper, per grupa, sentyment, kategoria, zakres dat
+- [ ] **FBVIEW-03**: Podsumowanie per deweloper: liczba monitorowanych grup, istotnych postów, % negatywnych
+- [ ] **FBVIEW-04**: Quick actions: scrapuj grupę, uruchom analizę, generuj raport
 
-- [ ] **DASH-01**: Kafelki KPI: średni czas odpowiedzi, % otwartych spraw, ogólny scoring komunikacji
-- [ ] **DASH-02**: Podsumowanie per skrzynka: liczba wątków, maili, ostatnia synchronizacja
-- [ ] **DASH-03**: Quick actions: generuj raport, odśwież skrzynkę, dodaj nową skrzynkę
-- [ ] **DASH-04**: Ostatnie raporty z datami i statusami
+### Raportowanie
 
-## v2 Requirements
+- [ ] **FBREP-01**: Raport na żądanie: user wybiera grupy/dewelopera + zakres dat → generuj
+- [ ] **FBREP-02**: Format raportu: sekcje per grupa + podsumowanie AI (co dobre, co złe, rekomendacje)
+- [ ] **FBREP-03**: Tabela wpisów w raporcie: grupa, data, treść postu, sentyment, snippet AI, **link do postu FB**
+- [ ] **FBREP-04**: Edytowalne prompty per sekcja raportu (reuse prompt editor)
+- [ ] **FBREP-05**: Eksport DOCX z klikalnymi linkami do postów FB
+- [ ] **FBREP-06**: Historia raportów z datami
 
-Deferred to future releases. Tracked but not in current roadmap.
+---
+
+## v2+ Requirements (deferred)
+
+### FB Analyzer rozszerzenia
+- **FBEXT-01**: Analiza komentarzy (osobny sentyment per komentarz, agregacja)
+- **FBEXT-02**: Trend sentymentu w czasie (wykres: miesiąc vs miesiąc)
+- **FBEXT-03**: Auto-tagowanie eskalacji (flaga + alert)
+- **FBEXT-04**: Raport porównawczy okres vs okres
+- **FBEXT-05**: Powiadomienia email/Telegram o negatywnych postach
+- **FBEXT-06**: Heatmapa aktywności (dzień/godzina)
+- **FBEXT-07**: Automatyczny scraping (cron)
+
+### Email Analyzer rozszerzenia
+- **SYNC-01** through **SYNC-03**: Auto-sync, powiadomienia
+- **ANLYT-01** through **ANLYT-03**: Trendy, porównania, benchmarking
+- **GMAIL-01** through **GMAIL-02**: Gmail support
 
 ### Pozostałe narzędzia hubu
-
-- **TOOL-01**: Narzędzie 2 (do ustalenia z klientem)
-- **TOOL-02**: Narzędzie 3 (do ustalenia z klientem)
-- **TOOL-03**: Narzędzie 4 (do ustalenia z klientem)
-- **TOOL-04**: Narzędzie 5 (do ustalenia z klientem)
-- **TOOL-05**: Narzędzie 6 (do ustalenia z klientem)
-
-### Auto-sync & Notifications
-
-- **SYNC-01**: Automatyczna synchronizacja maili (cron / Supabase CRON)
-- **SYNC-02**: Powiadomienia o nowych mailach
-- **SYNC-03**: Alerty o spóźnionych odpowiedziach
-
-### Advanced Analytics
-
-- **ANLYT-01**: Trendy komunikacyjne w czasie (wykresy)
-- **ANLYT-02**: Porównanie między skrzynkami / osiedlami
-- **ANLYT-03**: Benchmarking — scoring vs średnia branżowa
-
-### Gmail Support
-
-- **GMAIL-01**: Integracja z Gmail API
-- **GMAIL-02**: Obsługa skrzynek Gmail obok Outlook
+- **TOOL-01** through **TOOL-05**: Narzędzia 3-6 (do ustalenia)
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Odpowiadanie na maile z aplikacji | Tylko analiza read-only, nie klient mailowy |
-| Automatyczny sync (cron) | MVP: manualne odświeżanie, auto-sync w v2 |
-| Multi-tenancy (wiele organizacji) | Jedna instancja dla Lulkiewicz PR |
-| Integracja z innymi dostawcami poczty (Gmail, Yahoo) | Na razie tylko Outlook |
-| Mobile app | Web-first, responsive design |
+| Odpowiadanie na posty/komentarze FB | Read-only monitoring, user reaguje manualnie na FB |
+| Publikowanie treści w grupach FB | Narzędzie monitoringowe, nie do zarządzania social media |
+| Przeglądanie WSZYSTKICH postów | User widzi tylko istotne (AI-flagowane) posty |
+| Real-time scraping (cron/webhook) | Manual trigger, admin sprawdza raz dziennie/tygodniowo |
+| Profilowanie autorów (kto pisał ile) | RODO — nie budujemy profili mieszkańców |
+| Własny scraper FB (bez Apify) | Facebook blokuje — Apify utrzymuje scraper |
+| Multi-platform (Twitter, Google Reviews) | Focus na FB, inne platformy = osobne narzędzia |
+| Odpowiadanie na maile (email-analyzer) | Tylko analiza read-only |
+| Multi-tenancy | Jedna instancja dla Lulkiewicz PR |
+| Mobile app | Web-first, responsive |
 | Wielojęzyczność | Tylko PL |
-| Publiczny landing page | Narzędzie wewnętrzne, tylko login |
-| Pobieranie/analiza załączników | Skupiamy się na treści maili, nie na plikach |
-| Real-time monitoring maili | Batch analysis, nie streaming |
 
 ## Traceability
 
+### v1.0 (Phases 1-6) — Complete
+
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| HUB-01 | Phase 1 | Pending |
-| HUB-02 | Phase 1 | Pending |
-| HUB-03 | Phase 1 | Pending |
-| HUB-04 | Phase 1 | Pending |
-| HUB-05 | Phase 1 | Pending |
-| HUB-06 | Phase 1 | Pending |
-| HUB-07 | Phase 1 | Pending |
-| HUB-08 | Phase 1 | Pending |
-| HUB-09 | Phase 1 | Pending |
-| HUB-10 | Phase 1 | Pending |
-| MAIL-01 | Phase 2 | Pending |
-| MAIL-02 | Phase 2 | Pending |
-| MAIL-03 | Phase 2 | Pending |
-| MAIL-04 | Phase 2 | Pending |
-| MAIL-05 | Phase 2 | Pending |
-| FETCH-01 | Phase 2 | Pending |
-| FETCH-02 | Phase 2 | Pending |
-| FETCH-03 | Phase 2 | Pending |
-| FETCH-04 | Phase 2 | Pending |
-| FETCH-05 | Phase 2 | Pending |
-| FETCH-06 | Phase 2 | Pending |
-| FETCH-07 | Phase 2 | Pending |
-| THREAD-01 | Phase 3 | Pending |
-| THREAD-02 | Phase 3 | Pending |
-| THREAD-03 | Phase 3 | Pending |
-| THREAD-04 | Phase 3 | Pending |
-| THREAD-05 | Phase 3 | Pending |
-| AI-01 | Phase 4 | Pending |
-| AI-02 | Phase 4 | Pending |
-| AI-03 | Phase 4 | Pending |
-| AI-04 | Phase 4 | Pending |
-| AI-05 | Phase 4 | Pending |
-| AI-06 | Phase 4 | Pending |
-| AI-07 | Phase 4 | Pending |
-| AI-08 | Phase 4 | Pending |
-| AI-09 | Phase 4 | Pending |
-| AI-10 | Phase 4 | Pending |
-| EVAL-01 | Phase 4 | Pending |
-| EVAL-02 | Phase 4 | Pending |
-| EVAL-03 | Phase 4 | Pending |
-| EVAL-04 | Phase 4 | Pending |
-| PROMPT-01 | Phase 4 | Pending |
-| PROMPT-02 | Phase 4 | Pending |
-| PROMPT-03 | Phase 4 | Pending |
-| PROMPT-04 | Phase 4 | Pending |
-| PROMPT-05 | Phase 4 | Pending |
-| REPORT-01 | Phase 5 | Pending |
-| REPORT-02 | Phase 5 | Pending |
-| REPORT-03 | Phase 5 | Pending |
-| REPORT-04 | Phase 5 | Pending |
-| REPORT-05 | Phase 5 | Pending |
-| REPORT-06 | Phase 5 | Pending |
-| EXPORT-01 | Phase 5 | Pending |
-| EXPORT-02 | Phase 5 | Pending |
-| EXPORT-03 | Phase 5 | Pending |
-| DASH-01 | Phase 6 | Pending |
-| DASH-02 | Phase 6 | Pending |
-| DASH-03 | Phase 6 | Pending |
-| DASH-04 | Phase 6 | Pending |
+| HUB-01..10 | Phase 1 | Complete |
+| MAIL-01..05 | Phase 2 | Complete |
+| FETCH-01..07 | Phase 2 | Complete |
+| THREAD-01..05 | Phase 3 | Complete |
+| AI-01..10 | Phase 4 | Complete |
+| EVAL-01..04 | Phase 4 | Partial (DB only) |
+| PROMPT-01..05 | Phase 4 | Complete |
+| REPORT-01..06 | Phase 5 | Complete |
+| EXPORT-01..02 | Phase 5 | Complete |
+| EXPORT-03 | Phase 5 | Deferred |
+| DASH-01..04 | Phase 6 | Complete |
+
+### v1.1 (Phases 7+) — Pending
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| FBNAV-01..06 | TBD | Pending |
+| FBGRP-01..04 | TBD | Pending |
+| FBSCR-01..07 | TBD | Pending |
+| FBAI-01..06 | TBD | Pending |
+| FBVIEW-01..04 | TBD | Pending |
+| FBREP-01..06 | TBD | Pending |
 
 **Coverage:**
-- v1 requirements: 59 total
-- Mapped to phases: 59
-- Unmapped: 0
+- v1.0 requirements: 59 total (56 complete, 3 deferred/partial)
+- v1.1 requirements: 33 total
+- Mapped to phases: v1.0 all mapped, v1.1 TBD (roadmap creation)
 
 ---
 *Requirements defined: 2026-02-10*
-*Last updated: 2026-02-10 after roadmap creation*
+*Last updated: 2026-02-12 after v1.1 milestone requirements definition*
