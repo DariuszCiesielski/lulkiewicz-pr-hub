@@ -1,142 +1,372 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
-  Users, Plus, Play, Brain, Pencil, Trash2, ExternalLink,
-  CheckCircle2, PauseCircle,
+  Users, Plus, Upload, Loader2,
 } from 'lucide-react';
-import { mockGroups } from '@/lib/mock/fb-mock-data';
-
-function timeAgo(iso: string | null): string {
-  if (!iso) return 'Nigdy';
-  const diff = Date.now() - new Date(iso).getTime();
-  const minutes = Math.floor(diff / 60000);
-  if (minutes < 60) return `${minutes} min temu`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} godz. temu`;
-  return `${Math.floor(hours / 24)} dni temu`;
-}
+import type { FbGroupEnriched } from '@/types/fb';
+import GroupTable from '@/components/fb/GroupTable';
+import GroupFormModal from '@/components/fb/GroupFormModal';
+import type { GroupFormData } from '@/components/fb/GroupFormModal';
+import GroupBulkUpload from '@/components/fb/GroupBulkUpload';
+import BulkActionToolbar from '@/components/fb/BulkActionToolbar';
 
 export default function FbGroupsPage() {
-  const [groups] = useState(mockGroups);
+  const [groups, setGroups] = useState<FbGroupEnriched[]>([]);
+  const [developers, setDevelopers] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editingGroup, setEditingGroup] = useState<FbGroupEnriched | null>(null);
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
+  const [filterDeveloper, setFilterDeveloper] = useState<string>('');
+  const [filterStatus, setFilterStatus] = useState<string>('');
+
+  // --- Fetch ---
+
+  const fetchData = useCallback(async () => {
+    try {
+      setError(null);
+      const [groupsRes, devsRes] = await Promise.all([
+        fetch('/api/fb-groups'),
+        fetch('/api/fb-groups/developers'),
+      ]);
+
+      if (!groupsRes.ok) {
+        const data = await groupsRes.json().catch(() => ({}));
+        throw new Error(data.error || `Blad pobierania grup (${groupsRes.status})`);
+      }
+      if (!devsRes.ok) {
+        const data = await devsRes.json().catch(() => ({}));
+        throw new Error(data.error || `Blad pobierania deweloperow (${devsRes.status})`);
+      }
+
+      const [groupsData, devsData] = await Promise.all([
+        groupsRes.json(),
+        devsRes.json(),
+      ]);
+
+      setGroups(groupsData as FbGroupEnriched[]);
+      setDevelopers(devsData as string[]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Wystapil blad');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const refreshGroups = useCallback(async () => {
+    await fetchData();
+    setSelectedIds(new Set());
+  }, [fetchData]);
+
+  // --- Filtrowanie client-side ---
+
+  const filteredGroups = groups.filter((g) => {
+    if (filterDeveloper && (g.developer || '') !== filterDeveloper) return false;
+    if (filterStatus && g.status !== filterStatus) return false;
+    return true;
+  });
+
+  // --- Selection ---
+
+  const handleToggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleToggleSelectAll = useCallback(() => {
+    setSelectedIds((prev) => {
+      if (prev.size === filteredGroups.length) {
+        return new Set();
+      }
+      return new Set(filteredGroups.map((g) => g.id));
+    });
+  }, [filteredGroups]);
+
+  // --- CRUD Handlers ---
+
+  const handleAddGroup = async (data: GroupFormData) => {
+    const res = await fetch('/api/fb-groups', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: data.name,
+        facebook_url: data.facebook_url,
+        developer: data.developer || undefined,
+        ai_instruction: data.ai_instruction || undefined,
+      }),
+    });
+
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      throw new Error(json.error || 'Blad dodawania grupy');
+    }
+
+    setShowAddModal(false);
+    await refreshGroups();
+  };
+
+  const handleEditGroup = async (data: GroupFormData) => {
+    if (!editingGroup) return;
+
+    const res = await fetch(`/api/fb-groups/${editingGroup.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: data.name,
+        facebook_url: data.facebook_url,
+        developer: data.developer || null,
+        ai_instruction: data.ai_instruction || null,
+      }),
+    });
+
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      throw new Error(json.error || 'Blad edycji grupy');
+    }
+
+    setEditingGroup(null);
+    await refreshGroups();
+  };
+
+  const handleDeleteGroup = async (group: FbGroupEnriched) => {
+    if (!confirm(`Czy na pewno chcesz usunac grupe "${group.name}"? Ta operacja jest odwracalna (soft delete).`)) {
+      return;
+    }
+
+    const res = await fetch(`/api/fb-groups/${group.id}`, {
+      method: 'DELETE',
+    });
+
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      setError(json.error || 'Blad usuwania grupy');
+      return;
+    }
+
+    await refreshGroups();
+  };
+
+  const handleToggleStatus = async (group: FbGroupEnriched) => {
+    const newStatus = group.status === 'active' ? 'paused' : 'active';
+
+    const res = await fetch(`/api/fb-groups/${group.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus }),
+    });
+
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      setError(json.error || 'Blad zmiany statusu');
+      return;
+    }
+
+    await refreshGroups();
+  };
+
+  // --- Bulk Actions ---
+
+  const handleBulkAction = async (action: 'set_status' | 'set_developer' | 'soft_delete', value?: string) => {
+    const ids = Array.from(selectedIds);
+
+    const res = await fetch('/api/fb-groups/bulk', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids, action, value }),
+    });
+
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      setError(json.error || 'Blad operacji masowej');
+      return;
+    }
+
+    await refreshGroups();
+  };
+
+  // --- Render ---
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-6xl flex items-center justify-center py-20">
+        <Loader2
+          className="h-8 w-8 animate-spin"
+          style={{ color: 'var(--text-muted)' }}
+        />
+      </div>
+    );
+  }
 
   return (
-    <div className="mx-auto max-w-4xl">
-      <div className="flex items-center justify-between mb-6">
+    <div className="mx-auto max-w-6xl">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
           <Users className="h-6 w-6" style={{ color: 'var(--text-muted)' }} />
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+          <h1
+            className="text-2xl font-bold"
+            style={{ color: 'var(--text-primary)' }}
+          >
             Grupy FB
           </h1>
+          <span
+            className="rounded-full px-2 py-0.5 text-xs font-medium"
+            style={{
+              backgroundColor: 'var(--accent-light)',
+              color: 'var(--accent-primary)',
+            }}
+          >
+            {groups.length}
+          </span>
         </div>
-        <button
-          className="flex items-center gap-1 rounded-md px-3 py-2 text-sm text-white transition-colors hover:opacity-90"
-          style={{ backgroundColor: 'var(--accent-primary)' }}
-        >
-          <Plus className="h-4 w-4" />
-          Dodaj grupę
-        </button>
-      </div>
 
-      <div className="space-y-3">
-        {groups.map((group) => (
-          <div
-            key={group.id}
-            className="rounded-lg border p-4"
+        <div className="flex items-center gap-2">
+          {/* Filtr deweloper */}
+          <select
+            value={filterDeveloper}
+            onChange={(e) => {
+              setFilterDeveloper(e.target.value);
+              setSelectedIds(new Set());
+            }}
+            className="rounded-md border px-2 py-1.5 text-sm outline-none"
             style={{
               borderColor: 'var(--border-primary)',
               backgroundColor: 'var(--bg-secondary)',
+              color: 'var(--text-primary)',
             }}
           >
-            {/* Header */}
-            <div className="flex items-start justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                  {group.name}
-                </p>
-                <span
-                  className="rounded-full px-2 py-0.5 text-xs font-medium inline-flex items-center gap-1"
-                  style={{
-                    backgroundColor: group.status === 'active'
-                      ? 'rgba(34, 197, 94, 0.15)'
-                      : 'rgba(234, 179, 8, 0.15)',
-                    color: group.status === 'active' ? '#22c55e' : '#eab308',
-                  }}
-                >
-                  {group.status === 'active' ? (
-                    <><CheckCircle2 className="h-3 w-3" /> Aktywna</>
-                  ) : (
-                    <><PauseCircle className="h-3 w-3" /> Wstrzymana</>
-                  )}
-                </span>
-              </div>
-              <a
-                href={group.facebook_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 text-xs hover:opacity-80"
-                style={{ color: 'var(--accent-primary)' }}
-              >
-                <ExternalLink className="h-3 w-3" />
-                Facebook
-              </a>
-            </div>
+            <option value="">Wszyscy deweloperzy</option>
+            {developers.map((dev) => (
+              <option key={dev} value={dev}>{dev}</option>
+            ))}
+          </select>
 
-            {/* Meta */}
-            <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>
-              Deweloper: <span style={{ color: 'var(--text-secondary)' }}>{group.developer}</span>
-              {' · '}
-              {group.total_posts} postów ({group.relevant_posts} istotnych)
-              {' · '}
-              Ostatni scrape: {timeAgo(group.last_scrape_at)}
-            </p>
+          {/* Filtr status */}
+          <select
+            value={filterStatus}
+            onChange={(e) => {
+              setFilterStatus(e.target.value);
+              setSelectedIds(new Set());
+            }}
+            className="rounded-md border px-2 py-1.5 text-sm outline-none"
+            style={{
+              borderColor: 'var(--border-primary)',
+              backgroundColor: 'var(--bg-secondary)',
+              color: 'var(--text-primary)',
+            }}
+          >
+            <option value="">Wszystkie statusy</option>
+            <option value="active">Aktywne</option>
+            <option value="paused">Wstrzymane</option>
+          </select>
 
-            {/* Actions */}
-            <div className="flex gap-2">
-              <button
-                className="flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs transition-colors hover:opacity-80"
-                style={{
-                  borderColor: 'var(--border-primary)',
-                  color: 'var(--text-secondary)',
-                }}
-              >
-                <Play className="h-3 w-3" />
-                Scrapuj
-              </button>
-              <button
-                className="flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs transition-colors hover:opacity-80"
-                style={{
-                  borderColor: 'var(--border-primary)',
-                  color: 'var(--text-secondary)',
-                }}
-              >
-                <Brain className="h-3 w-3" />
-                Analizuj
-              </button>
-              <button
-                className="flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs transition-colors hover:opacity-80"
-                style={{
-                  borderColor: 'var(--border-primary)',
-                  color: 'var(--text-secondary)',
-                }}
-              >
-                <Pencil className="h-3 w-3" />
-                Edytuj
-              </button>
-              <button
-                className="flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs transition-colors hover:opacity-80"
-                style={{
-                  borderColor: 'rgba(239, 68, 68, 0.3)',
-                  color: '#ef4444',
-                }}
-              >
-                <Trash2 className="h-3 w-3" />
-                Usuń
-              </button>
-            </div>
-          </div>
-        ))}
+          {/* Przycisk Upload */}
+          <button
+            onClick={() => setShowBulkUpload(true)}
+            className="flex items-center gap-1 rounded-md border px-3 py-1.5 text-sm transition-colors hover:opacity-80"
+            style={{
+              borderColor: 'var(--border-primary)',
+              color: 'var(--text-secondary)',
+            }}
+          >
+            <Upload className="h-4 w-4" />
+            <span className="hidden sm:inline">Upload URL-ow</span>
+          </button>
+
+          {/* Przycisk Dodaj */}
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-1 rounded-md px-3 py-1.5 text-sm text-white transition-colors hover:opacity-90"
+            style={{ backgroundColor: 'var(--accent-primary)' }}
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">Dodaj grupe</span>
+          </button>
+        </div>
       </div>
+
+      {/* Error */}
+      {error && (
+        <div
+          className="rounded-md border p-3 text-sm mb-4"
+          style={{
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            borderColor: 'rgba(239, 68, 68, 0.3)',
+            color: '#ef4444',
+          }}
+        >
+          {error}
+          <button
+            onClick={() => setError(null)}
+            className="ml-2 underline hover:no-underline"
+          >
+            Zamknij
+          </button>
+        </div>
+      )}
+
+      {/* Bulk Action Toolbar */}
+      {selectedIds.size > 0 && (
+        <BulkActionToolbar
+          selectedCount={selectedIds.size}
+          developers={developers}
+          onAction={handleBulkAction}
+          onClearSelection={() => setSelectedIds(new Set())}
+        />
+      )}
+
+      {/* Group Table */}
+      <GroupTable
+        groups={filteredGroups}
+        selectedIds={selectedIds}
+        onToggleSelect={handleToggleSelect}
+        onToggleSelectAll={handleToggleSelectAll}
+        onEdit={(group) => setEditingGroup(group)}
+        onDelete={handleDeleteGroup}
+        onToggleStatus={handleToggleStatus}
+      />
+
+      {/* Add Modal */}
+      {showAddModal && (
+        <GroupFormModal
+          developers={developers}
+          onSubmit={handleAddGroup}
+          onClose={() => setShowAddModal(false)}
+        />
+      )}
+
+      {/* Edit Modal */}
+      {editingGroup && (
+        <GroupFormModal
+          group={editingGroup}
+          developers={developers}
+          onSubmit={handleEditGroup}
+          onClose={() => setEditingGroup(null)}
+        />
+      )}
+
+      {/* Bulk Upload Modal */}
+      {showBulkUpload && (
+        <GroupBulkUpload
+          developers={developers}
+          onComplete={refreshGroups}
+          onClose={() => setShowBulkUpload(false)}
+        />
+      )}
     </div>
   );
 }
