@@ -45,12 +45,21 @@ export async function POST(request: Request) {
 
   let userId: string | null = null;
 
-  // Check if auth user exists
+  // Check if auth user already exists (e.g. previously deleted from app_allowed_users but not from auth)
   const { data: authUsers } = await adminClient.auth.admin.listUsers();
   const existingAuth = authUsers?.users?.find((u) => u.email === email);
 
   if (existingAuth) {
     userId = existingAuth.id;
+    // Re-invite if method is invite, or update password if method is password
+    if (method === 'invite') {
+      await adminClient.auth.admin.inviteUserByEmail(email);
+    } else if (method === 'password' && password) {
+      await adminClient.auth.admin.updateUserById(existingAuth.id, {
+        password,
+        email_confirm: true,
+      });
+    }
   } else if (method === 'password' && password) {
     const { data: newUser, error: authError } = await adminClient.auth.admin.createUser({
       email,

@@ -77,6 +77,13 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: 'Brak ID' }, { status: 400 });
   }
 
+  // Get user_id before deleting from app_allowed_users
+  const { data: userRecord } = await adminClient
+    .from('app_allowed_users')
+    .select('user_id')
+    .eq('id', id)
+    .single();
+
   const { error } = await adminClient
     .from('app_allowed_users')
     .delete()
@@ -84,6 +91,11 @@ export async function DELETE(request: Request) {
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  // Also delete from auth.users to allow clean re-invite
+  if (userRecord?.user_id) {
+    await adminClient.auth.admin.deleteUser(userRecord.user_id);
   }
 
   return NextResponse.json({ success: true });

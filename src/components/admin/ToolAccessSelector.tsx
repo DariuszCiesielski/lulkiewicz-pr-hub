@@ -4,7 +4,7 @@ import type { ToolId } from '@/types';
 
 const TOOL_NAMES: Record<ToolId, string> = {
   'email-analyzer': 'Analizator Email',
-  'tool-2': 'Narzędzie 2',
+  'fb-analyzer': 'Analizator Grup FB',
   'tool-3': 'Narzędzie 3',
   'tool-4': 'Narzędzie 4',
   'tool-5': 'Narzędzie 5',
@@ -33,14 +33,16 @@ export default function ToolAccessSelector({ selected, onChange }: ToolAccessSel
         <button
           type="button"
           onClick={() => onChange([...ALL_TOOLS])}
-          className="text-blue-600 hover:underline"
+          className="hover:underline"
+          style={{ color: 'var(--accent-primary)' }}
         >
           Zaznacz wszystkie
         </button>
         <button
           type="button"
           onClick={() => onChange([])}
-          className="text-blue-600 hover:underline"
+          className="hover:underline"
+          style={{ color: 'var(--accent-primary)' }}
         >
           Odznacz wszystkie
         </button>
@@ -52,9 +54,10 @@ export default function ToolAccessSelector({ selected, onChange }: ToolAccessSel
               type="checkbox"
               checked={selected.includes(toolId)}
               onChange={() => toggle(toolId)}
-              className="rounded border-slate-300"
+              className="rounded"
+              style={{ borderColor: 'var(--border-primary)' }}
             />
-            <span className="text-sm text-slate-700">{TOOL_NAMES[toolId]}</span>
+            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{TOOL_NAMES[toolId]}</span>
           </label>
         ))}
       </div>

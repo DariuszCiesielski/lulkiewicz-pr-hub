@@ -99,20 +99,22 @@ export default function AdminPage() {
     <div className="mx-auto max-w-4xl">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Users className="h-6 w-6 text-slate-400" />
-          <h1 className="text-2xl font-bold text-white">Zarządzanie użytkownikami</h1>
+          <Users className="h-6 w-6" style={{ color: 'var(--text-muted)' }} />
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Zarządzanie użytkownikami</h1>
         </div>
         <div className="flex gap-2">
           <button
             onClick={fetchUsers}
-            className="flex items-center gap-1 rounded-md border border-slate-700 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800"
+            className="flex items-center gap-1 rounded-md border px-3 py-2 text-sm"
+            style={{ borderColor: 'var(--border-primary)', color: 'var(--text-secondary)' }}
           >
             <RefreshCw className="h-4 w-4" />
             Odśwież
           </button>
           <button
             onClick={() => { setEditingUser(null); setShowForm(true); }}
-            className="flex items-center gap-1 rounded-md bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-500"
+            className="flex items-center gap-1 rounded-md px-3 py-2 text-sm text-white"
+            style={{ backgroundColor: 'var(--accent-primary)' }}
           >
             <Plus className="h-4 w-4" />
             Dodaj użytkownika
@@ -121,13 +123,13 @@ export default function AdminPage() {
       </div>
 
       {error && (
-        <div className="mb-4 rounded-md bg-red-900/30 border border-red-800 p-3 text-sm text-red-300">
+        <div className="mb-4 rounded-md border p-3 text-sm" style={{ backgroundColor: 'var(--error-light)', borderColor: 'var(--error)', color: 'var(--error)' }}>
           {error}
         </div>
       )}
 
       {isLoading ? (
-        <p className="text-center text-slate-400 py-8">Ładowanie...</p>
+        <p className="text-center py-8" style={{ color: 'var(--text-muted)' }}>Ładowanie...</p>
       ) : (
         <UserList
           users={users}

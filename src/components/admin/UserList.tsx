@@ -11,7 +11,7 @@ interface UserListProps {
 export default function UserList({ users, onEdit, onDelete }: UserListProps) {
   if (users.length === 0) {
     return (
-      <p className="text-center text-slate-400 py-8">Brak użytkowników</p>
+      <p className="text-center py-8" style={{ color: 'var(--text-muted)' }}>Brak użytkowników</p>
     );
   }
 
@@ -19,7 +19,7 @@ export default function UserList({ users, onEdit, onDelete }: UserListProps) {
     <div className="overflow-x-auto">
       <table className="w-full text-left text-sm">
         <thead>
-          <tr className="border-b border-slate-700 text-slate-400">
+          <tr style={{ borderBottom: '1px solid var(--border-primary)', color: 'var(--text-muted)' }}>
             <th className="py-3 px-4">Użytkownik</th>
             <th className="py-3 px-4">Rola</th>
             <th className="py-3 px-4">Narzędzia</th>
@@ -28,25 +28,25 @@ export default function UserList({ users, onEdit, onDelete }: UserListProps) {
         </thead>
         <tbody>
           {users.map((user) => (
-            <tr key={user.id} className="border-b border-slate-800 hover:bg-slate-800/50">
+            <tr key={user.id} style={{ borderBottom: '1px solid var(--border-primary)' }}>
               <td className="py-3 px-4">
-                <div className="text-white">{user.display_name || user.email}</div>
+                <div style={{ color: 'var(--text-primary)' }}>{user.display_name || user.email}</div>
                 {user.display_name && (
-                  <div className="text-xs text-slate-400">{user.email}</div>
+                  <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{user.email}</div>
                 )}
               </td>
               <td className="py-3 px-4">
                 <span
-                  className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
-                    user.role === 'admin'
-                      ? 'bg-amber-900/50 text-amber-300'
-                      : 'bg-blue-900/50 text-blue-300'
-                  }`}
+                  className="inline-block rounded-full px-2 py-0.5 text-xs font-medium"
+                  style={{
+                    backgroundColor: user.role === 'admin' ? 'var(--warning-light)' : 'var(--info-light)',
+                    color: user.role === 'admin' ? 'var(--warning)' : 'var(--info)',
+                  }}
                 >
                   {user.role === 'admin' ? 'Admin' : 'Użytkownik'}
                 </span>
               </td>
-              <td className="py-3 px-4 text-slate-400">
+              <td className="py-3 px-4" style={{ color: 'var(--text-muted)' }}>
                 {user.role === 'admin'
                   ? 'Pełny dostęp'
                   : user.allowed_tools.length === 0
@@ -57,13 +57,15 @@ export default function UserList({ users, onEdit, onDelete }: UserListProps) {
                 <div className="flex gap-2">
                   <button
                     onClick={() => onEdit(user)}
-                    className="text-xs text-blue-400 hover:text-blue-300"
+                    className="text-xs"
+                    style={{ color: 'var(--accent-primary)' }}
                   >
                     Edytuj
                   </button>
                   <button
                     onClick={() => onDelete(user)}
-                    className="text-xs text-red-400 hover:text-red-300"
+                    className="text-xs"
+                    style={{ color: 'var(--error)' }}
                   >
                     Usuń
                   </button>
