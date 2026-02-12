@@ -26,7 +26,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 ### v1.1 FB Analyzer (Phases 7-12)
 
 - [ ] **Phase 7: FB Foundation** - Migracja DB (6 tabel + RLS), typy TS, nawigacja sidebar, layout + shell pages, admin utilities extraction — **3 plans, 2 waves**
-- [ ] **Phase 8: Group Management** - CRUD grup FB, status active/paused, konfiguracja Apify (token szyfrowany + FB cookies)
+- [ ] **Phase 8: Group Management** - CRUD grup FB, status active/paused, bulk ops, konfiguracja Apify (token szyfrowany + FB cookies) — **4 plans, 3 waves**
 - [ ] **Phase 9: Scraping Engine** - Integracja Apify Actor API, dwufazowa architektura polling, ochrona konta FB, rate limiting, error handling
 - [ ] **Phase 10: AI Sentiment Analysis** - Kwalifikacja postow (sentyment + relevance + kategorie), domain-specific prompty PL, batch processing, edytowalne prompty
 - [ ] **Phase 11: Post Browsing & Dashboard** - Widok TYLKO istotnych postow z filtrami i linkami do FB, dashboard KPI, alerty negatywne, quick actions
@@ -161,7 +161,13 @@ Plans:
   3. Admin moze przelaczac status grupy (active/paused) — wstrzymane grupy sa wizualnie oznaczone i wykluczone z scrapowania
   4. Admin moze skonfigurowac Apify API token i Facebook session cookies — dane sa szyfrowane (AES-256-GCM) i przechowywane bezpiecznie w bazie
 
-Plans: TBD
+**Plans:** 4 plans
+
+Plans:
+- [ ] 08-01-PLAN.md — Migracja SQL (ALTER TABLE fb_groups + CREATE TABLE fb_settings) + aktualizacja typow TS
+- [ ] 08-02-PLAN.md — API routes: fb-groups CRUD/bulk/developers + fb-settings (encrypted credentials)
+- [ ] 08-03-PLAN.md — UI strony grup: tabela z sekcjami per deweloper, modal CRUD, bulk upload, bulk actions
+- [ ] 08-04-PLAN.md — UI strony ustawien: Apify token, FB cookies, Actor ID (super admin), instrukcje AI
 
 ### Phase 9: Scraping Engine
 **Goal**: Admin moze scrapowac posty z grup FB przez Apify Actor z widocznym progressem, ochrona konta i obsluga bledow
@@ -235,7 +241,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 7. FB Foundation | 3/3 | **COMPLETE** | 2026-02-12 |
-| 8. Group Management | 0/? | Pending | — |
+| 8. Group Management | 0/4 | Planned | — |
 | 9. Scraping Engine | 0/? | Pending | — |
 | 10. AI Sentiment Analysis | 0/? | Pending | — |
 | 11. Post Browsing & Dashboard | 0/? | Pending | — |
