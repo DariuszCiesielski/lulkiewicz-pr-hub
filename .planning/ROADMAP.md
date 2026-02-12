@@ -147,9 +147,9 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 07-01-PLAN.md — Migracja SQL (6 tabel FB + RLS + indeksy) + typy TypeScript domeny FB
-- [ ] 07-02-PLAN.md — Aktywacja fb-analyzer na hub + sidebar nawigacja + layout + 6 stron shell
-- [ ] 07-03-PLAN.md — Ekstrakcja verifyAdmin()/getAdminClient() do shared module + aktualizacja 21 API routes
+- [x] 07-01-PLAN.md — Migracja SQL (6 tabel FB + RLS + indeksy) + typy TypeScript domeny FB
+- [x] 07-02-PLAN.md — Aktywacja fb-analyzer na hub + sidebar nawigacja + layout + 6 stron shell
+- [x] 07-03-PLAN.md — Ekstrakcja verifyAdmin()/getAdminClient() do shared module + aktualizacja 21 API routes
 
 ### Phase 8: Group Management
 **Goal**: Admin moze zarzadzac grupami FB (dodawac, edytowac, usuwac, wstrzymywac monitoring) i skonfigurowac polaczenie z Apify
@@ -234,7 +234,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 7. FB Foundation | 0/3 | **Planned** (3 plans, 2 waves) | — |
+| 7. FB Foundation | 3/3 | **COMPLETE** | 2026-02-12 |
 | 8. Group Management | 0/? | Pending | — |
 | 9. Scraping Engine | 0/? | Pending | — |
 | 10. AI Sentiment Analysis | 0/? | Pending | — |

@@ -39,12 +39,12 @@ Requirements for milestone v1.1. Each maps to roadmap phases 7+.
 
 ### Fundament & Nawigacja
 
-- [ ] **FBNAV-01**: ToolId `fb-analyzer` aktywny na hub grid (zastępuje Coming Soon)
-- [ ] **FBNAV-02**: Sidebar nawigacja FB Analyzer z children (Dashboard, Grupy, Posty, Analiza, Raporty, Ustawienia)
-- [ ] **FBNAV-03**: Layout FB Analyzer + strony shell
-- [ ] **FBNAV-04**: Migracja Supabase: tabele fb_groups, fb_posts, fb_comments, fb_scrape_jobs, fb_analysis_jobs, fb_reports + RLS admin-only + indeksy
-- [ ] **FBNAV-05**: Typy TypeScript domeny FB (FbGroup, FbPost, FbComment, FbScrapeJob, FbAnalysisJob, FbReport)
-- [ ] **FBNAV-06**: Ekstrakcja verifyAdmin()/getAdminClient() do shared module (src/lib/api/admin.ts)
+- [x] **FBNAV-01**: ToolId `fb-analyzer` aktywny na hub grid (zastępuje Coming Soon)
+- [x] **FBNAV-02**: Sidebar nawigacja FB Analyzer z children (Dashboard, Grupy, Posty, Analiza, Raporty, Ustawienia)
+- [x] **FBNAV-03**: Layout FB Analyzer + strony shell
+- [x] **FBNAV-04**: Migracja Supabase: tabele fb_groups, fb_posts, fb_comments, fb_scrape_jobs, fb_analysis_jobs, fb_reports + RLS admin-only + indeksy
+- [x] **FBNAV-05**: Typy TypeScript domeny FB (FbGroup, FbPost, FbComment, FbScrapeJob, FbAnalysisJob, FbReport)
+- [x] **FBNAV-06**: Ekstrakcja verifyAdmin()/getAdminClient() do shared module (src/lib/api/admin.ts)
 
 ### Zarządzanie Grupami FB
 
@@ -147,7 +147,7 @@ Requirements for milestone v1.1. Each maps to roadmap phases 7+.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FBNAV-01..06 | Phase 7 (FB Foundation) | Pending |
+| FBNAV-01..06 | Phase 7 (FB Foundation) | **Complete** |
 | FBGRP-01..04 | Phase 8 (Group Management) | Pending |
 | FBSCR-01..07 | Phase 9 (Scraping Engine) | Pending |
 | FBAI-01..06 | Phase 10 (AI Sentiment Analysis) | Pending |
