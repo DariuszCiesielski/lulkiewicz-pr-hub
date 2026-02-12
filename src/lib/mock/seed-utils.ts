@@ -38,5 +38,5 @@ export function mockUuid(seed: string): string {
     hash = hash & hash;
   }
   const hex = Math.abs(hash).toString(16).padStart(8, '0');
-  return `${hex.slice(0, 8)}-mock-4000-mock-${hex.padEnd(12, '0').slice(0, 12)}`;
+  return `${hex.slice(0, 8)}-a0c4-4000-b0c4-${hex.padEnd(12, '0').slice(0, 12)}`;
 }
