@@ -176,6 +176,12 @@ export default function AnalyzePage() {
             </span>
           </div>
 
+          {(analysisJob.status === 'starting' || analysisJob.status === 'processing') && (
+            <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>
+              Analiza każdego wątku wymaga wielu zapytań do AI — cały proces może potrwać kilka minut. Nie zamykaj tej strony.
+            </p>
+          )}
+
           {/* Progress bar */}
           <div
             className="h-2 rounded-full overflow-hidden"
