@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, Mail, Shield, Settings, X, Inbox, MessageSquare, Brain, FileText, Cog, ClipboardList, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, Mail, Shield, Settings, X, Inbox, MessageSquare, Brain, FileText, Cog, ClipboardList, BarChart3, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import type { LucideIcon } from 'lucide-react';
 
@@ -43,6 +43,20 @@ const NAV_ITEMS: NavItem[] = [
       { href: '/email-analyzer/reports', label: 'Raporty', icon: ClipboardList, adminOnly: true },
       { href: '/email-analyzer/prompts', label: 'Prompty', icon: FileText, adminOnly: true },
       { href: '/email-analyzer/settings', label: 'Ustawienia AI', icon: Cog, adminOnly: true },
+    ],
+  },
+  {
+    href: '/fb-analyzer',
+    label: 'Analizator Grup FB',
+    icon: MessageSquare,
+    badge: 'Aktywny',
+    children: [
+      { href: '/fb-analyzer/dashboard', label: 'Dashboard', icon: BarChart3, adminOnly: true },
+      { href: '/fb-analyzer/groups', label: 'Grupy', icon: Users, adminOnly: true },
+      { href: '/fb-analyzer/posts', label: 'Posty', icon: MessageSquare, adminOnly: true },
+      { href: '/fb-analyzer/analyze', label: 'Analiza', icon: Brain, adminOnly: true },
+      { href: '/fb-analyzer/reports', label: 'Raporty', icon: ClipboardList, adminOnly: true },
+      { href: '/fb-analyzer/settings', label: 'Ustawienia', icon: Cog, adminOnly: true },
     ],
   },
   { href: '/admin', label: 'Panel admina', icon: Shield, adminOnly: true },
