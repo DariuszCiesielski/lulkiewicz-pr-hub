@@ -34,7 +34,7 @@ export async function POST(request: Request) {
 
   // Build redirect URL for invite emails
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || request.headers.get('origin') || '';
-  const inviteRedirectTo = `${siteUrl}/auth/set-password`;
+  const inviteRedirectTo = `${siteUrl}/auth/callback?type=invite`;
 
   // Check if user already exists in app_allowed_users
   const { data: existing } = await adminClient
