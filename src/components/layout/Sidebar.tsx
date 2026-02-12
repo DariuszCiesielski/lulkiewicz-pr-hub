@@ -36,7 +36,7 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Analizator Email',
     icon: Mail,
     color: '#3b82f6',
-    badge: 'Aktywny',
+    badge: 'Demo',
     children: [
       { href: '/email-analyzer/dashboard', label: 'Dashboard', icon: BarChart3, adminOnly: true },
       { href: '/email-analyzer/mailboxes', label: 'Skrzynki', icon: Inbox, adminOnly: true },
@@ -52,7 +52,7 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Analizator Grup FB',
     icon: MessageSquare,
     color: '#8b5cf6',
-    badge: 'Aktywny',
+    badge: 'Demo',
     children: [
       { href: '/fb-analyzer/dashboard', label: 'Dashboard', icon: BarChart3, adminOnly: true },
       { href: '/fb-analyzer/groups', label: 'Grupy', icon: Users, adminOnly: true },
@@ -150,8 +150,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   <span
                     className="rounded-full px-2 py-0.5 text-xs font-medium"
                     style={{
-                      backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : 'var(--accent-light)',
-                      color: isActive ? '#ffffff' : 'var(--accent-primary)',
+                      backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : 'rgba(234, 179, 8, 0.2)',
+                      color: isActive ? '#ffffff' : '#eab308',
                     }}
                   >
                     {item.badge}
