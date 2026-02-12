@@ -54,26 +54,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user?.email) {
-        await fetchPermissions(session.user.email);
-      } else {
-        setUserRole(null);
-        setAllowedTools([]);
+    } = supabase.auth.onAuthStateChange(async (_event: string, session: Session | null) => {
+      try {
+        setSession(session);
+        setUser(session?.user ?? null);
+        if (session?.user?.email) {
+          await fetchPermissions(session.user.email);
+        } else {
+          setUserRole(null);
+          setAllowedTools([]);
+        }
+      } catch (err) {
+        console.error('Auth state change error:', err);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     });
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user?.email) {
-        await fetchPermissions(session.user.email);
-      }
-      setIsLoading(false);
-    });
+    supabase.auth.getSession()
+      .then(async ({ data: { session } }: { data: { session: Session | null } }) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        if (session?.user?.email) {
+          await fetchPermissions(session.user.email);
+        }
+      })
+      .catch((err: unknown) => {
+        console.error('getSession error:', err);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
 
     return () => subscription.unsubscribe();
   }, []);

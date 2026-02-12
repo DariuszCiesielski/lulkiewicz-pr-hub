@@ -107,8 +107,8 @@ organizations, organization_members, **mailboxes** (extended: +8 cols, sync_stat
 ## Session Continuity
 
 Last session: 2026-02-12
-Stopped at: v1.0 phases 1-6 complete (known gaps), v1.1 research pending
-Resume file: None
+Stopped at: Fix auth loading bug (Web Locks), then push + deploy
+Resume file: docs/HANDOFF-2026-02-12.md
 
 ### How to resume (v1.1 FB Analyzer):
 
