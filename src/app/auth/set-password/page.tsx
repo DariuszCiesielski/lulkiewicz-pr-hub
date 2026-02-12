@@ -54,7 +54,7 @@ export default function SetPasswordPage() {
 
     // Also listen for auth state changes as safety net
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (_event: string, session: { user?: { email?: string } } | null) => {
         if (session?.user?.email) {
           setUserEmail(session.user.email);
           setIsInitializing(false);
