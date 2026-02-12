@@ -9,20 +9,62 @@ export default function SetPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push('/login');
-        return;
+    const handleAuth = async () => {
+      try {
+        // 1. Handle PKCE code in URL search params
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get('code');
+        if (code) {
+          await supabase.auth.exchangeCodeForSession(code);
+          window.history.replaceState({}, '', '/auth/set-password');
+        }
+
+        // 2. Handle hash fragment tokens (implicit flow from invites)
+        const hash = window.location.hash;
+        if (hash) {
+          const hashParams = new URLSearchParams(hash.substring(1));
+          const accessToken = hashParams.get('access_token');
+          const refreshToken = hashParams.get('refresh_token');
+          if (accessToken && refreshToken) {
+            await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+            window.history.replaceState({}, '', '/auth/set-password');
+          }
+        }
+
+        // 3. Get current user (now should be the invited user)
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          router.push('/login');
+          return;
+        }
+        setUserEmail(user.email ?? null);
+      } finally {
+        setIsInitializing(false);
       }
-      setUserEmail(user.email ?? null);
     };
-    checkUser();
+
+    // Also listen for auth state changes as safety net
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (session?.user?.email) {
+          setUserEmail(session.user.email);
+          setIsInitializing(false);
+        }
+      }
+    );
+
+    handleAuth();
+
+    return () => subscription.unsubscribe();
   }, [supabase, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,6 +93,17 @@ export default function SetPasswordPage() {
 
     router.push('/dashboard');
   };
+
+  if (isInitializing) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-900">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-slate-400 border-t-white" />
+          <p className="mt-4 text-slate-400">Weryfikowanie zaproszenia...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-900">
