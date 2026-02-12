@@ -44,7 +44,7 @@ export default function AISettingsPage() {
     provider: 'openai',
     model: 'gpt-5.2',
     temperature: 0.3,
-    max_tokens: 4096,
+    max_tokens: 16384,
     api_key: '',
     has_api_key: false,
   });
@@ -258,8 +258,8 @@ export default function AISettingsPage() {
               backgroundColor: 'var(--bg-primary)',
               color: 'var(--text-primary)',
             }}
-            min={256}
-            max={16384}
+            min={1024}
+            max={32768}
           />
         </div>
 

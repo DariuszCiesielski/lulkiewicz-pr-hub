@@ -80,9 +80,9 @@ export async function POST(request: NextRequest) {
     .insert({
       provider: body.provider || 'openai',
       api_key_encrypted: encryptedKey,
-      model: body.model || 'gpt-4o-mini',
+      model: body.model || 'gpt-5.2',
       temperature: body.temperature ?? 0.3,
-      max_tokens: body.max_tokens ?? 4096,
+      max_tokens: body.max_tokens ?? 16384,
       is_active: true,
     })
     .select('id, provider, model, temperature, max_tokens, is_active')

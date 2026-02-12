@@ -50,7 +50,7 @@ export async function loadAIConfig(supabase: SupabaseClient): Promise<AIConfig> 
     apiKey,
     model: data.model,
     temperature: data.temperature ?? 0.3,
-    maxTokens: data.max_tokens ?? 4096,
+    maxTokens: data.max_tokens ?? 16384,
   };
 }
 
