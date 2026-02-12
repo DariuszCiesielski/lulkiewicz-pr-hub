@@ -59,8 +59,8 @@ export default function ToolCard({ tool, canAccess }: ToolCardProps) {
           borderColor: 'var(--border-primary)',
         }}
       >
-        <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/40">
-          <div className="flex items-center gap-2" style={{ color: 'var(--text-muted)' }}>
+        <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/50">
+          <div className="flex items-center gap-2 text-white">
             <Lock className="h-5 w-5" />
             <span className="text-sm font-medium">Brak dostępu</span>
           </div>

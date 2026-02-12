@@ -27,7 +27,7 @@ export default function UserMenu() {
 
   const handleSignOut = async () => {
     await signOut();
-    router.push('/login');
+    window.location.href = '/login';
   };
 
   const renderColorPreview = (theme: typeof currentTheme) => (
