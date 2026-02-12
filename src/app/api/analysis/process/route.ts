@@ -7,7 +7,7 @@ import { DEFAULT_PROMPTS } from '@/lib/ai/default-prompts';
 
 export const maxDuration = 60;
 
-const BATCH_SIZE = 3; // threads per batch
+const BATCH_SIZE = 1; // one thread per request — sections processed in parallel
 
 function getAdminClient() {
   return createClient(
@@ -173,44 +173,45 @@ export async function POST(request: NextRequest) {
         })
         .join('\n\n');
 
-      // Analyze through each section
-      for (const defaultPrompt of DEFAULT_PROMPTS) {
-        const prompt = globalOverrides.get(defaultPrompt.section_key) || defaultPrompt;
-        const userPrompt = (prompt.user_prompt_template || defaultPrompt.user_prompt_template)
-          .replace('{{threads}}', threadText);
+      // Analyze all sections in parallel for faster processing
+      await Promise.allSettled(
+        DEFAULT_PROMPTS.map(async (defaultPrompt) => {
+          const prompt = globalOverrides.get(defaultPrompt.section_key) || defaultPrompt;
+          const userPrompt = (prompt.user_prompt_template || defaultPrompt.user_prompt_template)
+            .replace('{{threads}}', threadText);
 
-        try {
-          const response = await callAI(
-            aiConfig,
-            prompt.system_prompt || defaultPrompt.system_prompt,
-            userPrompt
-          );
+          try {
+            const response = await callAI(
+              aiConfig,
+              prompt.system_prompt || defaultPrompt.system_prompt,
+              userPrompt
+            );
 
-          await adminClient.from('analysis_results').insert({
-            analysis_job_id: job.id,
-            thread_id: thread.id,
-            section_key: defaultPrompt.section_key,
-            result_data: {
-              content: response.content,
-              thread_subject: thread.subject_normalized,
-            },
-            tokens_used: response.tokensUsed,
-            processing_time_ms: response.processingTimeMs,
-          });
-        } catch (aiError) {
-          // Log but don't fail the whole batch
-          console.error(`AI error for thread ${thread.id}, section ${defaultPrompt.section_key}:`, aiError);
-          await adminClient.from('analysis_results').insert({
-            analysis_job_id: job.id,
-            thread_id: thread.id,
-            section_key: defaultPrompt.section_key,
-            result_data: {
-              error: aiError instanceof Error ? aiError.message : 'Błąd AI',
-              thread_subject: thread.subject_normalized,
-            },
-          });
-        }
-      }
+            await adminClient.from('analysis_results').insert({
+              analysis_job_id: job.id,
+              thread_id: thread.id,
+              section_key: defaultPrompt.section_key,
+              result_data: {
+                content: response.content,
+                thread_subject: thread.subject_normalized,
+              },
+              tokens_used: response.tokensUsed,
+              processing_time_ms: response.processingTimeMs,
+            });
+          } catch (aiError) {
+            console.error(`AI error for thread ${thread.id}, section ${defaultPrompt.section_key}:`, aiError);
+            await adminClient.from('analysis_results').insert({
+              analysis_job_id: job.id,
+              thread_id: thread.id,
+              section_key: defaultPrompt.section_key,
+              result_data: {
+                error: aiError instanceof Error ? aiError.message : 'Błąd AI',
+                thread_subject: thread.subject_normalized,
+              },
+            });
+          }
+        })
+      );
     }
 
     // Update progress
