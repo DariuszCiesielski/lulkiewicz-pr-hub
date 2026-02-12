@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-02-10)
 ## Current Position
 
 Phase: Phase 7 (FB Foundation) — in progress
-Plan: 01 of 3
-Status: Plan 07-01 COMPLETE — fundament danych (SQL + typy TS)
-Last activity: 2026-02-12 — Completed 07-01-PLAN.md (migracja SQL + typy FB)
+Plan: 02 of 3
+Status: Plan 07-02 COMPLETE — nawigacja FB Analyzer + shell pages
+Last activity: 2026-02-12 — Completed 07-02-PLAN.md (tools config, sidebar, routing, 6 shell pages)
 
 Progress (v1.0 Email Analyzer): [##################..] ~90% (Phases 1-6 complete, known gaps: eval criteria UI, Azure consent)
-Progress (v1.1 FB Analyzer): [##..................] 10% (phase 7: plan 01/03 complete)
+Progress (v1.1 FB Analyzer): [###.................] 15% (phase 7: plan 02/03 complete)
 
 ## Planning Status
 
@@ -50,7 +50,7 @@ Progress (v1.1 FB Analyzer): [##..................] 10% (phase 7: plan 01/03 com
 
 **Phase 7 plans (3 plans, 1 wave) — IN PROGRESS:**
 - [x] 07-01-PLAN.md (Wave 1, autonomous) — Fundament danych: migracja SQL 6 tabel FB + typy TS (de508e7, d27709d)
-- [ ] 07-02-PLAN.md — Konfiguracja narzedzia FB Analyzer (tools config, sidebar, routing)
+- [x] 07-02-PLAN.md (Wave 1, autonomous) — Nawigacja FB Analyzer + shell pages (4646ff5, 14bc39d)
 - [ ] 07-03-PLAN.md — API CRUD dla fb_groups
 
 ## Accumulated Context
@@ -88,6 +88,8 @@ Progress (v1.1 FB Analyzer): [##..................] 10% (phase 7: plan 01/03 com
 - [07-01]: Status/sentiment jako TEXT z CHECK (nie enum) — wzorzec z email-analyzer
 - [07-01]: UNIQUE(group_id, facebook_post_id) na fb_posts — deduplikacja scrapowanych postow
 - [07-01]: updated_at trigger (CREATE OR REPLACE) na fb_groups, fb_posts, fb_reports
+- [07-02]: Ikony FB nav: BarChart3, Users, MessageSquare, Brain, ClipboardList, Cog
+- [07-02]: Wszystkie children FB Analyzer = adminOnly: true (wzorzec email-analyzer)
 
 ### Blockers/Concerns
 
@@ -114,7 +116,7 @@ organizations, organization_members, **mailboxes** (extended: +8 cols, sync_stat
 
 ## Session Continuity
 
-Last session: 2026-02-12T15:57Z
-Stopped at: Completed 07-01-PLAN.md — next: execute 07-02-PLAN.md
-Resume file: .planning/phases/07-fb-foundation/07-01-SUMMARY.md
+Last session: 2026-02-12T15:59Z
+Stopped at: Completed 07-02-PLAN.md — next: execute 07-03-PLAN.md
+Resume file: .planning/phases/07-fb-foundation/07-02-SUMMARY.md
 Reference plan: C:\Users\dariu\.claude\plans\lexical-marinating-blossom.md
