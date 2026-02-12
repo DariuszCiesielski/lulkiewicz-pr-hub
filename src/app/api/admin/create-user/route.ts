@@ -32,6 +32,10 @@ export async function POST(request: Request) {
   const body = await request.json();
   const { email, displayName, role, allowedTools, method, password } = body;
 
+  // Build redirect URL for invite emails
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || request.headers.get('origin') || '';
+  const inviteRedirectTo = `${siteUrl}/auth/set-password`;
+
   // Check if user already exists in app_allowed_users
   const { data: existing } = await adminClient
     .from('app_allowed_users')
@@ -53,7 +57,7 @@ export async function POST(request: Request) {
     userId = existingAuth.id;
     // Re-invite if method is invite, or update password if method is password
     if (method === 'invite') {
-      await adminClient.auth.admin.inviteUserByEmail(email);
+      await adminClient.auth.admin.inviteUserByEmail(email, { redirectTo: inviteRedirectTo });
     } else if (method === 'password' && password) {
       await adminClient.auth.admin.updateUserById(existingAuth.id, {
         password,
@@ -72,7 +76,7 @@ export async function POST(request: Request) {
     }
     userId = newUser.user.id;
   } else if (method === 'invite') {
-    const { data: invited, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email);
+    const { data: invited, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, { redirectTo: inviteRedirectTo });
 
     if (inviteError) {
       return NextResponse.json({ error: inviteError.message }, { status: 500 });

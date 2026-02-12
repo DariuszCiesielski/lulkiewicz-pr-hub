@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
@@ -10,8 +10,36 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [checkingInvite, setCheckingInvite] = useState(true);
   const router = useRouter();
   const supabase = createClient();
+
+  // Handle invite/recovery tokens in URL hash
+  useEffect(() => {
+    const handleAuthEvent = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      // Check if this is an invite flow (token in URL hash)
+      const hash = window.location.hash;
+      if (hash && (hash.includes('type=invite') || hash.includes('type=recovery'))) {
+        // Session was already established by detectSessionInUrl
+        if (session) {
+          router.push('/auth/set-password');
+          return;
+        }
+      }
+
+      // If already logged in (not from invite), go to dashboard
+      if (session) {
+        router.push('/dashboard');
+        return;
+      }
+
+      setCheckingInvite(false);
+    };
+
+    handleAuthEvent();
+  }, [supabase, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,6 +59,14 @@ export default function LoginPage() {
 
     router.push('/dashboard');
   };
+
+  if (checkingInvite) {
+    return (
+      <div className="w-full max-w-md text-center">
+        <p className="text-slate-400">Ładowanie...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-md">
