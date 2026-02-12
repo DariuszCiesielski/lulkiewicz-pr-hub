@@ -4,6 +4,8 @@
 
 Lulkiewicz PR Hub to wewnetrzna platforma narzędziowa dla agencji PR obslugujacej deweloperow nieruchomosci. MVP dostarcza jeden kluczowy modul -- Analizator Komunikacji Email -- ktory pobiera tysiace maili ze skrzynek Outlook administracji osiedli, grupuje je w watki, analizuje jakosc komunikacji za pomoca AI i generuje raporty (wewnetrzny + kliencki) z eksportem do .docx/.pdf/clipboard. Roadmapa prowadzi przez 6 sekwencyjnych faz: od fundamentu (auth, hub shell) przez pipeline emailowy (ingestion, threading) i analiza AI, az po raporty i dashboard.
 
+Milestone v1.1 dodaje drugi modul -- Analizator Grup FB -- ktory scrapuje posty z grup Facebookowych osiedli mieszkaniowych (przez Apify Actor), analizuje sentyment AI, filtruje istotne posty i generuje raporty z linkami do oryginalnych postow na FB. Fazy 7-12 prowadza od fundamentu (DB, nawigacja) przez integracje Apify, analize AI, widok postow i dashboard, az po raporty z eksportem DOCX.
+
 ## Phases
 
 **Phase Numbering:**
@@ -12,12 +14,23 @@ Lulkiewicz PR Hub to wewnetrzna platforma narzędziowa dla agencji PR obslugujac
 
 Decimal phases appear between their surrounding integers in numeric order.
 
+### v1.0 Email Analyzer (Phases 1-6) -- COMPLETE
+
 - [x] **Phase 1: Hub Shell & Fundament** - Auth, role, design system, grid narzedziowy, sidebar, responsywnosc
 - [x] **Phase 2: Email Connection & Fetching** - Podlaczenie skrzynek Outlook, bulk sync maili, parsowanie, baza danych
 - [x] **Phase 3: Email Threading & Browsing** - Grupowanie maili w watki, widok watkow, filtrowanie, zakres czasowy
 - [x] **Phase 4: AI Analysis, Prompty & Kryteria Oceny** - Analiza AI per watek, Map-Reduce pipeline, prompt management, custom scoring
 - [x] **Phase 5: Report Generation & Export** - Generowanie raportow (wew/kliencki), podglad, edycja, eksport docx/pdf/clipboard
 - [x] **Phase 6: Dashboard & Polish** - KPI tiles, podsumowania per skrzynka, quick actions, ostatnie raporty
+
+### v1.1 FB Analyzer (Phases 7-12)
+
+- [ ] **Phase 7: FB Foundation** - Migracja DB (6 tabel + RLS), typy TS, nawigacja sidebar, layout + shell pages, admin utilities extraction
+- [ ] **Phase 8: Group Management** - CRUD grup FB, status active/paused, konfiguracja Apify (token szyfrowany + FB cookies)
+- [ ] **Phase 9: Scraping Engine** - Integracja Apify Actor API, dwufazowa architektura polling, ochrona konta FB, rate limiting, error handling
+- [ ] **Phase 10: AI Sentiment Analysis** - Kwalifikacja postow (sentyment + relevance + kategorie), domain-specific prompty PL, batch processing, edytowalne prompty
+- [ ] **Phase 11: Post Browsing & Dashboard** - Widok TYLKO istotnych postow z filtrami i linkami do FB, dashboard KPI, alerty negatywne, quick actions
+- [ ] **Phase 12: Reports & Export** - Raporty na zadanie z sekcjami per grupa, tabela postow z linkami FB, edytowalne prompty, eksport DOCX, historia
 
 ## Phase Details
 
@@ -118,10 +131,90 @@ Plans:
 Plans:
 - [x] 06-01: Dashboard Analizatora Email — KPI tiles, podsumowania per skrzynka, quick actions, ostatnie raporty
 
+---
+
+### Phase 7: FB Foundation
+**Goal**: Aplikacja ma kompletny fundament dla FB Analyzer — tabele DB, typy TS, nawigacja w sidebar, puste strony shell i wyekstrahowane utilities administracyjne
+**Depends on**: Phase 6 (v1.0 complete)
+**Requirements**: FBNAV-01, FBNAV-02, FBNAV-03, FBNAV-04, FBNAV-05, FBNAV-06
+**Success Criteria** (what must be TRUE):
+  1. Hub grid wyswietla karte "Analizator Grup FB" jako aktywne narzedzie (nie "Coming Soon") i klikniecie przenosi do modulu FB
+  2. Sidebar FB Analyzer pokazuje nawigacje z children: Dashboard, Grupy, Posty, Analiza, Raporty, Ustawienia — kazda strona renderuje shell z placeholderem
+  3. Wszystkie 6 tabel FB istnieje w Supabase z poprawnymi RLS policies (admin-only), indeksami i UNIQUE constraints (group_id + facebook_post_id na fb_posts)
+  4. Typy TypeScript domeny FB (FbGroup, FbPost, FbComment, FbScrapeJob, FbAnalysisJob, FbReport) sa zdefiniowane i importowalne
+  5. verifyAdmin() i getAdminClient() sa wyekstrahowane do shared module (src/lib/api/admin.ts) — nowe FB routes korzystaja z extracted utility
+
+Plans: TBD
+
+### Phase 8: Group Management
+**Goal**: Admin moze zarzadzac grupami FB (dodawac, edytowac, usuwac, wstrzymywac monitoring) i skonfigurowac polaczenie z Apify
+**Depends on**: Phase 7
+**Requirements**: FBGRP-01, FBGRP-02, FBGRP-03, FBGRP-04
+**Success Criteria** (what must be TRUE):
+  1. Admin moze dodac grupe FB podajac nazwe, URL Facebooka i dewelopera — grupa pojawia sie na liscie z metadanymi (deweloper, status, liczba postow: 0, ostatni scrape: nigdy)
+  2. Admin moze edytowac grupe (zmiana nazwy, URL, dewelopera) i usunac grupe z potwierdzeniem
+  3. Admin moze przelaczac status grupy (active/paused) — wstrzymane grupy sa wizualnie oznaczone i wykluczone z scrapowania
+  4. Admin moze skonfigurowac Apify API token i Facebook session cookies — dane sa szyfrowane (AES-256-GCM) i przechowywane bezpiecznie w bazie
+
+Plans: TBD
+
+### Phase 9: Scraping Engine
+**Goal**: Admin moze scrapowac posty z grup FB przez Apify Actor z widocznym progressem, ochrona konta i obsluga bledow
+**Depends on**: Phase 8
+**Requirements**: FBSCR-01, FBSCR-02, FBSCR-03, FBSCR-04, FBSCR-05, FBSCR-06, FBSCR-07
+**Success Criteria** (what must be TRUE):
+  1. Admin klika "Scrapuj" na aktywnej grupie — Apify Actor run startuje, progress bar pokazuje status (uruchamianie, scrapowanie, pobieranie wynikow, zakonczone) — posty pojawiaja sie w bazie danych
+  2. Posty sa deduplikowane (upsert ON CONFLICT) — ponowne scrapowanie tej samej grupy aktualizuje istniejace posty (likes, komentarze) zamiast tworzyc duplikaty
+  3. Scrapowanie wielu grup wymusza minimalny 3-minutowy odstep miedzy grupami z losowymi opoznieniami — UI informuje o kolejce i szacowanym czasie
+  4. Bledy scrapowania (timeout, expired cookies, Apify error) sa logowane, wyswietlane w UI z opisem i sugestia rozwiazania, a system proponuje retry
+  5. Przed scrapowaniem wykonywany jest cookie health check (testowy scrape maxPosts: 1) — jesli cookies wygasly, user widzi alert z instrukcja odswiezenia
+
+Plans: TBD
+
+### Phase 10: AI Sentiment Analysis
+**Goal**: Admin moze uruchomic analiza AI na scrapowanych postach — kazdy post otrzymuje sentyment, relevance score, kategorie i AI snippet w jednym wywolaniu AI
+**Depends on**: Phase 9
+**Requirements**: FBAI-01, FBAI-02, FBAI-03, FBAI-04, FBAI-05, FBAI-06
+**Success Criteria** (what must be TRUE):
+  1. Admin klika "Analizuj" na grupie — AI przetwarza posty batch-ami z progress bar (X/Y postow) — kazdy post otrzymuje sentyment (positive/negative/neutral), relevance score (0-10), AI snippet (1-2 zdania) i kategorie tematyczne
+  2. Domyslny prompt AI szuka opinii mieszkancow dotyczacych administracji osiedla i dewelopera — rozpoznaje sarkazm, skargi ukryte w grzecznym jezyku i kolokwializmy polskie
+  3. Admin moze edytowac prompt AI przez interfejs prompt editor (reuse z email-analyzer) — zmiany wplywaja na przyszle analizy
+  4. Admin moze konfigurowac slowa kluczowe i tematy do monitorowania (per grupa lub globalnie) — posty pasujace do slow kluczowych maja podwyzszone relevance score
+  5. Posty sa klasyfikowane do predefiniowanych kategorii: oplaty, naprawy, czystosc, bezpieczenstwo, zielen, komunikacja, finanse, prawo, sasiedzi, pochwaly, inne
+
+Plans: TBD
+
+### Phase 11: Post Browsing & Dashboard
+**Goal**: Admin widzi TYLKO istotne (AI-flagowane) posty z filtrami i linkami do FB oraz dashboard z KPI i alertami o negatywnych postach
+**Depends on**: Phase 10
+**Requirements**: FBVIEW-01, FBVIEW-02, FBVIEW-03, FBVIEW-04
+**Success Criteria** (what must be TRUE):
+  1. Lista postow wyswietla WYLACZNIE istotne posty (AI-flagowane, relevance >= prog) z sentymentem, AI snippet i klikalnym linkiem do oryginalnego postu na Facebooku
+  2. Admin moze filtrowac posty per deweloper, per grupa, sentyment (positive/negative/neutral), kategoria tematyczna i zakres dat — filtry dzialaja lacznie
+  3. Dashboard pokazuje podsumowanie per deweloper: liczba monitorowanych grup, istotnych postow, procent negatywnych — z alertami o nowych negatywnych postach (relevance >= 7)
+  4. Quick actions sa dostepne z dashboardu i listy postow: scrapuj grupe, uruchom analize, generuj raport — bez koniecznosci przechodzenia na osobne strony
+
+Plans: TBD
+
+### Phase 12: Reports & Export
+**Goal**: Admin moze wygenerowac raport FB na zadanie z sekcjami per grupa, tabela postow z linkami i wyeksportowac do DOCX z klikalnymi linkami
+**Depends on**: Phase 10 (analyzed posts), Phase 11 (for full flow, but technically independent)
+**Requirements**: FBREP-01, FBREP-02, FBREP-03, FBREP-04, FBREP-05, FBREP-06
+**Success Criteria** (what must be TRUE):
+  1. Admin wybiera grupy (lub dewelopera) i zakres dat, klika "Generuj raport" — raport jest tworzony na zadanie (nie automatycznie po scrapowaniu)
+  2. Raport zawiera sekcje per grupa z podsumowaniem AI (co dobre, co zle, rekomendacje) oraz tabele wpisow z kolumnami: grupa, data, tresc postu, sentyment, AI snippet, link do postu FB
+  3. Admin moze edytowac prompty per sekcja raportu FB (reuse prompt editor z email-analyzer) — 7 sekcji: podsumowanie, sentyment, negatywne, pozytywne, kategorie, ryzyko PR, rekomendacje
+  4. Eksport DOCX zawiera klikalne linki do postow na Facebooku, sformatowane tabele i sekcje — plik jest gotowy do wyslania klientowi-deweloperowi
+  5. Admin widzi historie wygenerowanych raportow FB z datami i moze otworzyc dowolny wczesniejszy raport
+
+Plans: TBD
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11 -> 12
+
+### v1.0 Email Analyzer
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -132,6 +225,17 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 5. Report Generation & Export | 2/3 | **COMPLETE** (fast-track, .docx/.pdf gap) | 2026-02-11 |
 | 6. Dashboard & Polish | 1/1 | **COMPLETE** (fast-track) | 2026-02-11 |
 
+### v1.1 FB Analyzer
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 7. FB Foundation | 0/? | Pending | — |
+| 8. Group Management | 0/? | Pending | — |
+| 9. Scraping Engine | 0/? | Pending | — |
+| 10. AI Sentiment Analysis | 0/? | Pending | — |
+| 11. Post Browsing & Dashboard | 0/? | Pending | — |
+| 12. Reports & Export | 0/? | Pending | — |
+
 ## Known Gaps (v1.0)
 
 Fazy 3-6 zostaly zaimplementowane w trybie fast-track (jeden commit 1f853d6 + poprawki 48582a0) zamiast indywidualnych planow. Ponizsze braki sa znane:
@@ -140,3 +244,10 @@ Fazy 3-6 zostaly zaimplementowane w trybie fast-track (jeden commit 1f853d6 + po
 2. **Evaluation criteria UI** (Phase 4): Tabela evaluation_criteria istnieje w DB, ale brak UI do zarzadzania kryteriami oceny.
 3. **Azure Admin Consent** (Phase 2): Czeka na administratora TAG Polska — wymagane do polaczenia z prawdziwymi skrzynkami Outlook.
 4. **Reports API** (Phase 5): POST /api/reports oryginalnie wymagal analysisJobId — naprawione w 48582a0 (akceptuje tez mailboxId).
+
+## Research Flags (v1.1)
+
+Fazy wymagajace glebszego researchu przed implementacja:
+
+1. **Phase 9 (Scraping Engine) — CRITICAL**: Apify Actor output schema wymaga walidacji (test run). Nazwy pol (`postId` vs `post_id`?), input params (`sessionCookies` vs `cookies`?), dataset pagination, timing runow. **Akcja:** Manual test run via Apify Console przed implementacja.
+2. **Phase 10 (AI Analysis) — MEDIUM**: Prompty AI dla polskiego real estate wymagaja iteracji. Few-shot examples, sarkazm, kolokwializmy. **Akcja:** Manual review pierwszych 20-30 analyzed posts, tune prompts jesli accuracy < 80%.

@@ -143,22 +143,22 @@ Requirements for milestone v1.1. Each maps to roadmap phases 7+.
 | EXPORT-03 | Phase 5 | Deferred |
 | DASH-01..04 | Phase 6 | Complete |
 
-### v1.1 (Phases 7+) — Pending
+### v1.1 (Phases 7-12) — Pending
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FBNAV-01..06 | TBD | Pending |
-| FBGRP-01..04 | TBD | Pending |
-| FBSCR-01..07 | TBD | Pending |
-| FBAI-01..06 | TBD | Pending |
-| FBVIEW-01..04 | TBD | Pending |
-| FBREP-01..06 | TBD | Pending |
+| FBNAV-01..06 | Phase 7 (FB Foundation) | Pending |
+| FBGRP-01..04 | Phase 8 (Group Management) | Pending |
+| FBSCR-01..07 | Phase 9 (Scraping Engine) | Pending |
+| FBAI-01..06 | Phase 10 (AI Sentiment Analysis) | Pending |
+| FBVIEW-01..04 | Phase 11 (Post Browsing & Dashboard) | Pending |
+| FBREP-01..06 | Phase 12 (Reports & Export) | Pending |
 
 **Coverage:**
 - v1.0 requirements: 59 total (56 complete, 3 deferred/partial)
-- v1.1 requirements: 33 total
-- Mapped to phases: v1.0 all mapped, v1.1 TBD (roadmap creation)
+- v1.1 requirements: 33 total (all mapped to phases 7-12)
+- Mapped to phases: v1.0 all mapped, v1.1 all mapped
 
 ---
 *Requirements defined: 2026-02-10*
-*Last updated: 2026-02-12 after v1.1 milestone requirements definition*
+*Last updated: 2026-02-12 after v1.1 roadmap creation (phases 7-12 mapped)*

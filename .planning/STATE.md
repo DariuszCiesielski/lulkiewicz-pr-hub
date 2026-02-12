@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-10)
 
 **Core value:** Hub narzędziowy — AI analizuje maile (email-analyzer) i posty z grup FB (fb-analyzer) dla audytu komunikacji administracji osiedli
-**Current focus:** Milestone v1.1 — FB Analyzer (defining requirements)
+**Current focus:** Milestone v1.1 — FB Analyzer (roadmap ready, planning phase 7)
 
 ## Current Position
 
-Phase: v1.0 Email Analyzer phases 1-6 complete (with known gaps), v1.1 research pending
+Phase: Phase 7 (FB Foundation) — planning
 Plan: —
-Status: v1.0 feature-complete (known gaps: .docx/.pdf export, eval criteria UI), v1.1 defining requirements
-Last activity: 2026-02-12 — v1.0 docs updated, v1.1 research pending
+Status: Milestone v1.1 FB Analyzer — roadmap DONE (phases 7-12), ready for /gsd:plan-phase 7
+Last activity: 2026-02-12 — Roadmap v1.1 created and approved
 
-Progress (v1.0 Email Analyzer): [##################..] ~90% (Phases 1-6 complete, known gaps: .docx/.pdf export, eval criteria UI)
-Progress (v1.1 FB Analyzer): [....................] 0% (milestone started, research pending)
+Progress (v1.0 Email Analyzer): [##################..] ~90% (Phases 1-6 complete, known gaps: eval criteria UI, Azure consent)
+Progress (v1.1 FB Analyzer): [#...................] 5% (roadmap done, phase 7 planning next)
 
 ## Planning Status
 
@@ -52,7 +52,7 @@ Progress (v1.1 FB Analyzer): [....................] 0% (milestone started, resea
 
 ### Decisions
 
-- [Roadmap]: 6 faz sekwencyjnych
+- [Roadmap]: 12 faz sekwencyjnych (v1.0: 1-6, v1.1: 7-12)
 - [Planning]: Next.js App Router, @supabase/ssr, Jezyk TYLKO PL, Supabase CLI broken
 - [01-01]: Tailwind CSS v4 (nie v3), Next.js 16 middleware deprecation (non-blocking)
 - [01-01]: Istniejace tabele Supabase zachowane dla pozniejszych faz
@@ -75,7 +75,7 @@ Progress (v1.1 FB Analyzer): [....................] 0% (milestone started, resea
 - [02-03]: Delta link stored on mailbox for incremental sync
 - [02-03]: No $select on @odata.nextLink (already contains params)
 - [02-04]: Stale closure fix — onComplete notification via useEffect watching status, not useCallback
-- [v1.1 milestone]: FB Analyzer = tool-2 w ToolId, fazy 7-13
+- [v1.1 milestone]: FB Analyzer = fb-analyzer w ToolId, fazy 7-12
 - [v1.1 milestone]: Apify Actor: curious_coder/facebook-post-scraper (bezposrednio z PR Hub, bez n8n)
 - [v1.1 milestone]: Supabase only (bez Airtable), reuse ai-provider.ts, reuse encrypt.ts
 - [v1.1 milestone]: 6 tabel: fb_groups, fb_posts, fb_comments, fb_scrape_jobs, fb_analysis_jobs, fb_reports
@@ -107,31 +107,6 @@ organizations, organization_members, **mailboxes** (extended: +8 cols, sync_stat
 ## Session Continuity
 
 Last session: 2026-02-12
-Stopped at: v1.0 all blockers fixed (auth, AI config, encryption). Ready for pipeline test.
-Resume file: docs/HANDOFF-2026-02-12.md
-
-### How to resume (v1.1 FB Analyzer):
-
-Run `/gsd:resume-work` and follow these steps:
-
-1. **Research (4 parallel agents)** — GSD new-milestone flow Phase 7
-   - Stack research: Apify Actor API (curious_coder/facebook-post-scraper), response format, rate limits
-   - Features research: FB group monitoring, sentiment analysis for Polish residential admin context
-   - Architecture research: Apify → Next.js API routes → Supabase integration, polling job pattern
-   - Pitfalls research: FB scraping legal/ToS, Apify cookie expiration, Polish sentiment accuracy
-
-2. **Define requirements** — scope FB Analyzer features, create REQUIREMENTS.md (FB-* IDs)
-
-3. **Create roadmap** — Phases 7-13 appended to ROADMAP.md (continuing from email-analyzer Phase 6)
-
-4. **Plan Phase 7** — `/gsd:plan-phase 7` (Fundament: DB + Types + Navigation)
-
-### Reference plan:
-See: `C:\Users\dariu\.claude\plans\lexical-marinating-blossom.md` — full architecture plan
-
-### Parallel track (v1.0 Email Analyzer — COMPLETE with known gaps):
-v1.0 Phases 1-6 zaimplementowane. Fazy 3-6 fast-tracked w commicie 1f853d6 (2026-02-11).
-Pozostale braki:
-  1. Eksport .docx/.pdf (Phase 5) — do zaimplementowania
-  2. Evaluation criteria UI (Phase 4) — tabela istnieje, brak UI
-  3. Azure Admin Consent — czeka na administratora TAG Polska
+Stopped at: Roadmap v1.1 approved — next: /gsd:plan-phase 7
+Resume file: docs/HANDOFF-2026-02-12-v2.md
+Reference plan: C:\Users\dariu\.claude\plans\lexical-marinating-blossom.md
