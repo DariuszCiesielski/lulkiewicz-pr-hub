@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Copy, Check, Edit3, Save, X } from 'lucide-react';
+import { ArrowLeft, Copy, Check, Edit3, Save, X, Download } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { exportReportToDocx } from '@/lib/export/export-report-docx';
 
 interface ReportSection {
   id: string;
@@ -40,6 +41,7 @@ export default function ReportDetailPage() {
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
   const [copied, setCopied] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !isAdmin) router.push('/dashboard');
@@ -98,6 +100,18 @@ export default function ReportDetailPage() {
     navigator.clipboard.writeText(fullMarkdown);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleExportDocx = async () => {
+    if (!report) return;
+    setExporting(true);
+    try {
+      await exportReportToDocx(report, sections);
+    } catch (err) {
+      console.error('DOCX export error:', err);
+    } finally {
+      setExporting(false);
+    }
   };
 
   if (authLoading || isLoading) {
@@ -163,17 +177,31 @@ export default function ReportDetailPage() {
               </p>
             )}
           </div>
-          <button
-            onClick={handleCopyAll}
-            className="flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm hover:opacity-80"
-            style={{
-              borderColor: 'var(--border-primary)',
-              color: 'var(--text-secondary)',
-            }}
-          >
-            {copied ? <Check className="h-4 w-4" style={{ color: '#22c55e' }} /> : <Copy className="h-4 w-4" />}
-            {copied ? 'Skopiowano!' : 'Kopiuj raport'}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleExportDocx}
+              disabled={exporting}
+              className="flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm hover:opacity-80 disabled:opacity-50"
+              style={{
+                borderColor: 'var(--accent-primary)',
+                color: 'var(--accent-primary)',
+              }}
+            >
+              <Download className="h-4 w-4" />
+              {exporting ? 'Eksportuję...' : 'Pobierz .docx'}
+            </button>
+            <button
+              onClick={handleCopyAll}
+              className="flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm hover:opacity-80"
+              style={{
+                borderColor: 'var(--border-primary)',
+                color: 'var(--text-secondary)',
+              }}
+            >
+              {copied ? <Check className="h-4 w-4" style={{ color: '#22c55e' }} /> : <Copy className="h-4 w-4" />}
+              {copied ? 'Skopiowano!' : 'Kopiuj raport'}
+            </button>
+          </div>
         </div>
       </div>
 

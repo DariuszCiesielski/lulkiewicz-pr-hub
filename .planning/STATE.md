@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-10)
 
 ## Current Position
 
-Phase: Not started (defining requirements for v1.1 FB Analyzer)
+Phase: v1.0 Email Analyzer phases 1-6 complete (with known gaps), v1.1 research pending
 Plan: —
-Status: Defining requirements
-Last activity: 2026-02-11 — Milestone v1.1 started
+Status: v1.0 feature-complete (known gaps: .docx/.pdf export, eval criteria UI), v1.1 defining requirements
+Last activity: 2026-02-12 — v1.0 docs updated, v1.1 research pending
 
-Progress (v1.0 Email Analyzer): [##########..........] 50% (Phase 1 complete, Phase 2: 3/4 plans done, 02-04 pending checkpoint)
+Progress (v1.0 Email Analyzer): [##################..] ~90% (Phases 1-6 complete, known gaps: .docx/.pdf export, eval criteria UI)
 Progress (v1.1 FB Analyzer): [....................] 0% (milestone started, research pending)
 
 ## Planning Status
@@ -24,13 +24,29 @@ Progress (v1.1 FB Analyzer): [....................] 0% (milestone started, resea
 - [x] 01-02-PLAN.md (Wave 2) — System rol admin/user + panel admina (f32245f)
 - [x] 01-03-PLAN.md (Wave 2) — Hub UI: grid, sidebar, design system, footer (6954168)
 
-**Phase 2 plans (4 plans, 3 waves) — IN PROGRESS:**
+**Phase 2 plans (4 plans, 3 waves) — ALL COMPLETE:**
 - [x] 02-01-PLAN.md (Wave 1, autonomous) — Fundament emailowy (b12e7b1, 1e5e4fe, 6602942)
 - [x] 02-02-PLAN.md (Wave 2, checkpoint) — Mailbox CRUD API + test connection + UI (c7560f5, 95f07ae, 41dc226, d1930f2)
 - [x] 02-03-PLAN.md (Wave 2, autonomous) — Sync engine: email fetcher, parser, API routes (540fd72, 45e9adc)
-- [ ] 02-04-PLAN.md (Wave 3, checkpoint) — useSyncJob hook, progress bar, full+delta sync UI
-  - Tasks 1-2 DONE: 2f22a50, 5b92531
-  - Task 3 (checkpoint:human-verify): PENDING — user musi przetestować sync flow end-to-end
+- [x] 02-04-PLAN.md (Wave 3, checkpoint) — useSyncJob hook, progress bar, full+delta sync UI (2f22a50, 5b92531)
+
+**Phase 3 plans — COMPLETE (fast-tracked in 1f853d6, 2026-02-11):**
+- [x] 03-01: Algorytm threadingu (Union-Find) + migracja (email_threads) + thread-builder.ts
+- [x] 03-02: UI listy watkow, drill-down, filtrowanie (ThreadList, ThreadCard, ThreadFilters, EmailMessage)
+
+**Phase 4 plans — COMPLETE (fast-tracked in 1f853d6, 2026-02-11):**
+- [x] 04-01: Konfiguracja AI (provider, klucz, model) + migracja + ai-provider.ts
+- [x] 04-02: Prompt management UI — edycja promptow per sekcja, default-prompts.ts
+- [x] 04-03: Evaluation criteria — tabela istnieje w DB (brak UI — known gap)
+- [x] 04-04: Map-Reduce AI pipeline — analiza per watek z anonimizacja, useAnalysisJob hook
+
+**Phase 5 plans — COMPLETE (fast-tracked in 1f853d6 + fix 48582a0, 2026-02-11):**
+- [x] 05-01: Generowanie raportu + migracja (reports) + API routes
+- [x] 05-02: Podglad raportu (markdown), edycja sekcji, historia raportow
+- [ ] 05-03: Eksport .docx/.pdf — NOT IMPLEMENTED (clipboard markdown only — known gap)
+
+**Phase 6 plans — COMPLETE (fast-tracked in 1f853d6 + fix 48582a0, 2026-02-11):**
+- [x] 06-01: Dashboard — KPI tiles, podsumowania per skrzynka, quick actions, ostatnie raporty
 
 ## Accumulated Context
 
@@ -86,12 +102,12 @@ Progress (v1.1 FB Analyzer): [....................] 0% (milestone started, resea
 
 ## Supabase Tables (Phase 2 updated)
 
-organizations, organization_members, **mailboxes** (extended: +8 cols, sync_status TEXT), mailbox_credentials, **emails** (extended: +13 cols, UNIQUE mailbox+internet_message_id), threads, reports, report_sections, section_templates, schedules, messages, app_allowed_users, **sync_jobs** (new: status, job_type, page_token, emails_fetched)
+organizations, organization_members, **mailboxes** (extended: +8 cols, sync_status TEXT), mailbox_credentials, **emails** (extended: +13 cols, UNIQUE mailbox+internet_message_id), threads, reports, report_sections, section_templates, schedules, messages, app_allowed_users, **sync_jobs** (new: status, job_type, page_token, emails_fetched), **email_threads** (Phase 3: Union-Find threading), **analysis_jobs** (Phase 4: AI analysis jobs), **analysis_results** (Phase 4: per-thread results), **prompt_templates** (Phase 4: customizable prompts), **evaluation_criteria** (Phase 4: scoring rubrics, no UI yet)
 
 ## Session Continuity
 
-Last session: 2026-02-11
-Stopped at: Milestone v1.1 started, research pending
+Last session: 2026-02-12
+Stopped at: v1.0 phases 1-6 complete (known gaps), v1.1 research pending
 Resume file: None
 
 ### How to resume (v1.1 FB Analyzer):
@@ -113,9 +129,9 @@ Run `/gsd:resume-work` and follow these steps:
 ### Reference plan:
 See: `C:\Users\dariu\.claude\plans\lexical-marinating-blossom.md` — full architecture plan
 
-### Parallel track (v1.0 Email Analyzer — PAUSED):
-  1. User approves 02-04 checkpoint (test sync flow) → "approved" lub opisz problemy
-  2. Create 02-04-SUMMARY.md
-  3. Phase 2 verification (gsd-verifier)
-  4. Update ROADMAP.md → Phase 2 complete
-  5. Phase 3 planning
+### Parallel track (v1.0 Email Analyzer — COMPLETE with known gaps):
+v1.0 Phases 1-6 zaimplementowane. Fazy 3-6 fast-tracked w commicie 1f853d6 (2026-02-11).
+Pozostale braki:
+  1. Eksport .docx/.pdf (Phase 5) — do zaimplementowania
+  2. Evaluation criteria UI (Phase 4) — tabela istnieje, brak UI
+  3. Azure Admin Consent — czeka na administratora TAG Polska

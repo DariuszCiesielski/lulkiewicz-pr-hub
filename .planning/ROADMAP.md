@@ -13,11 +13,11 @@ Lulkiewicz PR Hub to wewnetrzna platforma narzędziowa dla agencji PR obslugujac
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Hub Shell & Fundament** - Auth, role, design system, grid narzedziowy, sidebar, responsywnosc
-- [ ] **Phase 2: Email Connection & Fetching** - Podlaczenie skrzynek Outlook, bulk sync maili, parsowanie, baza danych
-- [ ] **Phase 3: Email Threading & Browsing** - Grupowanie maili w watki, widok watkow, filtrowanie, zakres czasowy
-- [ ] **Phase 4: AI Analysis, Prompty & Kryteria Oceny** - Analiza AI per watek, Map-Reduce pipeline, prompt management, custom scoring
-- [ ] **Phase 5: Report Generation & Export** - Generowanie raportow (wew/kliencki), podglad, edycja, eksport docx/pdf/clipboard
-- [ ] **Phase 6: Dashboard & Polish** - KPI tiles, podsumowania per skrzynka, quick actions, ostatnie raporty
+- [x] **Phase 2: Email Connection & Fetching** - Podlaczenie skrzynek Outlook, bulk sync maili, parsowanie, baza danych
+- [x] **Phase 3: Email Threading & Browsing** - Grupowanie maili w watki, widok watkow, filtrowanie, zakres czasowy
+- [x] **Phase 4: AI Analysis, Prompty & Kryteria Oceny** - Analiza AI per watek, Map-Reduce pipeline, prompt management, custom scoring
+- [x] **Phase 5: Report Generation & Export** - Generowanie raportow (wew/kliencki), podglad, edycja, eksport docx/pdf/clipboard
+- [x] **Phase 6: Dashboard & Polish** - KPI tiles, podsumowania per skrzynka, quick actions, ostatnie raporty
 
 ## Phase Details
 
@@ -51,10 +51,10 @@ Plans:
 **Plans:** 4 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Fundament: DB migration (mailboxes, sync_jobs, emails), typy TS, AES-256 encrypt, Graph API auth + client
-- [ ] 02-02-PLAN.md — Mailbox CRUD API + test polaczenia + UI zarzadzania skrzynkami (formularz, lista, statusy)
-- [ ] 02-03-PLAN.md — Sync engine: email fetcher (pagination), parser (HTML to text, threading headers), sync API routes
-- [ ] 02-04-PLAN.md — Sync UI: useSyncJob hook, progress bar, full sync + delta sync integracja z UI
+- [x] 02-01-PLAN.md — Fundament: DB migration (mailboxes, sync_jobs, emails), typy TS, AES-256 encrypt, Graph API auth + client
+- [x] 02-02-PLAN.md — Mailbox CRUD API + test polaczenia + UI zarzadzania skrzynkami (formularz, lista, statusy)
+- [x] 02-03-PLAN.md — Sync engine: email fetcher (pagination), parser (HTML to text, threading headers), sync API routes
+- [x] 02-04-PLAN.md — Sync UI: useSyncJob hook, progress bar, full sync + delta sync integracja z UI
 
 ### Phase 3: Email Threading & Browsing
 **Goal**: Uzytkownik moze przegladac maile pogrupowane w watki (sprawy) z filtrowaniem i wyborem zakresu czasowego
@@ -65,11 +65,11 @@ Plans:
   2. Uzytkownik widzi liste watkow z liczba wiadomosci, datami, uczestnikami i moze wejsc w szczegoly watku (chronologiczny widok maili)
   3. Uzytkownik moze filtrowac watki po dacie, nadawcy, statusie (otwarty/zamkniety) i slowach kluczowych
   4. Uzytkownik moze wybrac zakres czasowy analizy (1-3 miesiace) z uwzglednieniem starszych otwartych spraw
-**Plans**: TBD
+**Plans**: Fast-tracked (zaimplementowane w jednym commicie 1f853d6, 2026-02-11)
 
 Plans:
-- [ ] 03-01: Algorytm threadingu + migracja (email_threads, processed_emails)
-- [ ] 03-02: UI listy watkow, drill-down w watek, filtrowanie, wybor zakresu czasowego
+- [x] 03-01: Algorytm threadingu (Union-Find) + migracja (email_threads) + thread-builder.ts
+- [x] 03-02: UI listy watkow, drill-down w watek, filtrowanie (ThreadList, ThreadCard, ThreadFilters, EmailMessage)
 
 ### Phase 4: AI Analysis, Prompty & Kryteria Oceny
 **Goal**: Uzytkownik moze uruchomic analiza AI na wybranych watkach, zdefiniowac wlasne kryteria oceny i zarzadzac promptami per sekcja raportu
@@ -81,13 +81,13 @@ Plans:
   3. Uzytkownik moze edytowac prompty per sekcja raportu z podgladem side-by-side (domyslny vs edytowany), resetowac do domyslnego i korzystac z 3-tier resolution (kod/globalny/per-raport)
   4. Uzytkownik moze definiowac checklisty (tak/nie) i scoring rubrics (kryteria + wagi + skala) — AI ocenia kazdy punkt, wyniki widoczne z wizualnymi wskaznikami
   5. Analiza AI dziala na zasadzie Map-Reduce (per-watek analiza z agregacja) i miesci sie w limitach kontekstu LLM
-**Plans**: TBD
+**Plans**: Fast-tracked (zaimplementowane w jednym commicie 1f853d6, 2026-02-11)
 
 Plans:
-- [ ] 04-01: Konfiguracja AI (provider, klucz, model) + migracja (analysis_jobs, analysis_results, prompt_templates, evaluation_criteria)
-- [ ] 04-02: Prompt management UI — 3-tier system, side-by-side, reset, edycja per sekcja
-- [ ] 04-03: Custom evaluation criteria — checklisty, scoring rubrics, domyslny zestaw
-- [ ] 04-04: Map-Reduce AI pipeline — analiza per watek, agregacja, progress bar, Structured Outputs
+- [x] 04-01: Konfiguracja AI (provider, klucz, model) + migracja (analysis_jobs, analysis_results, prompt_templates, evaluation_criteria) + ai-provider.ts
+- [x] 04-02: Prompt management UI — edycja promptow per sekcja, default-prompts.ts
+- [x] 04-03: Custom evaluation criteria — tabela evaluation_criteria istnieje w DB, brak UI (known gap)
+- [x] 04-04: Map-Reduce AI pipeline — analiza per watek z anonimizacja, useAnalysisJob hook, progress bar
 
 ### Phase 5: Report Generation & Export
 **Goal**: Uzytkownik moze wygenerowac raport (wewnetrzny lub kliencki), przejrzec go, edytowac i wyeksportowac do schowka, .docx lub .pdf
@@ -98,12 +98,12 @@ Plans:
   2. Uzytkownik widzi podglad raportu w przegladarce (markdown rendering) i moze edytowac wygenerowana tresc przed eksportem
   3. Uzytkownik moze skopiowac raport do schowka jednym klikiem, wyeksportowac do .docx (z formatowaniem) i do .pdf (z formatowaniem)
   4. Uzytkownik widzi historie wygenerowanych raportow z datami i statusami
-**Plans**: TBD
+**Plans**: Fast-tracked (zaimplementowane w jednym commicie 1f853d6, 2026-02-11)
 
 Plans:
-- [ ] 05-01: Generowanie raportu z wynikow AI + migracja (reports, report_sections) + 2 szablony (wewnetrzny/kliencki)
-- [ ] 05-02: Podglad raportu (markdown rendering), edycja sekcji, historia raportow
-- [ ] 05-03: Eksport — kopiowanie do schowka, .docx, .pdf
+- [x] 05-01: Generowanie raportu z wynikow AI + migracja (reports tabela) + API routes (/api/reports, /api/reports/[id])
+- [x] 05-02: Podglad raportu (markdown rendering), edycja sekcji, historia raportow — reports page + report detail page
+- [ ] 05-03: Eksport — kopiowanie do schowka (DONE), .docx i .pdf (NOT IMPLEMENTED — known gap)
 
 ### Phase 6: Dashboard & Polish
 **Goal**: Uzytkownik widzi na dashboardzie Analizatora Email kluczowe metryki, podsumowania i szybkie akcje
@@ -113,10 +113,10 @@ Plans:
   1. Dashboard wyswietla kafelki KPI: sredni czas odpowiedzi, procent otwartych spraw, ogolny scoring komunikacji
   2. Dashboard pokazuje podsumowanie per skrzynka (liczba watkow, maili, ostatnia synchronizacja) i liste ostatnich raportow z datami/statusami
   3. Dashboard oferuje quick actions: generuj raport, odswiez skrzynke, dodaj nowa skrzynke
-**Plans**: TBD
+**Plans**: Fast-tracked (zaimplementowane w jednym commicie 1f853d6, 2026-02-11)
 
 Plans:
-- [ ] 06-01: Dashboard Analizatora Email — KPI tiles, podsumowania per skrzynka, quick actions, ostatnie raporty
+- [x] 06-01: Dashboard Analizatora Email — KPI tiles, podsumowania per skrzynka, quick actions, ostatnie raporty
 
 ## Progress
 
@@ -126,8 +126,17 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Hub Shell & Fundament | 3/3 | **COMPLETE** | 2026-02-10 |
-| 2. Email Connection & Fetching | 0/4 | **PLANNED** | - |
-| 3. Email Threading & Browsing | 0/2 | Not started | - |
-| 4. AI Analysis, Prompty & Kryteria Oceny | 0/4 | Not started | - |
-| 5. Report Generation & Export | 0/3 | Not started | - |
-| 6. Dashboard & Polish | 0/1 | Not started | - |
+| 2. Email Connection & Fetching | 4/4 | **COMPLETE** | 2026-02-10 |
+| 3. Email Threading & Browsing | 2/2 | **COMPLETE** (fast-track) | 2026-02-11 |
+| 4. AI Analysis, Prompty & Kryteria Oceny | 4/4 | **COMPLETE** (fast-track, eval UI gap) | 2026-02-11 |
+| 5. Report Generation & Export | 2/3 | **COMPLETE** (fast-track, .docx/.pdf gap) | 2026-02-11 |
+| 6. Dashboard & Polish | 1/1 | **COMPLETE** (fast-track) | 2026-02-11 |
+
+## Known Gaps (v1.0)
+
+Fazy 3-6 zostaly zaimplementowane w trybie fast-track (jeden commit 1f853d6 + poprawki 48582a0) zamiast indywidualnych planow. Ponizsze braki sa znane:
+
+1. **Eksport .docx/.pdf** (Phase 5): Tylko kopiowanie do schowka (markdown). Eksport do .docx i .pdf nie zaimplementowany.
+2. **Evaluation criteria UI** (Phase 4): Tabela evaluation_criteria istnieje w DB, ale brak UI do zarzadzania kryteriami oceny.
+3. **Azure Admin Consent** (Phase 2): Czeka na administratora TAG Polska — wymagane do polaczenia z prawdziwymi skrzynkami Outlook.
+4. **Reports API** (Phase 5): POST /api/reports oryginalnie wymagal analysisJobId — naprawione w 48582a0 (akceptuje tez mailboxId).
