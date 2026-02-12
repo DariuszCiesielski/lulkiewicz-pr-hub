@@ -48,10 +48,10 @@ Requirements for milestone v1.1. Each maps to roadmap phases 7+.
 
 ### Zarządzanie Grupami FB
 
-- [ ] **FBGRP-01**: CRUD grup FB z polem deweloper (grupowanie) + URL Facebooka
-- [ ] **FBGRP-02**: Status grupy (active/paused) — wstrzymanie monitoringu
-- [ ] **FBGRP-03**: Lista grup z metadanymi (deweloper, ostatni scrape, liczba postów, status)
-- [ ] **FBGRP-04**: Konfiguracja Apify: token API (szyfrowany AES-256) + Facebook session cookies
+- [x] **FBGRP-01**: CRUD grup FB z polem deweloper (grupowanie) + URL Facebooka
+- [x] **FBGRP-02**: Status grupy (active/paused) — wstrzymanie monitoringu
+- [x] **FBGRP-03**: Lista grup z metadanymi (deweloper, ostatni scrape, liczba postów, status)
+- [x] **FBGRP-04**: Konfiguracja Apify: token API (szyfrowany AES-256) + Facebook session cookies
 
 ### Scrapowanie Postów
 

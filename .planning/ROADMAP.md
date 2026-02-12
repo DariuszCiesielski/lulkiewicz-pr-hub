@@ -164,10 +164,10 @@ Plans:
 **Plans:** 4 plans
 
 Plans:
-- [ ] 08-01-PLAN.md — Migracja SQL (ALTER TABLE fb_groups + CREATE TABLE fb_settings) + aktualizacja typow TS
-- [ ] 08-02-PLAN.md — API routes: fb-groups CRUD/bulk/developers + fb-settings (encrypted credentials)
-- [ ] 08-03-PLAN.md — UI strony grup: tabela z sekcjami per deweloper, modal CRUD, bulk upload, bulk actions
-- [ ] 08-04-PLAN.md — UI strony ustawien: Apify token, FB cookies, Actor ID (super admin), instrukcje AI
+- [x] 08-01-PLAN.md — Migracja SQL (ALTER TABLE fb_groups + CREATE TABLE fb_settings) + aktualizacja typow TS
+- [x] 08-02-PLAN.md — API routes: fb-groups CRUD/bulk/developers + fb-settings (encrypted credentials)
+- [x] 08-03-PLAN.md — UI strony grup: tabela z sekcjami per deweloper, modal CRUD, bulk upload, bulk actions
+- [x] 08-04-PLAN.md — UI strony ustawien: Apify token, FB cookies, Actor ID (super admin), instrukcje AI
 
 ### Phase 9: Scraping Engine
 **Goal**: Admin moze scrapowac posty z grup FB przez Apify Actor z widocznym progressem, ochrona konta i obsluga bledow
@@ -241,7 +241,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 7. FB Foundation | 3/3 | **COMPLETE** | 2026-02-12 |
-| 8. Group Management | 0/4 | Planned | — |
+| 8. Group Management | 4/4 | **COMPLETE** | 2026-02-12 |
 | 9. Scraping Engine | 0/? | Pending | — |
 | 10. AI Sentiment Analysis | 0/? | Pending | — |
 | 11. Post Browsing & Dashboard | 0/? | Pending | — |

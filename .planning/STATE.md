@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-10)
 
 **Core value:** Hub narzędziowy — AI analizuje maile (email-analyzer) i posty z grup FB (fb-analyzer) dla audytu komunikacji administracji osiedli
-**Current focus:** Milestone v1.1 — FB Analyzer (phase 8 in progress)
+**Current focus:** Milestone v1.1 — FB Analyzer (phase 8 COMPLETE, ready for phase 9)
 
 ## Current Position
 
-Phase: Phase 8 (Group Management) — In progress
-Plan: 02 of 4
-Status: Plan 08-02 COMPLETE (API routes)
-Last activity: 2026-02-12 — Completed 08-02-PLAN.md (Group CRUD API routes)
+Phase: Phase 8 (Group Management) — COMPLETE
+Plan: 04 of 4
+Status: Phase 8 COMPLETE — all 4 plans executed, verified 4/4 must-haves
+Last activity: 2026-02-12 — Phase 8 execution complete (4 plans, 3 waves)
 
 Progress (v1.0 Email Analyzer): [##################..] ~90% (Phases 1-6 complete, known gaps: eval criteria UI, Azure consent)
-Progress (v1.1 FB Analyzer): [######..............] 30% (phase 7 COMPLETE, phase 8 plan 02/04 done)
+Progress (v1.1 FB Analyzer): [########............] 40% (phases 7-8 COMPLETE, ready for phase 9)
 
 ## Planning Status
 
@@ -53,11 +53,11 @@ Progress (v1.1 FB Analyzer): [######..............] 30% (phase 7 COMPLETE, phase
 - [x] 07-02-PLAN.md (Wave 1, autonomous) — Nawigacja FB Analyzer + shell pages (4646ff5, 14bc39d)
 - [x] 07-03-PLAN.md (Wave 2, autonomous) — Shared admin module + refaktoring 21 API routes (d40d07d, 9880239)
 
-**Phase 8 plans (4 plans) — IN PROGRESS:**
+**Phase 8 plans (4 plans, 3 waves) — ALL COMPLETE:**
 - [x] 08-01-PLAN.md (Wave 1, autonomous) — Data foundation: ALTER fb_groups + CREATE fb_settings + TS types (12f7607, df561a6)
 - [x] 08-02-PLAN.md (Wave 2, autonomous) — Group CRUD API routes: 5 endpoints, bulk ops, encrypted settings (db07756, 74bc879)
-- [ ] 08-03-PLAN.md — Group Management UI
-- [ ] 08-04-PLAN.md — Settings UI
+- [x] 08-03-PLAN.md (Wave 3, autonomous) — Groups UI: tabela, modal CRUD, bulk upload, bulk toolbar (a9c787d, 049c10d)
+- [x] 08-04-PLAN.md (Wave 3, autonomous) — Settings UI: Apify token, cookies, actor ID, AI instructions (b1211a3)
 
 ## Accumulated Context
 
@@ -130,7 +130,8 @@ organizations, organization_members, **mailboxes** (extended: +8 cols, sync_stat
 
 ## Session Continuity
 
-Last session: 2026-02-12T21:35Z
-Stopped at: Completed 08-02-PLAN.md — API routes (5 endpoints), next: 08-03
-Resume file: .planning/phases/08-group-management/08-02-SUMMARY.md
+Last session: 2026-02-12T23:30Z
+Stopped at: Phase 8 COMPLETE — all 4 plans executed, verified 4/4. ROADMAP+REQUIREMENTS updated but NOT YET COMMITTED.
+Resume file: .planning/phases/08-group-management/08-VERIFICATION.md
 Reference plan: C:\Users\dariu\.claude\plans\lexical-marinating-blossom.md
+Next step: Commit phase completion docs, then /gsd:plan-phase 9 (Scraping Engine)
