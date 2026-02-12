@@ -37,12 +37,17 @@ export default function ToolCard({ tool, canAccess }: ToolCardProps) {
         <div className="absolute top-3 right-3">
           <span
             className="rounded-full px-2.5 py-0.5 text-xs font-medium"
-            style={{ backgroundColor: 'var(--bg-accent)', color: 'var(--text-muted)' }}
+            style={{ backgroundColor: `${tool.color}15`, color: tool.color }}
           >
             Wkrótce
           </span>
         </div>
-        <Icon className="mb-4 h-8 w-8" style={{ color: 'var(--text-muted)' }} />
+        <div
+          className="mb-4 inline-flex items-center justify-center rounded-xl p-2.5"
+          style={{ backgroundColor: `${tool.color}15` }}
+        >
+          <Icon className="h-6 w-6" style={{ color: tool.color }} />
+        </div>
         <h3 className="text-lg font-semibold" style={{ color: 'var(--text-muted)' }}>
           {tool.name}
         </h3>
@@ -68,7 +73,12 @@ export default function ToolCard({ tool, canAccess }: ToolCardProps) {
             <span className="text-sm font-medium">Brak dostępu</span>
           </div>
         </div>
-        <Icon className="mb-4 h-8 w-8" style={{ color: 'var(--text-muted)' }} />
+        <div
+          className="mb-4 inline-flex items-center justify-center rounded-xl p-2.5"
+          style={{ backgroundColor: `${tool.color}15` }}
+        >
+          <Icon className="h-6 w-6" style={{ color: tool.color }} />
+        </div>
         <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
           {tool.name}
         </h3>
@@ -82,22 +92,27 @@ export default function ToolCard({ tool, canAccess }: ToolCardProps) {
   return (
     <Link
       href={tool.href}
-      className="group block rounded-xl border p-6 transition-all hover:-translate-y-1"
+      className="group block rounded-xl border p-6 transition-all duration-200 hover:-translate-y-1"
       style={{
         backgroundColor: 'var(--bg-secondary)',
         borderColor: 'var(--border-primary)',
         boxShadow: 'var(--shadow)',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = 'var(--accent-primary)';
-        e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+        e.currentTarget.style.borderColor = tool.color;
+        e.currentTarget.style.boxShadow = `0 4px 20px ${tool.color}33`;
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.borderColor = 'var(--border-primary)';
         e.currentTarget.style.boxShadow = 'var(--shadow)';
       }}
     >
-      <Icon className="mb-4 h-8 w-8" style={{ color: 'var(--accent-primary)' }} />
+      <div
+        className="mb-4 inline-flex items-center justify-center rounded-xl p-2.5"
+        style={{ backgroundColor: `${tool.color}20` }}
+      >
+        <Icon className="h-6 w-6" style={{ color: tool.color }} />
+      </div>
       <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
         {tool.name}
       </h3>
