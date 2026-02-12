@@ -141,7 +141,9 @@ export default function AISettingsPage() {
         </div>
       )}
 
-      <div
+      <form
+        onSubmit={(e) => { e.preventDefault(); handleSave(); }}
+        autoComplete="off"
         className="rounded-lg border p-6 space-y-5"
         style={{
           borderColor: 'var(--border-primary)',
@@ -204,6 +206,10 @@ export default function AISettingsPage() {
               type={showKey ? 'text' : 'password'}
               value={config.api_key}
               onChange={(e) => setConfig({ ...config, api_key: e.target.value })}
+              autoComplete="off"
+              spellCheck={false}
+              data-lpignore="true"
+              data-1p-ignore
               className="w-full rounded-md border px-3 py-2 pr-10 text-sm outline-none"
               style={{
                 borderColor: 'var(--border-primary)',
@@ -265,7 +271,7 @@ export default function AISettingsPage() {
 
         {/* Save button */}
         <button
-          onClick={handleSave}
+          type="submit"
           disabled={isSaving}
           className="flex items-center gap-2 rounded-md px-4 py-2 text-sm text-white transition-colors hover:opacity-90 disabled:opacity-50"
           style={{ backgroundColor: 'var(--accent-primary)' }}
@@ -273,7 +279,7 @@ export default function AISettingsPage() {
           <Save className="h-4 w-4" />
           {isSaving ? 'Zapisywanie...' : 'Zapisz konfigurację'}
         </button>
-      </div>
+      </form>
     </div>
   );
 }
