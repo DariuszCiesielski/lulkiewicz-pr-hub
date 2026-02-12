@@ -79,7 +79,7 @@ export async function callAI(
         { role: 'user', content: userPrompt },
       ],
       temperature: config.temperature,
-      max_tokens: config.maxTokens,
+      max_completion_tokens: config.maxTokens,
     }),
   });
 
