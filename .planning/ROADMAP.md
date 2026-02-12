@@ -25,7 +25,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 ### v1.1 FB Analyzer (Phases 7-12)
 
-- [ ] **Phase 7: FB Foundation** - Migracja DB (6 tabel + RLS), typy TS, nawigacja sidebar, layout + shell pages, admin utilities extraction
+- [ ] **Phase 7: FB Foundation** - Migracja DB (6 tabel + RLS), typy TS, nawigacja sidebar, layout + shell pages, admin utilities extraction — **3 plans, 2 waves**
 - [ ] **Phase 8: Group Management** - CRUD grup FB, status active/paused, konfiguracja Apify (token szyfrowany + FB cookies)
 - [ ] **Phase 9: Scraping Engine** - Integracja Apify Actor API, dwufazowa architektura polling, ochrona konta FB, rate limiting, error handling
 - [ ] **Phase 10: AI Sentiment Analysis** - Kwalifikacja postow (sentyment + relevance + kategorie), domain-specific prompty PL, batch processing, edytowalne prompty
@@ -144,7 +144,12 @@ Plans:
   4. Typy TypeScript domeny FB (FbGroup, FbPost, FbComment, FbScrapeJob, FbAnalysisJob, FbReport) sa zdefiniowane i importowalne
   5. verifyAdmin() i getAdminClient() sa wyekstrahowane do shared module (src/lib/api/admin.ts) — nowe FB routes korzystaja z extracted utility
 
-Plans: TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 07-01-PLAN.md — Migracja SQL (6 tabel FB + RLS + indeksy) + typy TypeScript domeny FB
+- [ ] 07-02-PLAN.md — Aktywacja fb-analyzer na hub + sidebar nawigacja + layout + 6 stron shell
+- [ ] 07-03-PLAN.md — Ekstrakcja verifyAdmin()/getAdminClient() do shared module + aktualizacja 21 API routes
 
 ### Phase 8: Group Management
 **Goal**: Admin moze zarzadzac grupami FB (dodawac, edytowac, usuwac, wstrzymywac monitoring) i skonfigurowac polaczenie z Apify
@@ -229,7 +234,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 7. FB Foundation | 0/? | Pending | — |
+| 7. FB Foundation | 0/3 | **Planned** (3 plans, 2 waves) | — |
 | 8. Group Management | 0/? | Pending | — |
 | 9. Scraping Engine | 0/? | Pending | — |
 | 10. AI Sentiment Analysis | 0/? | Pending | — |
