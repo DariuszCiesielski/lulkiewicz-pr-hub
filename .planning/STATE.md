@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-02-10)
 ## Current Position
 
 Phase: Phase 8 (Group Management) — In progress
-Plan: 01 of 4
-Status: Plan 08-01 COMPLETE (data foundation)
-Last activity: 2026-02-12 — Completed 08-01-PLAN.md (SQL migration + TS types)
+Plan: 02 of 4
+Status: Plan 08-02 COMPLETE (API routes)
+Last activity: 2026-02-12 — Completed 08-02-PLAN.md (Group CRUD API routes)
 
 Progress (v1.0 Email Analyzer): [##################..] ~90% (Phases 1-6 complete, known gaps: eval criteria UI, Azure consent)
-Progress (v1.1 FB Analyzer): [#####...............] 25% (phase 7 COMPLETE, phase 8 plan 01/04 done)
+Progress (v1.1 FB Analyzer): [######..............] 30% (phase 7 COMPLETE, phase 8 plan 02/04 done)
 
 ## Planning Status
 
@@ -55,7 +55,7 @@ Progress (v1.1 FB Analyzer): [#####...............] 25% (phase 7 COMPLETE, phase
 
 **Phase 8 plans (4 plans) — IN PROGRESS:**
 - [x] 08-01-PLAN.md (Wave 1, autonomous) — Data foundation: ALTER fb_groups + CREATE fb_settings + TS types (12f7607, df561a6)
-- [ ] 08-02-PLAN.md — Group CRUD API routes
+- [x] 08-02-PLAN.md (Wave 2, autonomous) — Group CRUD API routes: 5 endpoints, bulk ops, encrypted settings (db07756, 74bc879)
 - [ ] 08-03-PLAN.md — Group Management UI
 - [ ] 08-04-PLAN.md — Settings UI
 
@@ -101,6 +101,9 @@ Progress (v1.1 FB Analyzer): [#####...............] 25% (phase 7 COMPLETE, phase
 - [08-01]: fb_settings jako key-value store (nie osobne kolumny) — elastycznosc dla nowych kluczy
 - [08-01]: FbGroupEnriched extends FbGroup — pola obliczane oddzielone od modelu DB
 - [08-01]: FbSettingsKey union type z template literal — developer_instruction:{name}
+- [08-02]: Record<string, unknown> cast dla Supabase string-based selects (brak generated types)
+- [08-02]: Bulk ops filtruja .is('deleted_at', null) — zapobiega operacjom na soft-deleted grupach
+- [08-02]: POST fb-settings waliduje prefiks klucza — tylko dozwolone klucze akceptowane
 
 ### Blockers/Concerns
 
@@ -127,7 +130,7 @@ organizations, organization_members, **mailboxes** (extended: +8 cols, sync_stat
 
 ## Session Continuity
 
-Last session: 2026-02-12T21:27Z
-Stopped at: Completed 08-01-PLAN.md — data foundation (SQL + types), next: 08-02
-Resume file: .planning/phases/08-group-management/08-01-SUMMARY.md
+Last session: 2026-02-12T21:35Z
+Stopped at: Completed 08-02-PLAN.md — API routes (5 endpoints), next: 08-03
+Resume file: .planning/phases/08-group-management/08-02-SUMMARY.md
 Reference plan: C:\Users\dariu\.claude\plans\lexical-marinating-blossom.md
