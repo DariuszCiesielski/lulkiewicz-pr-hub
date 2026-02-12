@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-10)
 
 **Core value:** Hub narzędziowy — AI analizuje maile (email-analyzer) i posty z grup FB (fb-analyzer) dla audytu komunikacji administracji osiedli
-**Current focus:** Milestone v1.1 — FB Analyzer (phase 7 in progress)
+**Current focus:** Milestone v1.1 — FB Analyzer (phase 8 in progress)
 
 ## Current Position
 
-Phase: Phase 7 (FB Foundation) — COMPLETE
-Plan: 03 of 3
-Status: Phase 7 COMPLETE — all 3 plans executed
-Last activity: 2026-02-12 — Completed 07-03-PLAN.md (shared admin module, refaktoring 21 API routes)
+Phase: Phase 8 (Group Management) — In progress
+Plan: 01 of 4
+Status: Plan 08-01 COMPLETE (data foundation)
+Last activity: 2026-02-12 — Completed 08-01-PLAN.md (SQL migration + TS types)
 
 Progress (v1.0 Email Analyzer): [##################..] ~90% (Phases 1-6 complete, known gaps: eval criteria UI, Azure consent)
-Progress (v1.1 FB Analyzer): [####................] 20% (phase 7 COMPLETE, ready for phase 8)
+Progress (v1.1 FB Analyzer): [#####...............] 25% (phase 7 COMPLETE, phase 8 plan 01/04 done)
 
 ## Planning Status
 
@@ -52,6 +52,12 @@ Progress (v1.1 FB Analyzer): [####................] 20% (phase 7 COMPLETE, ready
 - [x] 07-01-PLAN.md (Wave 1, autonomous) — Fundament danych: migracja SQL 6 tabel FB + typy TS (de508e7, d27709d)
 - [x] 07-02-PLAN.md (Wave 1, autonomous) — Nawigacja FB Analyzer + shell pages (4646ff5, 14bc39d)
 - [x] 07-03-PLAN.md (Wave 2, autonomous) — Shared admin module + refaktoring 21 API routes (d40d07d, 9880239)
+
+**Phase 8 plans (4 plans) — IN PROGRESS:**
+- [x] 08-01-PLAN.md (Wave 1, autonomous) — Data foundation: ALTER fb_groups + CREATE fb_settings + TS types (12f7607, df561a6)
+- [ ] 08-02-PLAN.md — Group CRUD API routes
+- [ ] 08-03-PLAN.md — Group Management UI
+- [ ] 08-04-PLAN.md — Settings UI
 
 ## Accumulated Context
 
@@ -92,6 +98,9 @@ Progress (v1.1 FB Analyzer): [####................] 20% (phase 7 COMPLETE, ready
 - [07-02]: Wszystkie children FB Analyzer = adminOnly: true (wzorzec email-analyzer)
 - [07-03]: Shared admin module src/lib/api/admin.ts — verifyAdmin()+getAdminClient() w jednym miejscu
 - [07-03]: Nowe FB routes importuja z @/lib/api/admin (nie kopiuja boilerplate)
+- [08-01]: fb_settings jako key-value store (nie osobne kolumny) — elastycznosc dla nowych kluczy
+- [08-01]: FbGroupEnriched extends FbGroup — pola obliczane oddzielone od modelu DB
+- [08-01]: FbSettingsKey union type z template literal — developer_instruction:{name}
 
 ### Blockers/Concerns
 
@@ -112,13 +121,13 @@ Progress (v1.1 FB Analyzer): [####................] 20% (phase 7 COMPLETE, ready
 - **Auto-deploy:** GitHub -> Vercel
 - **Supabase Access Token:** (NIE zapisywać w repo — użyj Supabase Dashboard → Account → Access Tokens)
 
-## Supabase Tables (Phase 7 updated)
+## Supabase Tables (Phase 8 updated)
 
-organizations, organization_members, **mailboxes** (extended: +8 cols, sync_status TEXT), mailbox_credentials, **emails** (extended: +13 cols, UNIQUE mailbox+internet_message_id), threads, reports, report_sections, section_templates, schedules, messages, app_allowed_users, **sync_jobs** (new: status, job_type, page_token, emails_fetched), **email_threads** (Phase 3: Union-Find threading), **analysis_jobs** (Phase 4: AI analysis jobs), **analysis_results** (Phase 4: per-thread results), **prompt_templates** (Phase 4: customizable prompts), **evaluation_criteria** (Phase 4: scoring rubrics, no UI yet), **fb_groups** (Phase 7: grupy FB do monitorowania), **fb_posts** (Phase 7: posty z grup, UNIQUE group+facebook_post_id), **fb_comments** (Phase 7: komentarze do postow), **fb_scrape_jobs** (Phase 7: zadania scrapowania Apify), **fb_analysis_jobs** (Phase 7: zadania analizy AI postow), **fb_reports** (Phase 7: raporty z analizy grup FB)
+organizations, organization_members, **mailboxes** (extended: +8 cols, sync_status TEXT), mailbox_credentials, **emails** (extended: +13 cols, UNIQUE mailbox+internet_message_id), threads, reports, report_sections, section_templates, schedules, messages, app_allowed_users, **sync_jobs** (new: status, job_type, page_token, emails_fetched), **email_threads** (Phase 3: Union-Find threading), **analysis_jobs** (Phase 4: AI analysis jobs), **analysis_results** (Phase 4: per-thread results), **prompt_templates** (Phase 4: customizable prompts), **evaluation_criteria** (Phase 4: scoring rubrics, no UI yet), **fb_groups** (Phase 7+8: grupy FB, +ai_instruction, +deleted_at, +cookies_encrypted), **fb_posts** (Phase 7: posty z grup, UNIQUE group+facebook_post_id), **fb_comments** (Phase 7: komentarze do postow), **fb_scrape_jobs** (Phase 7: zadania scrapowania Apify), **fb_analysis_jobs** (Phase 7: zadania analizy AI postow), **fb_reports** (Phase 7: raporty z analizy grup FB), **fb_settings** (Phase 8: key-value config store, RLS admin-only)
 
 ## Session Continuity
 
-Last session: 2026-02-12T16:10Z
-Stopped at: Completed 07-03-PLAN.md — Phase 7 COMPLETE, next: plan Phase 8
-Resume file: .planning/phases/07-fb-foundation/07-03-SUMMARY.md
+Last session: 2026-02-12T21:27Z
+Stopped at: Completed 08-01-PLAN.md — data foundation (SQL + types), next: 08-02
+Resume file: .planning/phases/08-group-management/08-01-SUMMARY.md
 Reference plan: C:\Users\dariu\.claude\plans\lexical-marinating-blossom.md
