@@ -4,20 +4,35 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import type { ConnectionType, MailboxFormData } from '@/types/email';
 
+export interface MailboxEditData {
+  id: string;
+  email_address: string;
+  display_name: string | null;
+  connection_type: ConnectionType;
+  tenant_id: string;
+  client_id: string;
+}
+
 interface MailboxFormProps {
   onSubmit: (data: MailboxFormData) => Promise<void>;
   onClose: () => void;
+  /** If provided, form is in edit mode with pre-filled values */
+  initialData?: MailboxEditData;
 }
 
-export default function MailboxForm({ onSubmit, onClose }: MailboxFormProps) {
-  const [emailAddress, setEmailAddress] = useState('');
-  const [displayName, setDisplayName] = useState('');
-  const [connectionType, setConnectionType] = useState<ConnectionType>('ropc');
+export default function MailboxForm({ onSubmit, onClose, initialData }: MailboxFormProps) {
+  const isEditMode = !!initialData;
+
+  const [emailAddress, setEmailAddress] = useState(initialData?.email_address ?? '');
+  const [displayName, setDisplayName] = useState(initialData?.display_name ?? '');
+  const [connectionType, setConnectionType] = useState<ConnectionType>(
+    initialData?.connection_type ?? 'client_credentials'
+  );
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [clientSecret, setClientSecret] = useState('');
-  const [tenantId, setTenantId] = useState('');
-  const [clientId, setClientId] = useState('');
+  const [tenantId, setTenantId] = useState(initialData?.tenant_id ?? '');
+  const [clientId, setClientId] = useState(initialData?.client_id ?? '');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,7 +65,7 @@ export default function MailboxForm({ onSubmit, onClose }: MailboxFormProps) {
       <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-slate-900">
-            Dodaj skrzynkę
+            {isEditMode ? 'Edytuj skrzynkę' : 'Dodaj skrzynkę'}
           </h2>
           <button
             onClick={onClose}
@@ -124,29 +139,35 @@ export default function MailboxForm({ onSubmit, onClose }: MailboxFormProps) {
             <>
               <div>
                 <label className="block text-sm font-medium text-slate-700">
-                  Login (email) <span className="text-red-500">*</span>
+                  Login (email) {!isEditMode && <span className="text-red-500">*</span>}
                 </label>
                 <input
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  required
-                  placeholder="user@firma.onmicrosoft.com"
+                  required={!isEditMode}
+                  placeholder={isEditMode ? 'Pozostaw puste, aby nie zmieniać' : 'user@firma.onmicrosoft.com'}
                   className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700">
-                  Hasło <span className="text-red-500">*</span>
+                  Hasło {!isEditMode && <span className="text-red-500">*</span>}
                 </label>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  required
+                  required={!isEditMode}
+                  placeholder={isEditMode ? 'Pozostaw puste, aby nie zmieniać' : ''}
                   className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
+              {isEditMode && (
+                <p className="text-xs text-slate-500">
+                  Dane logowania są zaszyfrowane. Wypełnij oba pola tylko jeśli chcesz je zmienić.
+                </p>
+              )}
             </>
           )}
 
@@ -154,16 +175,20 @@ export default function MailboxForm({ onSubmit, onClose }: MailboxFormProps) {
           {connectionType === 'client_credentials' && (
             <div>
               <label className="block text-sm font-medium text-slate-700">
-                Client Secret <span className="text-red-500">*</span>
+                Client Secret
               </label>
               <input
                 type="password"
                 value={clientSecret}
                 onChange={(e) => setClientSecret(e.target.value)}
-                required
-                placeholder="Sekret aplikacji z Azure Portal"
+                placeholder={isEditMode ? 'Pozostaw puste, aby nie zmieniać' : 'Domyślny z konfiguracji'}
                 className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
+              <p className="mt-1 text-xs text-slate-500">
+                {isEditMode
+                  ? 'Pozostaw puste, aby zachować obecny secret'
+                  : 'Pozostaw puste, aby użyć domyślnego secretu z konfiguracji'}
+              </p>
             </div>
           )}
 
@@ -219,7 +244,9 @@ export default function MailboxForm({ onSubmit, onClose }: MailboxFormProps) {
               disabled={isLoading}
               className="rounded-md bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-800 disabled:opacity-50"
             >
-              {isLoading ? 'Dodawanie...' : 'Dodaj skrzynkę'}
+              {isLoading
+                ? (isEditMode ? 'Zapisywanie...' : 'Dodawanie...')
+                : (isEditMode ? 'Zapisz zmiany' : 'Dodaj skrzynkę')}
             </button>
           </div>
         </form>

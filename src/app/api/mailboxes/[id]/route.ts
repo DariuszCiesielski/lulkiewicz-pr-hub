@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { encrypt } from '@/lib/crypto/encrypt';
 import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
+import type { ConnectionType } from '@/types/email';
 
-const MAILBOX_SELECT_COLUMNS = 'id, email_address, display_name, connection_type, tenant_id, client_id, sync_status, last_sync_at, total_emails, delta_link, created_at, updated_at';
+const MAILBOX_SELECT_COLUMNS = 'id, email_address, display_name, connection_type, tenant_id, client_id, sync_status, last_sync_at, total_emails, delta_link, created_at, updated_at, connection_tested_at, connection_test_ok';
 
 export async function GET(
   _request: NextRequest,
@@ -23,6 +25,108 @@ export async function GET(
   if (error) {
     if (error.code === 'PGRST116') {
       return NextResponse.json({ error: 'Skrzynka nie została znaleziona' }, { status: 404 });
+    }
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json(data);
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  if (!(await verifyAdmin())) {
+    return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
+  }
+
+  const { id } = await params;
+  const adminClient = getAdminClient();
+
+  let body: {
+    email_address?: string;
+    display_name?: string;
+    connection_type?: ConnectionType;
+    tenant_id?: string;
+    client_id?: string;
+    username?: string;
+    password?: string;
+    client_secret?: string;
+  };
+
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Nieprawidłowy format danych' }, { status: 400 });
+  }
+
+  // Verify mailbox exists
+  const { data: existing, error: findError } = await adminClient
+    .from('mailboxes')
+    .select('id, connection_type')
+    .eq('id', id)
+    .single();
+
+  if (findError || !existing) {
+    return NextResponse.json({ error: 'Skrzynka nie została znaleziona' }, { status: 404 });
+  }
+
+  // Build update object — only include provided fields
+  const update: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  };
+
+  if (body.email_address !== undefined) {
+    if (!body.email_address.includes('@')) {
+      return NextResponse.json({ error: 'Nieprawidłowy adres email' }, { status: 400 });
+    }
+    update.email_address = body.email_address;
+  }
+
+  if (body.display_name !== undefined) update.display_name = body.display_name || null;
+  if (body.connection_type !== undefined) update.connection_type = body.connection_type;
+  // Only update tenant_id / client_id if non-empty value provided (empty = keep existing)
+  if (body.tenant_id) update.tenant_id = body.tenant_id;
+  if (body.client_id) update.client_id = body.client_id;
+
+  // Re-encrypt credentials if provided
+  const connectionType = body.connection_type || existing.connection_type;
+
+  if (connectionType === 'ropc' && body.username && body.password) {
+    try {
+      update.credentials_encrypted = encrypt(JSON.stringify({
+        username: body.username,
+        password: body.password,
+      }));
+    } catch {
+      return NextResponse.json({ error: 'Błąd szyfrowania danych logowania' }, { status: 500 });
+    }
+  } else if (connectionType === 'client_credentials' && body.client_secret) {
+    try {
+      update.credentials_encrypted = encrypt(JSON.stringify({
+        clientSecret: body.client_secret,
+      }));
+    } catch {
+      return NextResponse.json({ error: 'Błąd szyfrowania danych logowania' }, { status: 500 });
+    }
+  }
+
+  // Reset test status when credentials change
+  if (update.credentials_encrypted || body.tenant_id || body.client_id || body.connection_type) {
+    update.connection_tested_at = null;
+    update.connection_test_ok = null;
+  }
+
+  const { data, error } = await adminClient
+    .from('mailboxes')
+    .update(update)
+    .eq('id', id)
+    .select(MAILBOX_SELECT_COLUMNS)
+    .single();
+
+  if (error) {
+    if (error.code === '23505') {
+      return NextResponse.json({ error: 'Skrzynka o tym adresie email już istnieje' }, { status: 409 });
     }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

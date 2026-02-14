@@ -93,6 +93,15 @@ export async function POST(
 
     const messageCount = inbox?.totalItemCount ?? 0;
 
+    // Save successful test result to DB
+    await adminClient
+      .from('mailboxes')
+      .update({
+        connection_tested_at: new Date().toISOString(),
+        connection_test_ok: true,
+      })
+      .eq('id', id);
+
     return NextResponse.json({
       success: true,
       message: `Połączenie udane. Skrzynka zawiera ${messageCount} wiadomości.`,
@@ -113,6 +122,15 @@ export async function POST(
     } else {
       message = `Błąd Graph API: ${graphError?.message || 'Nieznany błąd'}`;
     }
+
+    // Save failed test result to DB
+    await adminClient
+      .from('mailboxes')
+      .update({
+        connection_tested_at: new Date().toISOString(),
+        connection_test_ok: false,
+      })
+      .eq('id', id);
 
     return NextResponse.json(
       { success: false, message },

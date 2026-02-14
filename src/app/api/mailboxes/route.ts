@@ -4,7 +4,7 @@ import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
 import type { ConnectionType } from '@/types/email';
 
 // Columns to return in GET responses (never credentials_encrypted)
-const MAILBOX_SELECT_COLUMNS = 'id, email_address, display_name, connection_type, tenant_id, client_id, sync_status, last_sync_at, total_emails, delta_link, created_at, updated_at';
+const MAILBOX_SELECT_COLUMNS = 'id, email_address, display_name, connection_type, tenant_id, client_id, sync_status, last_sync_at, total_emails, delta_link, created_at, updated_at, connection_tested_at, connection_test_ok';
 
 export async function GET() {
   if (!(await verifyAdmin())) {
@@ -93,9 +93,9 @@ export async function POST(request: Request) {
       );
     }
   } else if (connection_type === 'client_credentials') {
-    if (!client_secret) {
+    if (!client_secret && !process.env.AZURE_CLIENT_SECRET) {
       return NextResponse.json(
-        { error: 'Client Secret jest wymagany dla typu połączenia OAuth2' },
+        { error: 'Client Secret jest wymagany dla typu połączenia OAuth2 (podaj w formularzu lub ustaw AZURE_CLIENT_SECRET)' },
         { status: 400 }
       );
     }
@@ -106,9 +106,10 @@ export async function POST(request: Request) {
     );
   }
 
-  // Use env defaults if tenant_id / client_id not provided
+  // Use env defaults if tenant_id / client_id / client_secret not provided
   const resolvedTenantId = tenant_id || process.env.AZURE_TENANT_ID;
   const resolvedClientId = client_id || process.env.AZURE_CLIENT_ID;
+  const resolvedClientSecret = client_secret || process.env.AZURE_CLIENT_SECRET;
 
   if (!resolvedTenantId) {
     return NextResponse.json(
@@ -130,7 +131,7 @@ export async function POST(request: Request) {
     if (connection_type === 'ropc') {
       credentialsEncrypted = encrypt(JSON.stringify({ username, password }));
     } else {
-      credentialsEncrypted = encrypt(JSON.stringify({ clientSecret: client_secret }));
+      credentialsEncrypted = encrypt(JSON.stringify({ clientSecret: resolvedClientSecret }));
     }
   } catch (err) {
     console.error('Encryption error:', err);

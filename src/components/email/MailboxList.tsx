@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Wifi, RefreshCw, Trash2, Mail, Play, RotateCcw } from 'lucide-react';
+import { Wifi, Trash2, Mail, Play, RotateCcw, CheckCircle2, XCircle, CircleDashed, Pencil } from 'lucide-react';
 import ConnectionStatus from './ConnectionStatus';
 import SyncProgress from './SyncProgress';
 import type { SyncStatus, SyncJobType } from '@/types/email';
@@ -17,6 +17,8 @@ export interface MailboxListItem {
   total_emails: number;
   email_count: number;
   created_at: string;
+  connection_tested_at: string | null;
+  connection_test_ok: boolean | null;
 }
 
 export interface MailboxSyncState {
@@ -31,16 +33,29 @@ interface MailboxListProps {
   mailboxes: MailboxListItem[];
   onTestConnection: (id: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
+  onEdit: (mailbox: MailboxListItem) => void;
   onStartSync: (id: string) => void;
   onDeltaSync: (id: string) => void;
   onRetrySync: () => void;
   syncState: MailboxSyncState | null;
 }
 
+function formatTestDate(isoDate: string): string {
+  const date = new Date(isoDate);
+  return date.toLocaleDateString('pl-PL', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 export default function MailboxList({
   mailboxes,
   onTestConnection,
   onDelete,
+  onEdit,
   onStartSync,
   onDeltaSync,
   onRetrySync,
@@ -156,6 +171,33 @@ export default function MailboxList({
                   <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
                     {mailbox.email_count} wiadomosci
                   </span>
+                  {/* Persistent connection test indicator */}
+                  {mailbox.connection_tested_at ? (
+                    <span
+                      className="flex items-center gap-1 text-xs"
+                      style={{
+                        color: mailbox.connection_test_ok ? '#22c55e' : '#ef4444',
+                      }}
+                    >
+                      {mailbox.connection_test_ok ? (
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                      ) : (
+                        <XCircle className="h-3.5 w-3.5" />
+                      )}
+                      {mailbox.connection_test_ok ? 'Połączono' : 'Błąd połączenia'}
+                      <span style={{ color: 'var(--text-muted)' }}>
+                        · {formatTestDate(mailbox.connection_tested_at)}
+                      </span>
+                    </span>
+                  ) : (
+                    <span
+                      className="flex items-center gap-1 text-xs"
+                      style={{ color: 'var(--text-muted)' }}
+                    >
+                      <CircleDashed className="h-3.5 w-3.5" />
+                      Nie testowano
+                    </span>
+                  )}
                 </div>
 
                 {/* Test connection result */}
@@ -221,6 +263,21 @@ export default function MailboxList({
                     Odswiez
                   </button>
                 )}
+
+                {/* Edit */}
+                <button
+                  onClick={() => onEdit(mailbox)}
+                  disabled={disableActions}
+                  className="flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm transition-colors hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{
+                    borderColor: 'var(--border-primary)',
+                    color: 'var(--text-secondary)',
+                  }}
+                  title="Edytuj skrzynke"
+                >
+                  <Pencil className="h-4 w-4" />
+                  Edytuj
+                </button>
 
                 {/* Test connection */}
                 <button

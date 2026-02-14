@@ -6,6 +6,7 @@ import { Mail, Plus, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import MailboxList from '@/components/email/MailboxList';
 import MailboxForm from '@/components/email/MailboxForm';
+import type { MailboxEditData } from '@/components/email/MailboxForm';
 import type { MailboxListItem } from '@/components/email/MailboxList';
 import type { MailboxFormData } from '@/types/email';
 import { useSyncJob } from '@/hooks/useSyncJob';
@@ -18,6 +19,7 @@ export default function MailboxesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [editingMailbox, setEditingMailbox] = useState<MailboxEditData | null>(null);
 
   // Sync state
   const [activeSyncMailboxId, setActiveSyncMailboxId] = useState<string | null>(null);
@@ -30,8 +32,8 @@ export default function MailboxesPage() {
     }
   }, [isAdmin, authLoading, router]);
 
-  const fetchMailboxes = useCallback(async () => {
-    setIsLoading(true);
+  const fetchMailboxes = useCallback(async (silent = false) => {
+    if (!silent) setIsLoading(true);
     setError(null);
     try {
       const res = await fetch('/api/mailboxes');
@@ -44,7 +46,7 @@ export default function MailboxesPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Blad');
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   }, []);
 
@@ -74,8 +76,37 @@ export default function MailboxesPage() {
 
   const handleTestConnection = async (_id: string) => {
     // Test result is handled by MailboxList component directly
-    // Just refresh the list afterwards
-    await fetchMailboxes();
+    // Silently refresh the list so we don't unmount MailboxList and lose test result
+    await fetchMailboxes(true);
+  };
+
+  const handleEdit = (mailbox: MailboxListItem) => {
+    setEditingMailbox({
+      id: mailbox.id,
+      email_address: mailbox.email_address,
+      display_name: mailbox.display_name,
+      connection_type: mailbox.connection_type as 'ropc' | 'client_credentials',
+      tenant_id: '',
+      client_id: '',
+    });
+  };
+
+  const handleUpdateMailbox = async (formData: MailboxFormData) => {
+    if (!editingMailbox) return;
+
+    const res = await fetch(`/api/mailboxes/${editingMailbox.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData),
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || 'Nie udało się zaktualizować skrzynki');
+    }
+
+    setEditingMailbox(null);
+    await fetchMailboxes(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -216,6 +247,7 @@ export default function MailboxesPage() {
           mailboxes={mailboxes}
           onTestConnection={handleTestConnection}
           onDelete={handleDelete}
+          onEdit={handleEdit}
           onStartSync={handleStartSync}
           onDeltaSync={handleDeltaSync}
           onRetrySync={handleRetrySync}
@@ -227,6 +259,14 @@ export default function MailboxesPage() {
         <MailboxForm
           onSubmit={handleCreateMailbox}
           onClose={() => setShowForm(false)}
+        />
+      )}
+
+      {editingMailbox && (
+        <MailboxForm
+          onSubmit={handleUpdateMailbox}
+          onClose={() => setEditingMailbox(null)}
+          initialData={editingMailbox}
         />
       )}
     </div>

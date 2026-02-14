@@ -62,10 +62,10 @@ const NAV_ITEMS: NavItem[] = [
       { href: '/fb-analyzer/settings', label: 'Ustawienia', icon: Cog, adminOnly: true },
     ],
   },
-  { href: '#', label: 'Social Media Manager', icon: Share2, color: '#ec4899', comingSoon: true },
-  { href: '#', label: 'Generator Artykułów', icon: FileText, color: '#10b981', comingSoon: true },
-  { href: '#', label: 'Cold Mailing', icon: Send, color: '#f59e0b', comingSoon: true },
-  { href: '#', label: 'Analizator Kampanii', icon: BarChart3, color: '#06b6d4', comingSoon: true },
+  { href: '#social-media-manager', label: 'Social Media Manager', icon: Share2, color: '#ec4899', comingSoon: true },
+  { href: '#generator-artykulow', label: 'Generator Artykułów', icon: FileText, color: '#10b981', comingSoon: true },
+  { href: '#cold-mailing', label: 'Cold Mailing', icon: Send, color: '#f59e0b', comingSoon: true },
+  { href: '#analizator-kampanii', label: 'Analizator Kampanii', icon: BarChart3, color: '#06b6d4', comingSoon: true },
   { href: '/admin', label: 'Panel admina', icon: Shield, adminOnly: true },
 ];
 
