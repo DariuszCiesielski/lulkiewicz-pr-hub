@@ -190,7 +190,7 @@ export default function MailboxesPage() {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={fetchMailboxes}
+            onClick={() => fetchMailboxes()}
             className="flex items-center gap-1 rounded-md border px-3 py-2 text-sm transition-colors hover:opacity-80"
             style={{
               borderColor: 'var(--border-primary)',
