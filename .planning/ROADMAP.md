@@ -14,10 +14,11 @@ Milestone v1.1 dodaje drugi modul -- Analizator Grup FB -- ktory scrapuje posty 
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-### v1.0 Email Analyzer (Phases 1-6) -- COMPLETE
+### v1.0 Email Analyzer (Phases 1-6) -- COMPLETE (+ Phase 2.1 INSERTED)
 
 - [x] **Phase 1: Hub Shell & Fundament** - Auth, role, design system, grid narzedziowy, sidebar, responsywnosc
 - [x] **Phase 2: Email Connection & Fetching** - Podlaczenie skrzynek Outlook, bulk sync maili, parsowanie, baza danych
+- [x] **Phase 2.1: Multi-Folder Sync** (INSERTED) - Sync wszystkich folderow (nie tylko Inbox), legenda statusow, polskie znaki — **3 plans, 2 waves**
 - [x] **Phase 3: Email Threading & Browsing** - Grupowanie maili w watki, widok watkow, filtrowanie, zakres czasowy
 - [x] **Phase 4: AI Analysis, Prompty & Kryteria Oceny** - Analiza AI per watek, Map-Reduce pipeline, prompt management, custom scoring
 - [x] **Phase 5: Report Generation & Export** - Generowanie raportow (wew/kliencki), podglad, edycja, eksport docx/pdf/clipboard
@@ -235,6 +236,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 4. AI Analysis, Prompty & Kryteria Oceny | 4/4 | **COMPLETE** (fast-track, eval UI gap) | 2026-02-11 |
 | 5. Report Generation & Export | 2/3 | **COMPLETE** (fast-track, .docx/.pdf gap) | 2026-02-11 |
 | 6. Dashboard & Polish | 1/1 | **COMPLETE** (fast-track) | 2026-02-11 |
+| 2.1. Multi-Folder Sync | 3/3 | **COMPLETE** (INSERTED) | 2026-02-15 |
 
 ### v1.1 FB Analyzer
 
