@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-10)
 Phase: Phase 2.2 (Email Analyzer Quality) — ALL COMPLETE
 Plan: 4 of 4
 Status: All plans (02.2-01 through 02.2-04) COMPLETE. Phase 2.2 done.
-Last activity: 2026-02-15 — Completed 02.2-03-PLAN.md (Synthetic Reports)
+Last activity: 2026-02-15 — v1.0.3 quality fixes (Polish diacritics, report filtering, delete reports, remove Demo)
 
 Progress (v1.0 Email Analyzer): [####################] 100% (Phases 1-6 + Phase 2.1 + Phase 2.2 ALL COMPLETE)
 Progress (v1.1 FB Analyzer): [########............] 40% (phases 7-8 COMPLETE, ready for phase 9)
@@ -157,6 +157,11 @@ Progress (v1.1 FB Analyzer): [########............] 40% (phases 7-8 COMPLETE, re
 - [Cost tracking]: pricing.ts — 10 modeli, 3 providerzy (OpenAI GPT-5.x, Anthropic Claude 4.x, Google Gemini 2.5/3)
 - [Cost tracking]: Legacy fallback — stare dane bez split tokens uzywaja blended rate 70/30
 - [Cost tracking]: SQL migration: prompt_tokens, completion_tokens, cost_usd na analysis_results
+- [v1.0.3]: Report generation respects in_internal_report/in_client_report flags from prompt_templates DB
+- [v1.0.3]: _global_context excluded from report synthesis (context only, loaded as globalContext)
+- [v1.0.3]: Global context loaded from _global_context in prompt_templates (not report_global)
+- [v1.0.3]: DELETE /api/reports/[id] — cascade delete sections + report
+- [v1.0.3]: Demo badges removed from Sidebar (production mode)
 
 ### Blockers/Concerns
 
@@ -183,8 +188,8 @@ organizations, organization_members, **mailboxes** (extended: +8 cols, sync_stat
 
 ## Session Continuity
 
-Last session: 2026-02-15T20:00Z
-Stopped at: Phase 2.2 COMPLETE + exact cost tracking + analysis pause/resume
+Last session: 2026-02-15T22:00Z
+Stopped at: v1.0.3 released — quality fixes, report section filtering, delete reports
 Resume file: .planning/phases/02.2-email-analyzer-quality/02.2-VERIFICATION.md
 Next step: Phase 9 (FB Scraping Engine) — /gsd:discuss-phase 9
-Version tag: v1.0.2
+Version tag: v1.0.3
