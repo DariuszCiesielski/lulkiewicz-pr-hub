@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-10)
 ## Current Position
 
 Phase: Phase 2.2 (Email Analyzer Quality) — IN PROGRESS
-Plan: 1 of 4
-Status: Plan 02.2-01 (Thread Intelligence) COMPLETE. Plan 02.2-02 (Analysis UX) IN PROGRESS.
-Last activity: 2026-02-15 — Completed 02.2-01-PLAN.md (Thread Intelligence)
+Plan: 2 of 4
+Status: Plan 02.2-01 + 02.2-02 COMPLETE (Wave 1 done). Wave 2 ready: 02.2-03, 02.2-04.
+Last activity: 2026-02-15 — Completed 02.2-02-PLAN.md (Analysis UX)
 
-Progress (v1.0 Email Analyzer): [###################.] 95% (Phases 1-6 + Phase 2.1 COMPLETE, Phase 2.2 plan 1/4 done)
+Progress (v1.0 Email Analyzer): [###################.] 95% (Phases 1-6 + Phase 2.1 COMPLETE, Phase 2.2 plan 2/4 done)
 Progress (v1.1 FB Analyzer): [########............] 40% (phases 7-8 COMPLETE, ready for phase 9)
 
 ## Planning Status
@@ -60,7 +60,7 @@ Progress (v1.1 FB Analyzer): [########............] 40% (phases 7-8 COMPLETE, re
 
 **Phase 2.2 plans (4 plans, 2 waves) — IN PROGRESS:**
 - [x] 02.2-01-PLAN.md (Wave 1, autonomous) — Thread Intelligence: AI summary per wątek, ulepszone statusy, persisted mailbox (d5cee2a, 8ad58e6, 1e67f83, 3f2d708, 4f42b83)
-- [ ] 02.2-02-PLAN.md (Wave 1, autonomous) — Analysis UX: date presets, spinner+ETA, dźwięk, historia analiz
+- [x] 02.2-02-PLAN.md (Wave 1, autonomous) — Analysis UX: date presets, spinner+ETA, dźwięk, historia analiz (27cb22b, b7b9d60, d4659db, 2bd0bcc)
 - [ ] 02.2-03-PLAN.md (Wave 2, checkpoint) — Synthetic Reports: AI REDUCE, formatowanie, nazwy DOCX
 - [ ] 02.2-04-PLAN.md (Wave 2, autonomous) — UI/UX Polish: kontrast WCAG AA, nawigacja, prompt CRUD, podgląd klucza API
 
@@ -138,6 +138,10 @@ Progress (v1.1 FB Analyzer): [########............] 40% (phases 7-8 COMPLETE, re
 - [02.2-01]: Graceful fallback — brak AI config = puste summary, status z heurystyki
 - [02.2-01]: localStorage klucz 'ea-selected-mailbox' wspoldzielony miedzy threads/analyze/reports
 - [02.2-01]: ThreadStatus rozszerzony: open, closed_positive, closed_negative, pending (+ legacy 'closed')
+- [02.2-02]: Web Audio API oscillator dla dźwiękowego powiadomienia (nie base64 audio)
+- [02.2-02]: ETA obliczane w AnalysisProgress z props startedAt (hook = dane, komponent = prezentacja)
+- [02.2-02]: Historia analiz jako sekcja inline na stronie analyze (nie osobna strona)
+- [02.2-02]: GET /api/analysis dodany do istniejącego route.ts obok POST (RESTful)
 
 ### Blockers/Concerns
 
@@ -165,6 +169,6 @@ organizations, organization_members, **mailboxes** (extended: +8 cols, sync_stat
 ## Session Continuity
 
 Last session: 2026-02-15T13:35Z
-Stopped at: Completed 02.2-01-PLAN.md (Thread Intelligence)
-Resume file: .planning/phases/02.2-email-analyzer-quality/02.2-01-SUMMARY.md
-Next step: Complete 02.2-02-PLAN.md (Analysis UX) → 02.2-03 (Wave 2) → 02.2-04 (Wave 2)
+Stopped at: Completed 02.2-02-PLAN.md (Analysis UX)
+Resume file: .planning/phases/02.2-email-analyzer-quality/02.2-02-SUMMARY.md
+Next step: Execute 02.2-03-PLAN.md (Wave 2, Synthetic Reports) → 02.2-04 (Wave 2, UI/UX Polish)
