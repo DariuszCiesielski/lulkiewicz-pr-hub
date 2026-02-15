@@ -6,9 +6,11 @@
  * 2. Fallback: normalized subject match (max 30 days gap)
  *
  * Produces email_threads records and updates emails with thread_id.
+ * Optionally generates AI summaries and smart status detection per thread.
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { loadAIConfig, callAI, type AIConfig } from '@/lib/ai/ai-provider';
 
 // --- Subject normalization ---
 
@@ -79,8 +81,10 @@ interface RawEmail {
   mailbox_id: string;
   subject: string | null;
   from_address: string | null;
+  from_name: string | null;
   sent_at: string | null;
   received_at: string;
+  body_text: string | null;
   header_message_id: string | null;
   header_in_reply_to: string | null;
   header_references: string[];
@@ -91,13 +95,150 @@ interface ThreadGroup {
   subjectNormalized: string;
 }
 
+// --- AI Summary types ---
+
+interface ThreadSummaryResult {
+  summary: string;
+  status: 'open' | 'closed_positive' | 'closed_negative' | 'pending';
+}
+
+// --- AI Summary generation ---
+
+const AI_SUMMARY_SYSTEM_PROMPT = `Jesteś asystentem zarządcy nieruchomości. Analizujesz wątki emailowe z administracji osiedli.
+
+Dla każdego wątku musisz zwrócić JSON z dwoma polami:
+1. "summary" — zwięzłe podsumowanie wątku w 1-2 zdaniach po polsku. Opisz główny temat i aktualny stan sprawy.
+2. "status" — jeden z czterech statusów:
+   - "open" — sprawa w toku, trwa wymiana wiadomości, obie strony aktywne
+   - "pending" — ostatnia wiadomość jest od mieszkańca/zewnętrznej osoby, administracja jeszcze nie odpowiedziała
+   - "closed_positive" — sprawa zakończona pozytywnie (problem rozwiązany, prośba spełniona, podziękowanie)
+   - "closed_negative" — sprawa zakończona negatywnie (odmowa, brak rozwiązania, reklamacja odrzucona, eskalacja)
+
+Zwracaj WYŁĄCZNIE prawidłowy JSON bez dodatkowego tekstu:
+{"summary": "...", "status": "..."}`;
+
+/**
+ * Build a user prompt from thread emails for AI summary.
+ * Includes first email body + last email body, max ~3000 chars total.
+ */
+function buildSummaryUserPrompt(
+  threadEmails: RawEmail[],
+  mailboxEmail: string
+): string {
+  const MAX_BODY_CHARS = 1200;
+
+  function formatEmail(e: RawEmail): string {
+    const direction = isIncoming(e.from_address, mailboxEmail) ? 'PRZYCHODZACY' : 'WYCHODZACY';
+    const date = e.sent_at || e.received_at;
+    const body = (e.body_text || '').slice(0, MAX_BODY_CHARS);
+    return `[${direction}] Od: ${e.from_name || e.from_address || 'nieznany'} | Data: ${date}\n${body}`;
+  }
+
+  const parts: string[] = [];
+  parts.push(`Temat: ${threadEmails[0].subject || '(brak tematu)'}`);
+  parts.push(`Liczba wiadomości: ${threadEmails.length}`);
+  parts.push('');
+
+  // First email
+  parts.push('--- Pierwsza wiadomość ---');
+  parts.push(formatEmail(threadEmails[0]));
+
+  // Last email (if different from first)
+  if (threadEmails.length > 1) {
+    const lastEmail = threadEmails[threadEmails.length - 1];
+    parts.push('');
+    parts.push('--- Ostatnia wiadomość ---');
+    parts.push(formatEmail(lastEmail));
+  }
+
+  // Middle messages summary (if more than 2)
+  if (threadEmails.length > 2) {
+    const middleCount = threadEmails.length - 2;
+    const middleIncoming = threadEmails.slice(1, -1).filter(e => isIncoming(e.from_address, mailboxEmail)).length;
+    parts.push('');
+    parts.push(`(Pominięto ${middleCount} wiadomości pośrednich: ${middleIncoming} przychodzących, ${middleCount - middleIncoming} wychodzących)`);
+  }
+
+  return parts.join('\n');
+}
+
+/**
+ * Parse AI response for thread summary.
+ * Gracefully handles malformed JSON.
+ */
+function parseSummaryResponse(content: string): ThreadSummaryResult | null {
+  try {
+    // Try to extract JSON from possible markdown code blocks
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return null;
+
+    const parsed = JSON.parse(jsonMatch[0]);
+    const validStatuses = ['open', 'closed_positive', 'closed_negative', 'pending'];
+
+    if (typeof parsed.summary !== 'string' || !parsed.summary.trim()) return null;
+    if (!validStatuses.includes(parsed.status)) return null;
+
+    return {
+      summary: parsed.summary.trim(),
+      status: parsed.status,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Generate AI summaries for threads in batches.
+ * Returns a map of threadIndex -> { summary, status }.
+ * Graceful: if AI is not configured, returns empty map.
+ */
+async function generateThreadSummaries(
+  supabase: SupabaseClient,
+  threadGroups: { emails: RawEmail[]; index: number }[],
+  mailboxEmail: string
+): Promise<Map<number, ThreadSummaryResult>> {
+  const results = new Map<number, ThreadSummaryResult>();
+
+  // Try to load AI config — if not configured, skip silently
+  let aiConfig: AIConfig;
+  try {
+    aiConfig = await loadAIConfig(supabase);
+  } catch {
+    // AI not configured — no summaries generated
+    return results;
+  }
+
+  const AI_BATCH_SIZE = 5;
+
+  for (let i = 0; i < threadGroups.length; i += AI_BATCH_SIZE) {
+    const batch = threadGroups.slice(i, i + AI_BATCH_SIZE);
+
+    const batchResults = await Promise.allSettled(
+      batch.map(async (group) => {
+        const userPrompt = buildSummaryUserPrompt(group.emails, mailboxEmail);
+        const response = await callAI(aiConfig, AI_SUMMARY_SYSTEM_PROMPT, userPrompt);
+        const parsed = parseSummaryResponse(response.content);
+        return { index: group.index, result: parsed };
+      })
+    );
+
+    for (const settledResult of batchResults) {
+      if (settledResult.status === 'fulfilled' && settledResult.value.result) {
+        results.set(settledResult.value.index, settledResult.value.result);
+      }
+    }
+  }
+
+  return results;
+}
+
 // --- Main builder ---
 
 export async function buildThreadsForMailbox(
   supabase: SupabaseClient,
   mailboxId: string,
   mailboxEmail: string
-): Promise<{ threadsCreated: number; emailsUpdated: number }> {
+): Promise<{ threadsCreated: number; emailsUpdated: number; summariesGenerated: number }> {
   // 1. Fetch all emails for this mailbox (paginated — Supabase returns max 1000 per query)
   const PAGE_SIZE = 1000;
   const emails: RawEmail[] = [];
@@ -106,13 +247,13 @@ export async function buildThreadsForMailbox(
   while (true) {
     const { data, error } = await supabase
       .from('emails')
-      .select('id, mailbox_id, subject, from_address, sent_at, received_at, header_message_id, header_in_reply_to, header_references')
+      .select('id, mailbox_id, subject, from_address, from_name, sent_at, received_at, body_text, header_message_id, header_in_reply_to, header_references')
       .eq('mailbox_id', mailboxId)
       .eq('is_deleted', false)
       .order('received_at', { ascending: true })
       .range(from, from + PAGE_SIZE - 1);
 
-    if (error) throw new Error(`Błąd pobierania emaili: ${error.message}`);
+    if (error) throw new Error(`Blad pobierania emaili: ${error.message}`);
     if (!data || data.length === 0) break;
 
     emails.push(...data);
@@ -121,7 +262,7 @@ export async function buildThreadsForMailbox(
     from += PAGE_SIZE;
   }
 
-  if (emails.length === 0) return { threadsCreated: 0, emailsUpdated: 0 };
+  if (emails.length === 0) return { threadsCreated: 0, emailsUpdated: 0, summariesGenerated: 0 };
 
   // 2. Build message-id index
   const messageIdMap = new Map<string, RawEmail>();
@@ -234,6 +375,7 @@ export async function buildThreadsForMailbox(
     message_count: number;
     participant_addresses: string[];
     status: string;
+    summary: string | null;
     avg_response_time_minutes: number | null;
   }
 
@@ -247,6 +389,7 @@ export async function buildThreadsForMailbox(
 
   const threadRows: ThreadRow[] = [];
   const emailUpdates: EmailUpdate[] = [];
+  const threadGroupsForAI: { emails: RawEmail[]; index: number }[] = [];
 
   for (const [, group] of groups) {
     // Sort emails chronologically
@@ -294,8 +437,12 @@ export async function buildThreadsForMailbox(
       message_count: group.emails.length,
       participant_addresses: Array.from(participants),
       status: lastIsIncoming ? 'pending' : 'open',
+      summary: null,
       avg_response_time_minutes: avgResponseTime,
     });
+
+    // Collect thread groups for AI summary generation
+    threadGroupsForAI.push({ emails: group.emails, index: threadIndex });
 
     // Prepare email updates
     for (let i = 0; i < group.emails.length; i++) {
@@ -324,6 +471,21 @@ export async function buildThreadsForMailbox(
     }
   }
 
+  // 5b. Generate AI summaries (graceful — skips if AI not configured)
+  const summaries = await generateThreadSummaries(
+    supabase,
+    threadGroupsForAI,
+    mailboxEmail
+  );
+
+  // Apply AI summaries and status to thread rows
+  let summariesGenerated = 0;
+  for (const [index, result] of summaries) {
+    threadRows[index].summary = result.summary;
+    threadRows[index].status = result.status;
+    summariesGenerated++;
+  }
+
   // 6. Delete existing threads for this mailbox (rebuild)
   await supabase
     .from('emails')
@@ -347,7 +509,7 @@ export async function buildThreadsForMailbox(
       .select('id');
 
     if (insertError) {
-      throw new Error(`Błąd tworzenia wątków: ${insertError.message}`);
+      throw new Error(`Blad tworzenia watkow: ${insertError.message}`);
     }
 
     for (const row of data) {
@@ -378,5 +540,5 @@ export async function buildThreadsForMailbox(
     emailsUpdated += results.filter((r) => !r.error).length;
   }
 
-  return { threadsCreated: allThreadIds.length, emailsUpdated };
+  return { threadsCreated: allThreadIds.length, emailsUpdated, summariesGenerated };
 }

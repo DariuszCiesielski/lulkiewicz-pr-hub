@@ -46,9 +46,13 @@ export async function POST(request: NextRequest) {
       mailbox.email_address
     );
 
+    const summaryInfo = result.summariesGenerated > 0
+      ? `, wygenerowano ${result.summariesGenerated} podsumowań AI`
+      : '';
+
     return NextResponse.json({
       success: true,
-      message: `Zbudowano ${result.threadsCreated} wątków, zaktualizowano ${result.emailsUpdated} emaili`,
+      message: `Zbudowano ${result.threadsCreated} wątków, zaktualizowano ${result.emailsUpdated} emaili${summaryInfo}`,
       ...result,
     });
   } catch (error) {
