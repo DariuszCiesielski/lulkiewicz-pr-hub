@@ -21,7 +21,7 @@ export const corporateTheme: Theme = {
 
     textPrimary: '#0f172a',
     textSecondary: '#475569',
-    textMuted: '#94a3b8',
+    textMuted: '#64748b',
     textInverse: '#f8fafc',
 
     borderPrimary: '#e2e8f0',

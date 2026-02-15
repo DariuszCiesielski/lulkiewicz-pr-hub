@@ -21,7 +21,7 @@ export const defaultTheme: Theme = {
 
     textPrimary: '#1e293b',
     textSecondary: '#475569',
-    textMuted: '#94a3b8',
+    textMuted: '#64748b',
     textInverse: '#ffffff',
 
     borderPrimary: '#e2e8f0',

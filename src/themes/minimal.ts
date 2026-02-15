@@ -21,7 +21,7 @@ export const minimalTheme: Theme = {
 
     textPrimary: '#171717',
     textSecondary: '#525252',
-    textMuted: '#a3a3a3',
+    textMuted: '#737373',
     textInverse: '#fafafa',
 
     borderPrimary: '#e5e5e5',
