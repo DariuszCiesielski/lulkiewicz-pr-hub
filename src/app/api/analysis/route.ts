@@ -2,6 +2,38 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
 
 /**
+ * GET /api/analysis — Lista zadań analizy.
+ * Query: ?mailboxId=uuid (opcjonalnie)
+ * Zwraca ostatnie 10 zadań, posortowane od najnowszych.
+ */
+export async function GET(request: NextRequest) {
+  if (!(await verifyAdmin())) {
+    return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
+  }
+
+  const mailboxId = request.nextUrl.searchParams.get('mailboxId');
+  const adminClient = getAdminClient();
+
+  let query = adminClient
+    .from('analysis_jobs')
+    .select('id, status, total_threads, processed_threads, date_range_from, date_range_to, created_at, completed_at, error_message')
+    .order('created_at', { ascending: false })
+    .limit(10);
+
+  if (mailboxId) {
+    query = query.eq('mailbox_id', mailboxId);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ jobs: data || [] });
+}
+
+/**
  * POST /api/analysis — Start a new analysis job.
  * Body: { mailboxId, dateRangeFrom?, dateRangeTo? }
  */
