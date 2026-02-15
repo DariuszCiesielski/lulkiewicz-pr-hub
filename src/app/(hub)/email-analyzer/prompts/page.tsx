@@ -1,9 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { FileText, Save, RotateCcw } from 'lucide-react';
+import {
+  FileText,
+  Save,
+  RotateCcw,
+  Plus,
+  Copy,
+  Trash2,
+  ChevronUp,
+  ChevronDown,
+  Info,
+} from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { DEFAULT_PROMPTS } from '@/lib/ai/default-prompts';
 
 interface PromptTemplate {
   id: string | null;
@@ -13,6 +24,8 @@ interface PromptTemplate {
   user_prompt_template: string;
   tier: string;
   section_order: number;
+  in_internal_report?: boolean;
+  in_client_report?: boolean;
 }
 
 export default function PromptsPage() {
@@ -24,23 +37,31 @@ export default function PromptsPage() {
   const [editedPrompt, setEditedPrompt] = useState<PromptTemplate | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newSectionTitle, setNewSectionTitle] = useState('');
 
   useEffect(() => {
     if (!authLoading && !isAdmin) router.push('/dashboard');
   }, [isAdmin, authLoading, router]);
 
-  const fetchPrompts = async () => {
+  const fetchPrompts = useCallback(async () => {
     const res = await fetch('/api/prompts');
     const data = await res.json();
-    setPrompts(data.prompts || []);
-    if (data.prompts?.length > 0 && !editedPrompt) {
-      setEditedPrompt(data.prompts[0]);
-    }
-  };
+    const fetched = data.prompts || [];
+    setPrompts(fetched);
+    return fetched;
+  }, []);
 
   useEffect(() => {
-    if (isAdmin) fetchPrompts();
-  }, [isAdmin]);
+    if (isAdmin) {
+      fetchPrompts().then((fetched: PromptTemplate[]) => {
+        if (fetched.length > 0) {
+          setSelectedIndex(0);
+          setEditedPrompt(fetched[0]);
+        }
+      });
+    }
+  }, [isAdmin, fetchPrompts]);
 
   const handleSelectPrompt = (index: number) => {
     setSelectedIndex(index);
@@ -63,34 +84,239 @@ export default function PromptsPage() {
           system_prompt: editedPrompt.system_prompt,
           user_prompt_template: editedPrompt.user_prompt_template,
           section_order: editedPrompt.section_order,
+          in_internal_report: editedPrompt.in_internal_report ?? true,
+          in_client_report: editedPrompt.in_client_report ?? false,
         }),
       });
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || 'Błąd zapisu');
+        throw new Error(data.error || 'Blad zapisu');
       }
 
       setMessage({ type: 'success', text: 'Prompt zapisany.' });
-      await fetchPrompts();
+      const fetched = await fetchPrompts();
+      // Keep selection on same section_key
+      const newIdx = fetched.findIndex(
+        (p: PromptTemplate) => p.section_key === editedPrompt.section_key
+      );
+      if (newIdx >= 0) {
+        setSelectedIndex(newIdx);
+        setEditedPrompt(fetched[newIdx]);
+      }
     } catch (err) {
-      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Błąd' });
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Blad' });
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleReset = () => {
-    if (prompts[selectedIndex]) {
-      setEditedPrompt(prompts[selectedIndex]);
-      setMessage(null);
+  const handleReset = async () => {
+    if (!editedPrompt) return;
+
+    // Find default prompt for this section_key
+    const defaultPrompt = DEFAULT_PROMPTS.find(
+      (d) => d.section_key === editedPrompt.section_key
+    );
+
+    if (!defaultPrompt) {
+      setMessage({ type: 'error', text: 'Brak domyslnego promptu dla tej sekcji.' });
+      return;
+    }
+
+    setIsSaving(true);
+    setMessage(null);
+
+    try {
+      // Save default values to DB (overwriting current)
+      const res = await fetch('/api/prompts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          section_key: defaultPrompt.section_key,
+          title: defaultPrompt.title,
+          system_prompt: defaultPrompt.system_prompt,
+          user_prompt_template: defaultPrompt.user_prompt_template,
+          section_order: defaultPrompt.section_order,
+          in_internal_report: editedPrompt.in_internal_report ?? true,
+          in_client_report: editedPrompt.in_client_report ?? false,
+        }),
+      });
+
+      if (!res.ok) throw new Error('Blad resetowania');
+
+      setMessage({ type: 'success', text: 'Przywrocono domyslna tresc promptu.' });
+      const fetched = await fetchPrompts();
+      const newIdx = fetched.findIndex(
+        (p: PromptTemplate) => p.section_key === defaultPrompt.section_key
+      );
+      if (newIdx >= 0) {
+        setSelectedIndex(newIdx);
+        setEditedPrompt(fetched[newIdx]);
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Blad' });
+    } finally {
+      setIsSaving(false);
     }
   };
+
+  const handleDelete = async (sectionKey: string) => {
+    if (!confirm('Czy na pewno chcesz usunac te sekcje?')) return;
+
+    try {
+      const res = await fetch('/api/prompts', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ section_key: sectionKey }),
+      });
+
+      if (!res.ok) throw new Error('Blad usuwania');
+
+      setMessage({ type: 'success', text: 'Sekcja usunieta.' });
+      const fetched = await fetchPrompts();
+      if (fetched.length > 0) {
+        const newIdx = Math.min(selectedIndex, fetched.length - 1);
+        setSelectedIndex(newIdx);
+        setEditedPrompt(fetched[newIdx]);
+      } else {
+        setEditedPrompt(null);
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Blad' });
+    }
+  };
+
+  const handleCopy = async (prompt: PromptTemplate) => {
+    const maxOrder = Math.max(...prompts.map((p) => p.section_order), 0);
+    const newKey = `${prompt.section_key}_copy_${Date.now()}`;
+
+    try {
+      const res = await fetch('/api/prompts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          section_key: newKey,
+          title: `${prompt.title} (kopia)`,
+          system_prompt: prompt.system_prompt,
+          user_prompt_template: prompt.user_prompt_template,
+          section_order: maxOrder + 1,
+          in_internal_report: prompt.in_internal_report ?? true,
+          in_client_report: prompt.in_client_report ?? false,
+        }),
+      });
+
+      if (!res.ok) throw new Error('Blad kopiowania');
+
+      setMessage({ type: 'success', text: 'Sekcja skopiowana.' });
+      const fetched = await fetchPrompts();
+      const newIdx = fetched.findIndex((p: PromptTemplate) => p.section_key === newKey);
+      if (newIdx >= 0) {
+        setSelectedIndex(newIdx);
+        setEditedPrompt(fetched[newIdx]);
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Blad' });
+    }
+  };
+
+  const handleAddSection = async () => {
+    if (!newSectionTitle.trim()) return;
+
+    const maxOrder = Math.max(...prompts.map((p) => p.section_order), 0);
+    const newKey = `custom_${Date.now()}`;
+
+    try {
+      const res = await fetch('/api/prompts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          section_key: newKey,
+          title: newSectionTitle.trim(),
+          system_prompt: 'Jestes ekspertem ds. zarzadzania nieruchomosciami. Odpowiadasz po polsku.',
+          user_prompt_template: 'Przeanalizuj ponizsze watki email.\n\nWATKI:\n{{threads}}\n\nNapisz analize.',
+          section_order: maxOrder + 1,
+          in_internal_report: true,
+          in_client_report: false,
+        }),
+      });
+
+      if (!res.ok) throw new Error('Blad dodawania');
+
+      setMessage({ type: 'success', text: 'Nowa sekcja dodana.' });
+      setNewSectionTitle('');
+      setShowAddForm(false);
+      const fetched = await fetchPrompts();
+      const newIdx = fetched.findIndex((p: PromptTemplate) => p.section_key === newKey);
+      if (newIdx >= 0) {
+        setSelectedIndex(newIdx);
+        setEditedPrompt(fetched[newIdx]);
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Blad' });
+    }
+  };
+
+  const handleReorder = async (index: number, direction: 'up' | 'down') => {
+    const swapIndex = direction === 'up' ? index - 1 : index + 1;
+    if (swapIndex < 0 || swapIndex >= prompts.length) return;
+
+    const current = prompts[index];
+    const swap = prompts[swapIndex];
+
+    // Save both with swapped section_order
+    try {
+      await Promise.all([
+        fetch('/api/prompts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            section_key: current.section_key,
+            title: current.title,
+            system_prompt: current.system_prompt,
+            user_prompt_template: current.user_prompt_template,
+            section_order: swap.section_order,
+            in_internal_report: current.in_internal_report ?? true,
+            in_client_report: current.in_client_report ?? false,
+          }),
+        }),
+        fetch('/api/prompts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            section_key: swap.section_key,
+            title: swap.title,
+            system_prompt: swap.system_prompt,
+            user_prompt_template: swap.user_prompt_template,
+            section_order: current.section_order,
+            in_internal_report: swap.in_internal_report ?? true,
+            in_client_report: swap.in_client_report ?? false,
+          }),
+        }),
+      ]);
+
+      const fetched = await fetchPrompts();
+      const newIdx = fetched.findIndex(
+        (p: PromptTemplate) => p.section_key === current.section_key
+      );
+      if (newIdx >= 0) {
+        setSelectedIndex(newIdx);
+        setEditedPrompt(fetched[newIdx]);
+      }
+    } catch {
+      setMessage({ type: 'error', text: 'Blad zmiany kolejnosci' });
+    }
+  };
+
+  const isGlobalContext = editedPrompt?.section_key === '_global_context';
+  const isDefaultSection = editedPrompt
+    ? DEFAULT_PROMPTS.some((d) => d.section_key === editedPrompt.section_key)
+    : false;
 
   if (authLoading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <p style={{ color: 'var(--text-muted)' }}>Ładowanie...</p>
+        <p style={{ color: 'var(--text-muted)' }}>Ladowanie...</p>
       </div>
     );
   }
@@ -99,12 +325,60 @@ export default function PromptsPage() {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <div className="flex items-center gap-3 mb-6">
-        <FileText className="h-6 w-6" style={{ color: 'var(--text-muted)' }} />
-        <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-          Zarządzanie promptami
-        </h1>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <FileText className="h-6 w-6" style={{ color: 'var(--text-muted)' }} />
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+            Zarzadzanie promptami
+          </h1>
+        </div>
+        <button
+          onClick={() => setShowAddForm(!showAddForm)}
+          className="flex items-center gap-1 rounded-md px-3 py-2 text-sm text-white hover:opacity-90"
+          style={{ backgroundColor: 'var(--accent-primary)' }}
+        >
+          <Plus className="h-4 w-4" />
+          Dodaj sekcje
+        </button>
       </div>
+
+      {/* Add section form */}
+      {showAddForm && (
+        <div
+          className="mb-4 rounded-lg border p-4 flex items-end gap-3"
+          style={{
+            borderColor: 'var(--border-primary)',
+            backgroundColor: 'var(--bg-secondary)',
+          }}
+        >
+          <div className="flex-1 flex flex-col gap-1">
+            <label className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+              Nazwa nowej sekcji
+            </label>
+            <input
+              type="text"
+              value={newSectionTitle}
+              onChange={(e) => setNewSectionTitle(e.target.value)}
+              placeholder="np. Analiza kosztow"
+              className="rounded-md border px-3 py-2 text-sm outline-none"
+              style={{
+                borderColor: 'var(--border-primary)',
+                backgroundColor: 'var(--bg-primary)',
+                color: 'var(--text-primary)',
+              }}
+              onKeyDown={(e) => e.key === 'Enter' && handleAddSection()}
+            />
+          </div>
+          <button
+            onClick={handleAddSection}
+            disabled={!newSectionTitle.trim()}
+            className="rounded-md px-4 py-2 text-sm text-white hover:opacity-90 disabled:opacity-50"
+            style={{ backgroundColor: 'var(--accent-primary)' }}
+          >
+            Dodaj
+          </button>
+        </div>
+      )}
 
       {message && (
         <div
@@ -123,20 +397,67 @@ export default function PromptsPage() {
         {/* Section list */}
         <div className="col-span-1 space-y-1">
           {prompts.map((prompt, i) => (
-            <button
-              key={prompt.section_key}
-              onClick={() => handleSelectPrompt(i)}
-              className="w-full text-left rounded-md px-3 py-2 text-sm transition-colors"
-              style={{
-                backgroundColor: i === selectedIndex ? 'var(--accent-light)' : 'transparent',
-                color: i === selectedIndex ? 'var(--accent-primary)' : 'var(--text-secondary)',
-              }}
-            >
-              <div className="font-medium">{prompt.title}</div>
-              <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                {prompt.tier === 'default' ? 'Domyślny' : 'Zmodyfikowany'}
+            <div key={prompt.section_key} className="group relative">
+              <button
+                onClick={() => handleSelectPrompt(i)}
+                className="w-full text-left rounded-md px-3 py-2 text-sm transition-colors"
+                style={{
+                  backgroundColor: i === selectedIndex ? 'var(--accent-light)' : 'transparent',
+                  color: i === selectedIndex ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                }}
+              >
+                <div className="font-medium text-xs leading-tight">{prompt.title}</div>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                    {prompt.tier === 'default' ? 'Domyslny' : 'Zmodyfikowany'}
+                  </span>
+                </div>
+              </button>
+              {/* Reorder + actions overlay */}
+              <div
+                className="absolute right-1 top-1 hidden group-hover:flex items-center gap-0.5"
+                style={{ zIndex: 10 }}
+              >
+                {i > 0 && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleReorder(i, 'up'); }}
+                    className="p-0.5 rounded hover:opacity-70"
+                    style={{ color: 'var(--text-muted)' }}
+                    title="W gore"
+                  >
+                    <ChevronUp className="h-3 w-3" />
+                  </button>
+                )}
+                {i < prompts.length - 1 && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleReorder(i, 'down'); }}
+                    className="p-0.5 rounded hover:opacity-70"
+                    style={{ color: 'var(--text-muted)' }}
+                    title="W dol"
+                  >
+                    <ChevronDown className="h-3 w-3" />
+                  </button>
+                )}
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleCopy(prompt); }}
+                  className="p-0.5 rounded hover:opacity-70"
+                  style={{ color: 'var(--text-muted)' }}
+                  title="Kopiuj"
+                >
+                  <Copy className="h-3 w-3" />
+                </button>
+                {!DEFAULT_PROMPTS.some((d) => d.section_key === prompt.section_key) && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDelete(prompt.section_key); }}
+                    className="p-0.5 rounded hover:opacity-70"
+                    style={{ color: 'var(--error)' }}
+                    title="Usun"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                )}
               </div>
-            </button>
+            </div>
           ))}
         </div>
 
@@ -150,9 +471,10 @@ export default function PromptsPage() {
                 backgroundColor: 'var(--bg-secondary)',
               }}
             >
+              {/* Section title */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                  Tytuł sekcji
+                  Tytul sekcji
                 </label>
                 <input
                   type="text"
@@ -167,6 +489,35 @@ export default function PromptsPage() {
                 />
               </div>
 
+              {/* Report type checkboxes (not for _global_context) */}
+              {!isGlobalContext && (
+                <div className="flex items-center gap-6">
+                  <label className="flex items-center gap-2 text-sm cursor-pointer" style={{ color: 'var(--text-secondary)' }}>
+                    <input
+                      type="checkbox"
+                      checked={editedPrompt.in_internal_report ?? true}
+                      onChange={(e) =>
+                        setEditedPrompt({ ...editedPrompt, in_internal_report: e.target.checked })
+                      }
+                      className="rounded"
+                    />
+                    Raport wewnetrzny
+                  </label>
+                  <label className="flex items-center gap-2 text-sm cursor-pointer" style={{ color: 'var(--text-secondary)' }}>
+                    <input
+                      type="checkbox"
+                      checked={editedPrompt.in_client_report ?? false}
+                      onChange={(e) =>
+                        setEditedPrompt({ ...editedPrompt, in_client_report: e.target.checked })
+                      }
+                      className="rounded"
+                    />
+                    Raport kliencki
+                  </label>
+                </div>
+              )}
+
+              {/* System prompt */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                   System prompt
@@ -184,16 +535,16 @@ export default function PromptsPage() {
                 />
               </div>
 
+              {/* User prompt template */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                  User prompt template
-                  <span className="text-xs font-normal ml-2" style={{ color: 'var(--text-muted)' }}>
-                    Użyj {'{{threads}}'} jako placeholder na treść wątków
-                  </span>
+                  {isGlobalContext ? 'Kontekst globalny' : 'User prompt template'}
                 </label>
                 <textarea
                   value={editedPrompt.user_prompt_template}
-                  onChange={(e) => setEditedPrompt({ ...editedPrompt, user_prompt_template: e.target.value })}
+                  onChange={(e) =>
+                    setEditedPrompt({ ...editedPrompt, user_prompt_template: e.target.value })
+                  }
                   rows={10}
                   className="rounded-md border px-3 py-2 text-sm outline-none resize-y font-mono"
                   style={{
@@ -204,6 +555,30 @@ export default function PromptsPage() {
                 />
               </div>
 
+              {/* {{threads}} info */}
+              {!isGlobalContext && (
+                <div
+                  className="flex items-start gap-2 rounded-md p-3 text-sm"
+                  style={{
+                    backgroundColor: 'var(--info-light)',
+                    color: 'var(--info)',
+                  }}
+                >
+                  <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <span>
+                    Tresc watkow email zostanie automatycznie dolaczona do promptu (zmienna{' '}
+                    <code
+                      className="px-1 py-0.5 rounded text-xs font-mono"
+                      style={{ backgroundColor: 'var(--bg-tertiary)' }}
+                    >
+                      {'{{threads}}'}
+                    </code>
+                    ). Nie musisz jej recznie dodawac.
+                  </span>
+                </div>
+              )}
+
+              {/* Action buttons */}
               <div className="flex gap-2">
                 <button
                   onClick={handleSave}
@@ -214,17 +589,21 @@ export default function PromptsPage() {
                   <Save className="h-4 w-4" />
                   {isSaving ? 'Zapisywanie...' : 'Zapisz zmiany'}
                 </button>
-                <button
-                  onClick={handleReset}
-                  className="flex items-center gap-1 rounded-md border px-3 py-2 text-sm hover:opacity-80"
-                  style={{
-                    borderColor: 'var(--border-primary)',
-                    color: 'var(--text-secondary)',
-                  }}
-                >
-                  <RotateCcw className="h-4 w-4" />
-                  Resetuj
-                </button>
+                {isDefaultSection && (
+                  <button
+                    onClick={handleReset}
+                    disabled={isSaving}
+                    className="flex items-center gap-1 rounded-md border px-3 py-2 text-sm hover:opacity-80 disabled:opacity-50"
+                    style={{
+                      borderColor: 'var(--border-primary)',
+                      color: 'var(--text-secondary)',
+                    }}
+                    title="Przywroc domyslna tresc z default-prompts.ts"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    Resetuj do domyslnego
+                  </button>
+                )}
               </div>
             </div>
           )}
