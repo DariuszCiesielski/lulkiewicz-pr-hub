@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-10)
 
 ## Current Position
 
-Phase: Phase 8 (Group Management) — COMPLETE
-Plan: 04 of 4
-Status: Phase 8 COMPLETE — all 4 plans executed, verified 4/4 must-haves
-Last activity: 2026-02-12 — Phase 8 execution complete (4 plans, 3 waves)
+Phase: Phase 2.1 (Multi-Folder Sync) — IN PROGRESS
+Plan: 01 of 3 COMPLETE, next: 02
+Status: 3 plans created, 1 executed. Hotfix do email-analyzer — synchronizacja wszystkich folderów.
+Last activity: 2026-02-15 — Completed 02.1-01-PLAN.md (DB schema + graph-folders + all-folders endpoints)
 
-Progress (v1.0 Email Analyzer): [##################..] ~90% (Phases 1-6 complete, known gaps: eval criteria UI, Azure consent)
+Progress (v1.0 Email Analyzer): [##################..] ~90% (Phases 1-6 complete, Phase 2.1 INSERTED for multi-folder sync)
 Progress (v1.1 FB Analyzer): [########............] 40% (phases 7-8 COMPLETE, ready for phase 9)
 
 ## Planning Status
@@ -52,6 +52,11 @@ Progress (v1.1 FB Analyzer): [########............] 40% (phases 7-8 COMPLETE, re
 - [x] 07-01-PLAN.md (Wave 1, autonomous) — Fundament danych: migracja SQL 6 tabel FB + typy TS (de508e7, d27709d)
 - [x] 07-02-PLAN.md (Wave 1, autonomous) — Nawigacja FB Analyzer + shell pages (4646ff5, 14bc39d)
 - [x] 07-03-PLAN.md (Wave 2, autonomous) — Shared admin module + refaktoring 21 API routes (d40d07d, 9880239)
+
+**Phase 2.1 plans (3 plans, 2 waves) — INSERTED, READY FOR EXECUTION:**
+- [x] 02.1-01-PLAN.md (Wave 1, autonomous) — Schema DB + graph-folders helper + email-fetcher all-folders endpoints (a487504, 7f7a227, 0bde990)
+- [ ] 02.1-02-PLAN.md (Wave 1, autonomous) — Sync API routes adaptacja + email-parser folder_id
+- [ ] 02.1-03-PLAN.md (Wave 2, autonomous) — Legenda statusów + polskie znaki diakrytyczne (47 poprawek w 8 plikach)
 
 **Phase 8 plans (4 plans, 3 waves) — ALL COMPLETE:**
 - [x] 08-01-PLAN.md (Wave 1, autonomous) — Data foundation: ALTER fb_groups + CREATE fb_settings + TS types (12f7607, df561a6)
@@ -105,6 +110,16 @@ Progress (v1.1 FB Analyzer): [########............] 40% (phases 7-8 COMPLETE, re
 - [08-02]: Bulk ops filtruja .is('deleted_at', null) — zapobiega operacjom na soft-deleted grupach
 - [08-02]: POST fb-settings waliduje prefiks klucza — tylko dozwolone klucze akceptowane
 
+- [Phase 2.1 INSERTED]: Multi-folder sync — /messages zamiast /mailFolders/inbox/messages
+- [Phase 2.1]: Delta sync zmieniony na smart resync z $filter=receivedDateTime ge (delta per-folder only w Graph API)
+- [Phase 2.1]: Excluded folders: drafts, junkemail, deleteditems (cached in sync_jobs.metadata)
+- [Phase 2.1]: isIncoming() zmieniony na domain-based comparison (nie exact email match)
+- [Phase 2.1]: Hotfixy wykonane w Cursor: deduplikacja batchy, paginacja 1000-row limit, batch thread building, totalInDatabase w UI
+- [02.1-01]: parentFolderId dodany do MESSAGE_SELECT_FIELDS — identyfikacja folderu zrodlowego
+- [02.1-01]: getMailboxMessageCount zmieniony na /messages z $count (ConsistencyLevel: eventual)
+- [02.1-01]: fetchDeltaPage zachowany z @deprecated — backward compatibility do czasu migracji route
+- [02.1-01]: filterExcludedFolders jako pure function — filtrowanie in-memory po pobraniu batcha
+
 ### Blockers/Concerns
 
 - [Phase 2]: Azure App Registration needed — user must configure AZURE_TENANT_ID + AZURE_CLIENT_ID in .env.local
@@ -126,12 +141,11 @@ Progress (v1.1 FB Analyzer): [########............] 40% (phases 7-8 COMPLETE, re
 
 ## Supabase Tables (Phase 8 updated)
 
-organizations, organization_members, **mailboxes** (extended: +8 cols, sync_status TEXT), mailbox_credentials, **emails** (extended: +13 cols, UNIQUE mailbox+internet_message_id), threads, reports, report_sections, section_templates, schedules, messages, app_allowed_users, **sync_jobs** (new: status, job_type, page_token, emails_fetched), **email_threads** (Phase 3: Union-Find threading), **analysis_jobs** (Phase 4: AI analysis jobs), **analysis_results** (Phase 4: per-thread results), **prompt_templates** (Phase 4: customizable prompts), **evaluation_criteria** (Phase 4: scoring rubrics, no UI yet), **fb_groups** (Phase 7+8: grupy FB, +ai_instruction, +deleted_at, +cookies_encrypted), **fb_posts** (Phase 7: posty z grup, UNIQUE group+facebook_post_id), **fb_comments** (Phase 7: komentarze do postow), **fb_scrape_jobs** (Phase 7: zadania scrapowania Apify), **fb_analysis_jobs** (Phase 7: zadania analizy AI postow), **fb_reports** (Phase 7: raporty z analizy grup FB), **fb_settings** (Phase 8: key-value config store, RLS admin-only)
+organizations, organization_members, **mailboxes** (extended: +8 cols, sync_status TEXT), mailbox_credentials, **emails** (extended: +13 cols + folder_id TEXT, UNIQUE mailbox+internet_message_id), threads, reports, report_sections, section_templates, schedules, messages, app_allowed_users, **sync_jobs** (new: status, job_type, page_token, emails_fetched, metadata JSONB), **email_threads** (Phase 3: Union-Find threading), **analysis_jobs** (Phase 4: AI analysis jobs), **analysis_results** (Phase 4: per-thread results), **prompt_templates** (Phase 4: customizable prompts), **evaluation_criteria** (Phase 4: scoring rubrics, no UI yet), **fb_groups** (Phase 7+8: grupy FB, +ai_instruction, +deleted_at, +cookies_encrypted), **fb_posts** (Phase 7: posty z grup, UNIQUE group+facebook_post_id), **fb_comments** (Phase 7: komentarze do postow), **fb_scrape_jobs** (Phase 7: zadania scrapowania Apify), **fb_analysis_jobs** (Phase 7: zadania analizy AI postow), **fb_reports** (Phase 7: raporty z analizy grup FB), **fb_settings** (Phase 8: key-value config store, RLS admin-only)
 
 ## Session Continuity
 
-Last session: 2026-02-12T23:30Z
-Stopped at: Phase 8 COMPLETE — all 4 plans executed, verified 4/4. ROADMAP+REQUIREMENTS updated but NOT YET COMMITTED.
-Resume file: .planning/phases/08-group-management/08-VERIFICATION.md
-Reference plan: C:\Users\dariu\.claude\plans\lexical-marinating-blossom.md
-Next step: Commit phase completion docs, then /gsd:plan-phase 9 (Scraping Engine)
+Last session: 2026-02-15T08:27Z
+Stopped at: Completed 02.1-01-PLAN.md (DB schema + graph-folders helper + all-folders endpoints)
+Resume file: .planning/phases/02.1-multi-folder-sync/02.1-01-SUMMARY.md
+Next step: Execute 02.1-02-PLAN.md (sync route adaptation + email-parser folder_id), then 02.1-03, then SQL migration, then re-sync
