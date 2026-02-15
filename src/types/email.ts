@@ -68,6 +68,7 @@ export interface Email {
   header_references: string[];
   is_read: boolean;
   is_deleted: boolean;
+  folder_id: string | null;
   created_at: string;
 }
 

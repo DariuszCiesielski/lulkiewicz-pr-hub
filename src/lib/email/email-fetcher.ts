@@ -243,6 +243,7 @@ export async function upsertEmails(
     header_in_reply_to: email.header_in_reply_to,
     header_references: email.header_references ?? [],
     is_read: email.is_read ?? false,
+    folder_id: email.folder_id ?? null,
   }));
 
   const { error } = await adminClient

@@ -139,5 +139,6 @@ export function mapGraphMessageToEmail(
     header_in_reply_to: threading.inReplyTo,
     header_references: threading.references,
     is_read: msg.isRead || false,
+    folder_id: msg.parentFolderId || null,
   };
 }
