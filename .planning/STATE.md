@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-10)
 
 **Core value:** Hub narzędziowy — AI analizuje maile (email-analyzer) i posty z grup FB (fb-analyzer) dla audytu komunikacji administracji osiedli
-**Current focus:** Milestone v1.1 — FB Analyzer (phase 8 COMPLETE, ready for phase 9). Phase 2.1 (Multi-Folder Sync) COMPLETE.
+**Current focus:** Phase 2.2 (Email Analyzer Quality) — IN PROGRESS. Milestone v1.1 — FB Analyzer (phase 8 COMPLETE, ready for phase 9).
 
 ## Current Position
 
-Phase: Phase 2.1 (Multi-Folder Sync) — COMPLETE
-Plan: 03 of 3 COMPLETE
-Status: All 3 plans executed. Multi-folder sync backend + UX improvements done.
-Last activity: 2026-02-15 — Completed 02.1-03-PLAN.md (legenda statusow + polskie znaki diakrytyczne)
+Phase: Phase 2.2 (Email Analyzer Quality) — IN PROGRESS
+Plan: 1 of 4
+Status: Plan 02.2-01 (Thread Intelligence) COMPLETE. Plan 02.2-02 (Analysis UX) IN PROGRESS.
+Last activity: 2026-02-15 — Completed 02.2-01-PLAN.md (Thread Intelligence)
 
-Progress (v1.0 Email Analyzer): [####################] 100% (Phases 1-6 + Phase 2.1 COMPLETE)
+Progress (v1.0 Email Analyzer): [###################.] 95% (Phases 1-6 + Phase 2.1 COMPLETE, Phase 2.2 plan 1/4 done)
 Progress (v1.1 FB Analyzer): [########............] 40% (phases 7-8 COMPLETE, ready for phase 9)
 
 ## Planning Status
@@ -57,6 +57,12 @@ Progress (v1.1 FB Analyzer): [########............] 40% (phases 7-8 COMPLETE, re
 - [x] 02.1-01-PLAN.md (Wave 1, autonomous) — Schema DB + graph-folders helper + email-fetcher all-folders endpoints (a487504, 7f7a227, 0bde990)
 - [x] 02.1-02-PLAN.md (Wave 1, autonomous) — Sync API routes adaptacja + email-parser folder_id (3b3624b, d8c0874, b7db1b8)
 - [x] 02.1-03-PLAN.md (Wave 2, autonomous) — Legenda statusow + polskie znaki diakrytyczne (c4ce978, b33137d, 56864cc, 153eaa4, 4868dbf, aec9b43)
+
+**Phase 2.2 plans (4 plans, 2 waves) — IN PROGRESS:**
+- [x] 02.2-01-PLAN.md (Wave 1, autonomous) — Thread Intelligence: AI summary per wątek, ulepszone statusy, persisted mailbox (d5cee2a, 8ad58e6, 1e67f83, 3f2d708, 4f42b83)
+- [ ] 02.2-02-PLAN.md (Wave 1, autonomous) — Analysis UX: date presets, spinner+ETA, dźwięk, historia analiz
+- [ ] 02.2-03-PLAN.md (Wave 2, checkpoint) — Synthetic Reports: AI REDUCE, formatowanie, nazwy DOCX
+- [ ] 02.2-04-PLAN.md (Wave 2, autonomous) — UI/UX Polish: kontrast WCAG AA, nawigacja, prompt CRUD, podgląd klucza API
 
 **Phase 8 plans (4 plans, 3 waves) — ALL COMPLETE:**
 - [x] 08-01-PLAN.md (Wave 1, autonomous) — Data foundation: ALTER fb_groups + CREATE fb_settings + TS types (12f7607, df561a6)
@@ -127,6 +133,12 @@ Progress (v1.1 FB Analyzer): [########............] 40% (phases 7-8 COMPLETE, re
 - [02.1-03]: Kolory legendy identyczne z ThreadCard STATUS_STYLES (rgba)
 - [02.1-03]: 60+ poprawek polskich znakow diakrytycznych w 9 plikach UI (plan mowil o 47 w 8 plikach, znaleziono wiecej)
 
+- [02.2-01]: AI summary prompt zwraca JSON {summary, status} — 1 API call per watek
+- [02.2-01]: Batch 5 watkow rownolegle via Promise.allSettled
+- [02.2-01]: Graceful fallback — brak AI config = puste summary, status z heurystyki
+- [02.2-01]: localStorage klucz 'ea-selected-mailbox' wspoldzielony miedzy threads/analyze/reports
+- [02.2-01]: ThreadStatus rozszerzony: open, closed_positive, closed_negative, pending (+ legacy 'closed')
+
 ### Blockers/Concerns
 
 - [Phase 2]: Azure App Registration needed — user must configure AZURE_TENANT_ID + AZURE_CLIENT_ID in .env.local
@@ -148,11 +160,11 @@ Progress (v1.1 FB Analyzer): [########............] 40% (phases 7-8 COMPLETE, re
 
 ## Supabase Tables (Phase 8 updated)
 
-organizations, organization_members, **mailboxes** (extended: +8 cols, sync_status TEXT), mailbox_credentials, **emails** (extended: +13 cols + folder_id TEXT, UNIQUE mailbox+internet_message_id), threads, reports, report_sections, section_templates, schedules, messages, app_allowed_users, **sync_jobs** (new: status, job_type, page_token, emails_fetched, metadata JSONB), **email_threads** (Phase 3: Union-Find threading), **analysis_jobs** (Phase 4: AI analysis jobs), **analysis_results** (Phase 4: per-thread results), **prompt_templates** (Phase 4: customizable prompts), **evaluation_criteria** (Phase 4: scoring rubrics, no UI yet), **fb_groups** (Phase 7+8: grupy FB, +ai_instruction, +deleted_at, +cookies_encrypted), **fb_posts** (Phase 7: posty z grup, UNIQUE group+facebook_post_id), **fb_comments** (Phase 7: komentarze do postow), **fb_scrape_jobs** (Phase 7: zadania scrapowania Apify), **fb_analysis_jobs** (Phase 7: zadania analizy AI postow), **fb_reports** (Phase 7: raporty z analizy grup FB), **fb_settings** (Phase 8: key-value config store, RLS admin-only)
+organizations, organization_members, **mailboxes** (extended: +8 cols, sync_status TEXT), mailbox_credentials, **emails** (extended: +13 cols + folder_id TEXT, UNIQUE mailbox+internet_message_id), threads, reports, report_sections, section_templates, schedules, messages, app_allowed_users, **sync_jobs** (new: status, job_type, page_token, emails_fetched, metadata JSONB), **email_threads** (Phase 3: Union-Find threading, +summary TEXT Phase 2.2), **analysis_jobs** (Phase 4: AI analysis jobs), **analysis_results** (Phase 4: per-thread results), **prompt_templates** (Phase 4: customizable prompts), **evaluation_criteria** (Phase 4: scoring rubrics, no UI yet), **fb_groups** (Phase 7+8: grupy FB, +ai_instruction, +deleted_at, +cookies_encrypted), **fb_posts** (Phase 7: posty z grup, UNIQUE group+facebook_post_id), **fb_comments** (Phase 7: komentarze do postow), **fb_scrape_jobs** (Phase 7: zadania scrapowania Apify), **fb_analysis_jobs** (Phase 7: zadania analizy AI postow), **fb_reports** (Phase 7: raporty z analizy grup FB), **fb_settings** (Phase 8: key-value config store, RLS admin-only)
 
 ## Session Continuity
 
-Last session: 2026-02-15T08:41Z
-Stopped at: Completed 02.1-03-PLAN.md — Phase 2.1 COMPLETE
-Resume file: .planning/phases/02.1-multi-folder-sync/02.1-03-SUMMARY.md
-Next step: SQL migration (02.1-01) must be applied in Supabase SQL Editor, then re-sync mailboxes. After that: Phase 9 (Scraping Engine)
+Last session: 2026-02-15T13:35Z
+Stopped at: Completed 02.2-01-PLAN.md (Thread Intelligence)
+Resume file: .planning/phases/02.2-email-analyzer-quality/02.2-01-SUMMARY.md
+Next step: Complete 02.2-02-PLAN.md (Analysis UX) → 02.2-03 (Wave 2) → 02.2-04 (Wave 2)
