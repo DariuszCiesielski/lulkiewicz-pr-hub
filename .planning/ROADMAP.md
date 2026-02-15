@@ -24,6 +24,10 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 5: Report Generation & Export** - Generowanie raportow (wew/kliencki), podglad, edycja, eksport docx/pdf/clipboard
 - [x] **Phase 6: Dashboard & Polish** - KPI tiles, podsumowania per skrzynka, quick actions, ostatnie raporty
 
+### v1.0 Email Analyzer Quality (Phase 2.2 INSERTED)
+
+- [x] **Phase 2.2: Email Analyzer Quality** (INSERTED) — Thread intelligence (AI summary + status), analysis UX (date presets, ETA, sound), synthetic reports (AI REDUCE), UI polish (contrast, navigation, prompt CRUD) — **4 plans, 2 waves**
+
 ### v1.1 FB Analyzer (Phases 7-12)
 
 - [ ] **Phase 7: FB Foundation** - Migracja DB (6 tabel + RLS), typy TS, nawigacja sidebar, layout + shell pages, admin utilities extraction — **3 plans, 2 waves**
@@ -134,6 +138,25 @@ Plans:
 
 ---
 
+### Phase 2.2: Email Analyzer Quality (INSERTED)
+**Goal**: Poprawa jakosci i uzytecznosci Email Analyzer na podstawie testow produkcyjnych — raporty syntetyczne zamiast 400+ stron, AI summary per watek, ulepszone UX analizy
+**Depends on**: Phase 2.1
+**Requirements**: Zebrane z testow produkcyjnych (24 uwagi)
+**Success Criteria** (what must be TRUE):
+  1. Kazdy watek ma AI-generowany opis (1-2 zdania) i poprawny status (open/closed_positive/closed_negative/pending)
+  2. Strona analizy ma szybkie filtry dat (4 presety), spinner z ETA, opcjonalny dzwiek, historie analiz
+  3. Domyslny raport syntetyczny ma ~5-15 stron (nie 400+) — AI agreguje wyniki z wielu watkow
+  4. Raport szczegolowy (watek po watku) dostepny jako opcja
+  5. Eksport DOCX ma unikalne nazwy plikow (typ_skrzynka_daty.docx)
+  6. Kontrast czcionek WCAG AA, plynna nawigacja, prompt CRUD (dodaj/usun/kopiuj/kolejnosc), globalny prompt, checkboxy sekcji per typ raportu
+**Plans:** 4 plans
+
+Plans:
+- [x] 02.2-01-PLAN.md — Thread Intelligence: AI summary per watek, ulepszone statusy, persisted mailbox selection
+- [x] 02.2-02-PLAN.md — Analysis UX: date presets, spinner+ETA, dzwiek, historia analiz
+- [x] 02.2-03-PLAN.md — Synthetic Reports: AI REDUCE, formatowanie, nazwy DOCX
+- [x] 02.2-04-PLAN.md — UI/UX Polish: kontrast WCAG AA, nawigacja, prompt CRUD, podglad klucza API
+
 ### Phase 7: FB Foundation
 **Goal**: Aplikacja ma kompletny fundament dla FB Analyzer — tabele DB, typy TS, nawigacja w sidebar, puste strony shell i wyekstrahowane utilities administracyjne
 **Depends on**: Phase 6 (v1.0 complete)
@@ -237,6 +260,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 5. Report Generation & Export | 2/3 | **COMPLETE** (fast-track, .docx/.pdf gap) | 2026-02-11 |
 | 6. Dashboard & Polish | 1/1 | **COMPLETE** (fast-track) | 2026-02-11 |
 | 2.1. Multi-Folder Sync | 3/3 | **COMPLETE** (INSERTED) | 2026-02-15 |
+| 2.2. Email Analyzer Quality | 4/4 | **COMPLETE** (INSERTED) | 2026-02-15 |
 
 ### v1.1 FB Analyzer
 
