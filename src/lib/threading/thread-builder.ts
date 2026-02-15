@@ -31,12 +31,35 @@ export function normalizeSubject(subject: string | null): string {
 
 // --- Direction detection ---
 
+/**
+ * Extract domain from an email address.
+ */
+function getDomain(email: string): string {
+  const atIndex = email.lastIndexOf('@');
+  return atIndex >= 0 ? email.slice(atIndex + 1).toLowerCase() : '';
+}
+
+/**
+ * Determine if an email is incoming (from outside the organization).
+ *
+ * Uses domain comparison: emails from the same domain as the mailbox
+ * are considered outgoing (from the organization / administration),
+ * emails from other domains are incoming (from residents / external).
+ *
+ * This approach works even when we only sync the Inbox folder,
+ * because outgoing replies from staff members within the same domain
+ * (e.g. jan.kowalski@domain.pl replying from administracja@domain.pl)
+ * are correctly identified as organizational / outgoing.
+ */
 export function isIncoming(
   fromAddress: string | null,
   mailboxEmail: string
 ): boolean {
   if (!fromAddress) return true;
-  return fromAddress.toLowerCase() !== mailboxEmail.toLowerCase();
+  const fromDomain = getDomain(fromAddress);
+  const mailboxDomain = getDomain(mailboxEmail);
+  if (!fromDomain || !mailboxDomain) return true;
+  return fromDomain !== mailboxDomain;
 }
 
 // --- Response time calculation ---
@@ -75,16 +98,30 @@ export async function buildThreadsForMailbox(
   mailboxId: string,
   mailboxEmail: string
 ): Promise<{ threadsCreated: number; emailsUpdated: number }> {
-  // 1. Fetch all emails for this mailbox
-  const { data: emails, error } = await supabase
-    .from('emails')
-    .select('id, mailbox_id, subject, from_address, sent_at, received_at, header_message_id, header_in_reply_to, header_references')
-    .eq('mailbox_id', mailboxId)
-    .eq('is_deleted', false)
-    .order('received_at', { ascending: true });
+  // 1. Fetch all emails for this mailbox (paginated — Supabase returns max 1000 per query)
+  const PAGE_SIZE = 1000;
+  const emails: RawEmail[] = [];
+  let from = 0;
 
-  if (error) throw new Error(`Błąd pobierania emaili: ${error.message}`);
-  if (!emails || emails.length === 0) return { threadsCreated: 0, emailsUpdated: 0 };
+  while (true) {
+    const { data, error } = await supabase
+      .from('emails')
+      .select('id, mailbox_id, subject, from_address, sent_at, received_at, header_message_id, header_in_reply_to, header_references')
+      .eq('mailbox_id', mailboxId)
+      .eq('is_deleted', false)
+      .order('received_at', { ascending: true })
+      .range(from, from + PAGE_SIZE - 1);
+
+    if (error) throw new Error(`Błąd pobierania emaili: ${error.message}`);
+    if (!data || data.length === 0) break;
+
+    emails.push(...data);
+
+    if (data.length < PAGE_SIZE) break; // last page
+    from += PAGE_SIZE;
+  }
+
+  if (emails.length === 0) return { threadsCreated: 0, emailsUpdated: 0 };
 
   // 2. Build message-id index
   const messageIdMap = new Map<string, RawEmail>();
@@ -188,20 +225,28 @@ export async function buildThreadsForMailbox(
     groups.get(root)!.emails.push(email);
   }
 
-  // 5. Delete existing threads for this mailbox (rebuild)
-  await supabase
-    .from('emails')
-    .update({ thread_id: null })
-    .eq('mailbox_id', mailboxId);
+  // 5. Compute all thread metadata in memory before DB operations
+  interface ThreadRow {
+    mailbox_id: string;
+    subject_normalized: string;
+    first_message_at: string;
+    last_message_at: string;
+    message_count: number;
+    participant_addresses: string[];
+    status: string;
+    avg_response_time_minutes: number | null;
+  }
 
-  await supabase
-    .from('email_threads')
-    .delete()
-    .eq('mailbox_id', mailboxId);
+  interface EmailUpdate {
+    id: string;
+    threadIndex: number; // maps to thread insert order
+    subject_normalized: string;
+    is_incoming: boolean;
+    response_time_minutes: number | null;
+  }
 
-  // 6. Create thread records and update emails
-  let threadsCreated = 0;
-  let emailsUpdated = 0;
+  const threadRows: ThreadRow[] = [];
+  const emailUpdates: EmailUpdate[] = [];
 
   for (const [, group] of groups) {
     // Sort emails chronologically
@@ -225,7 +270,6 @@ export async function buildThreadsForMailbox(
       const curr = group.emails[i];
       const prevIsIncoming = isIncoming(prev.from_address, mailboxEmail);
       const currIsIncoming = isIncoming(curr.from_address, mailboxEmail);
-      // Response = direction change
       if (prevIsIncoming !== currIsIncoming) {
         const rt = calcResponseTimeMinutes(
           curr.sent_at || curr.received_at,
@@ -239,34 +283,21 @@ export async function buildThreadsForMailbox(
       ? responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length
       : null;
 
-    // Determine thread status
     const lastIsIncoming = isIncoming(lastEmail.from_address, mailboxEmail);
-    const threadStatus = lastIsIncoming ? 'pending' : 'open';
+    const threadIndex = threadRows.length;
 
-    // Insert thread
-    const { data: thread, error: threadError } = await supabase
-      .from('email_threads')
-      .insert({
-        mailbox_id: mailboxId,
-        subject_normalized: group.subjectNormalized || '(brak tematu)',
-        first_message_at: firstEmail.sent_at || firstEmail.received_at,
-        last_message_at: lastEmail.sent_at || lastEmail.received_at,
-        message_count: group.emails.length,
-        participant_addresses: Array.from(participants),
-        status: threadStatus,
-        avg_response_time_minutes: avgResponseTime,
-      })
-      .select('id')
-      .single();
+    threadRows.push({
+      mailbox_id: mailboxId,
+      subject_normalized: group.subjectNormalized || '(brak tematu)',
+      first_message_at: firstEmail.sent_at || firstEmail.received_at,
+      last_message_at: lastEmail.sent_at || lastEmail.received_at,
+      message_count: group.emails.length,
+      participant_addresses: Array.from(participants),
+      status: lastIsIncoming ? 'pending' : 'open',
+      avg_response_time_minutes: avgResponseTime,
+    });
 
-    if (threadError) {
-      console.error(`Błąd tworzenia wątku: ${threadError.message}`);
-      continue;
-    }
-
-    threadsCreated++;
-
-    // Update emails with thread_id, subject_normalized, is_incoming, response_time
+    // Prepare email updates
     for (let i = 0; i < group.emails.length; i++) {
       const email = group.emails[i];
       const incoming = isIncoming(email.from_address, mailboxEmail);
@@ -283,23 +314,69 @@ export async function buildThreadsForMailbox(
         }
       }
 
-      const { error: updateError } = await supabase
-        .from('emails')
-        .update({
-          thread_id: thread.id,
-          subject_normalized: group.subjectNormalized,
-          is_incoming: incoming,
-          response_time_minutes: responseTime,
-        })
-        .eq('id', email.id);
-
-      if (updateError) {
-        console.error(`Błąd aktualizacji emaila ${email.id}: ${updateError.message}`);
-      } else {
-        emailsUpdated++;
-      }
+      emailUpdates.push({
+        id: email.id,
+        threadIndex,
+        subject_normalized: group.subjectNormalized,
+        is_incoming: incoming,
+        response_time_minutes: responseTime,
+      });
     }
   }
 
-  return { threadsCreated, emailsUpdated };
+  // 6. Delete existing threads for this mailbox (rebuild)
+  await supabase
+    .from('emails')
+    .update({ thread_id: null })
+    .eq('mailbox_id', mailboxId);
+
+  await supabase
+    .from('email_threads')
+    .delete()
+    .eq('mailbox_id', mailboxId);
+
+  // 7. Batch insert threads (in chunks of 500)
+  const THREAD_BATCH_SIZE = 500;
+  const allThreadIds: string[] = [];
+
+  for (let i = 0; i < threadRows.length; i += THREAD_BATCH_SIZE) {
+    const batch = threadRows.slice(i, i + THREAD_BATCH_SIZE);
+    const { data, error: insertError } = await supabase
+      .from('email_threads')
+      .insert(batch)
+      .select('id');
+
+    if (insertError) {
+      throw new Error(`Błąd tworzenia wątków: ${insertError.message}`);
+    }
+
+    for (const row of data) {
+      allThreadIds.push(row.id);
+    }
+  }
+
+  // 8. Batch update emails in parallel (chunks of 100 concurrent)
+  const EMAIL_BATCH_SIZE = 100;
+  let emailsUpdated = 0;
+
+  for (let i = 0; i < emailUpdates.length; i += EMAIL_BATCH_SIZE) {
+    const batch = emailUpdates.slice(i, i + EMAIL_BATCH_SIZE);
+    const results = await Promise.all(
+      batch.map((update) =>
+        supabase
+          .from('emails')
+          .update({
+            thread_id: allThreadIds[update.threadIndex],
+            subject_normalized: update.subject_normalized,
+            is_incoming: update.is_incoming,
+            response_time_minutes: update.response_time_minutes,
+          })
+          .eq('id', update.id)
+      )
+    );
+
+    emailsUpdated += results.filter((r) => !r.error).length;
+  }
+
+  return { threadsCreated: allThreadIds.length, emailsUpdated };
 }

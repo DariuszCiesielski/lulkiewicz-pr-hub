@@ -153,8 +153,17 @@ export async function upsertEmails(
     return 0;
   }
 
+  // Deduplicate within batch — PostgreSQL ON CONFLICT cannot handle
+  // the same row appearing twice in a single INSERT.
+  // Keep the last occurrence (most recent data) for each internet_message_id.
+  const deduped = new Map<string, Partial<Email>>();
+  for (const email of validEmails) {
+    deduped.set(email.internet_message_id!, email);
+  }
+  const uniqueEmails = Array.from(deduped.values());
+
   // Prepare rows for upsert
-  const rows = validEmails.map((email) => ({
+  const rows = uniqueEmails.map((email) => ({
     mailbox_id: mailboxId,
     internet_message_id: email.internet_message_id,
     graph_id: email.graph_id,
@@ -186,5 +195,5 @@ export async function upsertEmails(
     throw new Error(`Błąd zapisu emaili do bazy: ${error.message}`);
   }
 
-  return validEmails.length;
+  return uniqueEmails.length;
 }
