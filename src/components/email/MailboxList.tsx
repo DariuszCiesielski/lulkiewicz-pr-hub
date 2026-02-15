@@ -79,7 +79,7 @@ export default function MailboxList({
           Brak skrzynek
         </p>
         <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
-          Dodaj pierwsza skrzynke aby rozpoczac.
+          Dodaj pierwszą skrzynkę aby rozpocząć.
         </p>
       </div>
     );
@@ -98,14 +98,14 @@ export default function MailboxList({
       setTestResult((prev) => ({ ...prev, [id]: { success: data.success, message: data.message } }));
       await onTestConnection(id);
     } catch {
-      setTestResult((prev) => ({ ...prev, [id]: { success: false, message: 'Blad polaczenia z serwerem' } }));
+      setTestResult((prev) => ({ ...prev, [id]: { success: false, message: 'Błąd połączenia z serwerem' } }));
     } finally {
       setTestingId(null);
     }
   };
 
   const handleDelete = async (id: string, emailAddress: string) => {
-    if (!window.confirm(`Czy na pewno chcesz usunac skrzynke ${emailAddress}? Ta operacja jest nieodwracalna.`)) {
+    if (!window.confirm(`Czy na pewno chcesz usunąć skrzynkę ${emailAddress}? Ta operacja jest nieodwracalna.`)) {
       return;
     }
     setDeletingId(id);
@@ -169,7 +169,7 @@ export default function MailboxList({
                 <div className="mt-2 flex items-center gap-4 flex-wrap">
                   <ConnectionStatus status={mailbox.sync_status} lastSyncAt={mailbox.last_sync_at} />
                   <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                    {mailbox.email_count} wiadomosci
+                    {mailbox.email_count} wiadomości
                   </span>
                   {/* Persistent connection test indicator */}
                   {mailbox.connection_tested_at ? (
@@ -274,7 +274,7 @@ export default function MailboxList({
                     borderColor: 'var(--border-primary)',
                     color: 'var(--text-secondary)',
                   }}
-                  title="Edytuj skrzynke"
+                  title="Edytuj skrzynkę"
                 >
                   <Pencil className="h-4 w-4" />
                   Edytuj
@@ -289,7 +289,7 @@ export default function MailboxList({
                     borderColor: 'var(--border-primary)',
                     color: 'var(--text-secondary)',
                   }}
-                  title="Testuj polaczenie"
+                  title="Testuj połączenie"
                 >
                   <Wifi className={`h-4 w-4 ${testingId === mailbox.id ? 'animate-pulse' : ''}`} />
                   {testingId === mailbox.id ? 'Testowanie...' : 'Testuj'}
@@ -304,7 +304,7 @@ export default function MailboxList({
                     borderColor: 'rgba(239, 68, 68, 0.3)',
                     color: '#ef4444',
                   }}
-                  title="Usun skrzynke"
+                  title="Usuń skrzynkę"
                 >
                   <Trash2 className="h-4 w-4" />
                   {deletingId === mailbox.id ? 'Usuwanie...' : 'Usuń'}
