@@ -161,19 +161,6 @@ export default function AnalyzePage() {
     );
   }, [selectedMailboxId, dateFrom, dateTo, analysisJob]);
 
-  if (authLoading) {
-    return (
-      <div className="flex min-h-[50vh] items-center justify-center">
-        <p style={{ color: 'var(--text-muted)' }}>Ładowanie...</p>
-      </div>
-    );
-  }
-
-  if (!isAdmin) return null;
-
-  const isRunning = analysisJob.status === 'starting' || analysisJob.status === 'processing';
-  const isPaused = analysisJob.status === 'paused';
-
   const handlePause = useCallback(() => {
     analysisJob.pauseJob();
   }, [analysisJob]);
@@ -192,6 +179,19 @@ export default function AnalyzePage() {
   const handleResumeFromHistory = useCallback((job: AnalysisHistoryItem) => {
     analysisJob.resumeJob(job.id, job.processed_threads, job.total_threads, job.started_at || job.created_at);
   }, [analysisJob]);
+
+  if (authLoading) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <p style={{ color: 'var(--text-muted)' }}>Ładowanie...</p>
+      </div>
+    );
+  }
+
+  if (!isAdmin) return null;
+
+  const isRunning = analysisJob.status === 'starting' || analysisJob.status === 'processing';
+  const isPaused = analysisJob.status === 'paused';
 
   return (
     <div className="mx-auto max-w-2xl">
