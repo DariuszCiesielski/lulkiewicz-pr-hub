@@ -3,11 +3,13 @@ import { decrypt } from '@/lib/crypto/encrypt';
 import { getAccessToken } from '@/lib/email/graph-auth';
 import { createGraphClient } from '@/lib/email/graph-client';
 import { mapGraphMessageToEmail } from '@/lib/email/email-parser';
+import { getExcludedFolderIds } from '@/lib/email/graph-folders';
 import {
   fetchMessagesPage,
-  fetchDeltaPage,
+  fetchMessagesSince,
   upsertEmails,
   getMailboxMessageCount,
+  filterExcludedFolders,
 } from '@/lib/email/email-fetcher';
 import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
 import type { MailboxCredentials, SyncJobStatus } from '@/types/email';
@@ -81,7 +83,7 @@ export async function POST(request: Request) {
   // Fetch mailbox
   const { data: mailbox, error: mailboxError } = await adminClient
     .from('mailboxes')
-    .select('id, email_address, connection_type, credentials_encrypted, tenant_id, client_id, delta_link')
+    .select('id, email_address, connection_type, credentials_encrypted, tenant_id, client_id, last_sync_at')
     .eq('id', job.mailbox_id)
     .single();
 
@@ -149,6 +151,26 @@ export async function POST(request: Request) {
 
   const graphClient = createGraphClient(accessToken);
 
+  // Get excluded folder IDs (cached in job metadata for subsequent batches)
+  let excludedFolderIds: string[] = [];
+  const jobMetadata = job.metadata as { excludedFolderIds?: string[] } | null;
+
+  if (jobMetadata?.excludedFolderIds) {
+    // Reuse from previous batch
+    excludedFolderIds = jobMetadata.excludedFolderIds;
+  } else {
+    // First batch — fetch from Graph API and cache in job metadata
+    try {
+      excludedFolderIds = await getExcludedFolderIds(graphClient, mailbox.email_address);
+      await adminClient
+        .from('sync_jobs')
+        .update({ metadata: { excludedFolderIds } })
+        .eq('id', jobId);
+    } catch {
+      console.warn('Could not fetch excluded folders — syncing all folders');
+    }
+  }
+
   try {
     // Mark job as processing
     await adminClient
@@ -173,7 +195,6 @@ export async function POST(request: Request) {
 
     let fetchedCount = 0;
     let newPageToken: string | null = null;
-    let newDeltaLink: string | null = null;
 
     if (job.job_type === 'full') {
       // Full sync — paginated fetch
@@ -183,8 +204,9 @@ export async function POST(request: Request) {
         job.page_token
       );
 
-      // Parse and upsert
-      const parsed = result.messages.map((msg) =>
+      // Filter out excluded folders (spam, drafts, deleted items)
+      const filteredMessages = filterExcludedFolders(result.messages, excludedFolderIds);
+      const parsed = filteredMessages.map((msg) =>
         mapGraphMessageToEmail(msg, mailbox.id)
       );
 
@@ -194,17 +216,19 @@ export async function POST(request: Request) {
 
       newPageToken = result.nextLink;
     } else {
-      // Delta sync
-      const deltaLinkToUse = job.page_token || mailbox.delta_link;
+      // Delta sync — fetch messages since last sync date (all folders)
+      const sinceDate = mailbox.last_sync_at || new Date(0).toISOString();
 
-      const result = await fetchDeltaPage(
+      const result = await fetchMessagesSince(
         graphClient,
         mailbox.email_address,
-        deltaLinkToUse
+        sinceDate,
+        job.page_token
       );
 
-      // Parse and upsert new/changed messages
-      const parsed = result.messages.map((msg) =>
+      // Filter out excluded folders
+      const filteredMessages = filterExcludedFolders(result.messages, excludedFolderIds);
+      const parsed = filteredMessages.map((msg) =>
         mapGraphMessageToEmail(msg, mailbox.id)
       );
 
@@ -212,18 +236,7 @@ export async function POST(request: Request) {
         fetchedCount = await upsertEmails(adminClient, mailbox.id, parsed);
       }
 
-      // Mark removed messages
-      if (result.removedIds.length > 0) {
-        await adminClient
-          .from('emails')
-          .update({ is_deleted: true })
-          .eq('mailbox_id', mailbox.id)
-          .in('graph_id', result.removedIds);
-      }
-
-      // For delta: nextLink means more pages, deltaLink means we're done
       newPageToken = result.nextLink;
-      newDeltaLink = result.deltaLink;
     }
 
     const totalFetched = (job.emails_fetched || 0) + fetchedCount;
@@ -260,11 +273,6 @@ export async function POST(request: Request) {
         last_sync_at: new Date().toISOString(),
         total_emails: emailCount ?? 0,
       };
-
-      // Save delta link for future delta syncs
-      if (newDeltaLink) {
-        mailboxUpdate.delta_link = newDeltaLink;
-      }
 
       await adminClient
         .from('mailboxes')
