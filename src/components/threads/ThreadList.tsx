@@ -1,6 +1,7 @@
 'use client';
 
-import { MessageSquare } from 'lucide-react';
+import { useState } from 'react';
+import { MessageSquare, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import ThreadCard from './ThreadCard';
 import type { EmailThread } from '@/types/email';
 
@@ -19,6 +20,8 @@ interface ThreadListProps {
 }
 
 export default function ThreadList({ threads, pagination, isLoading, onPageChange }: ThreadListProps) {
+  const [showLegend, setShowLegend] = useState(false);
+
   if (isLoading) {
     return (
       <div className="space-y-3">
@@ -61,6 +64,52 @@ export default function ThreadList({ threads, pagination, isLoading, onPageChang
 
   return (
     <div className="space-y-3">
+      {/* Legenda statusow */}
+      <div className="mb-3">
+        <button
+          onClick={() => setShowLegend(!showLegend)}
+          className="flex items-center gap-1.5 text-xs transition-colors hover:opacity-80"
+          style={{ color: 'var(--text-muted)' }}
+        >
+          <Info className="h-3.5 w-3.5" />
+          Legenda statusów
+          {showLegend ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+        </button>
+
+        {showLegend && (
+          <div
+            className="mt-2 rounded-md border p-3 text-xs space-y-1.5"
+            style={{
+              borderColor: 'var(--border-primary)',
+              backgroundColor: 'var(--bg-secondary)',
+              color: 'var(--text-secondary)',
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <span className="inline-block rounded-full px-2 py-0.5 text-xs font-medium"
+                style={{ backgroundColor: 'rgba(234, 179, 8, 0.15)', color: '#eab308' }}>
+                Oczekujący
+              </span>
+              <span>Ostatnia wiadomość od osoby zewnętrznej — czeka na odpowiedź administracji</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="inline-block rounded-full px-2 py-0.5 text-xs font-medium"
+                style={{ backgroundColor: 'rgba(34, 197, 94, 0.15)', color: '#22c55e' }}>
+                Otwarty
+              </span>
+              <span>Ostatnia wiadomość od administracji — sprawa w toku</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="inline-block rounded-full px-2 py-0.5 text-xs font-medium"
+                style={{ backgroundColor: 'rgba(107, 114, 128, 0.15)', color: '#6b7280' }}>
+                Zamknięty
+              </span>
+              <span>Wątek oznaczony jako zamknięty</span>
+            </div>
+          </div>
+        )}
+      </div>
+
       {threads.map((thread) => (
         <ThreadCard key={thread.id} thread={thread} />
       ))}
