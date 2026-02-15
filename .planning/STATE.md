@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-10)
 
 **Core value:** Hub narzędziowy — AI analizuje maile (email-analyzer) i posty z grup FB (fb-analyzer) dla audytu komunikacji administracji osiedli
-**Current focus:** Milestone v1.1 — FB Analyzer (phase 8 COMPLETE, ready for phase 9)
+**Current focus:** Milestone v1.1 — FB Analyzer (phase 8 COMPLETE, ready for phase 9). Phase 2.1 (Multi-Folder Sync) COMPLETE.
 
 ## Current Position
 
-Phase: Phase 2.1 (Multi-Folder Sync) — IN PROGRESS
-Plan: 02 of 3 COMPLETE, next: 03
-Status: 3 plans created, 2 executed. Sync routes adaptowane do multi-folder, pozostaje 02.1-03 (UX).
-Last activity: 2026-02-15 — Completed 02.1-02-PLAN.md (sync route adaptation + email-parser folder_id)
+Phase: Phase 2.1 (Multi-Folder Sync) — COMPLETE
+Plan: 03 of 3 COMPLETE
+Status: All 3 plans executed. Multi-folder sync backend + UX improvements done.
+Last activity: 2026-02-15 — Completed 02.1-03-PLAN.md (legenda statusow + polskie znaki diakrytyczne)
 
-Progress (v1.0 Email Analyzer): [##################..] ~93% (Phases 1-6 complete, Phase 2.1 plan 02/03 done)
+Progress (v1.0 Email Analyzer): [####################] 100% (Phases 1-6 + Phase 2.1 COMPLETE)
 Progress (v1.1 FB Analyzer): [########............] 40% (phases 7-8 COMPLETE, ready for phase 9)
 
 ## Planning Status
@@ -53,10 +53,10 @@ Progress (v1.1 FB Analyzer): [########............] 40% (phases 7-8 COMPLETE, re
 - [x] 07-02-PLAN.md (Wave 1, autonomous) — Nawigacja FB Analyzer + shell pages (4646ff5, 14bc39d)
 - [x] 07-03-PLAN.md (Wave 2, autonomous) — Shared admin module + refaktoring 21 API routes (d40d07d, 9880239)
 
-**Phase 2.1 plans (3 plans, 2 waves) — INSERTED, READY FOR EXECUTION:**
+**Phase 2.1 plans (3 plans, 2 waves) — ALL COMPLETE:**
 - [x] 02.1-01-PLAN.md (Wave 1, autonomous) — Schema DB + graph-folders helper + email-fetcher all-folders endpoints (a487504, 7f7a227, 0bde990)
 - [x] 02.1-02-PLAN.md (Wave 1, autonomous) — Sync API routes adaptacja + email-parser folder_id (3b3624b, d8c0874, b7db1b8)
-- [ ] 02.1-03-PLAN.md (Wave 2, autonomous) — Legenda statusów + polskie znaki diakrytyczne (47 poprawek w 8 plikach)
+- [x] 02.1-03-PLAN.md (Wave 2, autonomous) — Legenda statusow + polskie znaki diakrytyczne (c4ce978, b33137d, 56864cc, 153eaa4, 4868dbf, aec9b43)
 
 **Phase 8 plans (4 plans, 3 waves) — ALL COMPLETE:**
 - [x] 08-01-PLAN.md (Wave 1, autonomous) — Data foundation: ALTER fb_groups + CREATE fb_settings + TS types (12f7607, df561a6)
@@ -123,6 +123,9 @@ Progress (v1.1 FB Analyzer): [########............] 40% (phases 7-8 COMPLETE, re
 - [02.1-02]: Delta sync walidacja zmieniona z delta_link na last_sync_at (sync/route.ts)
 - [02.1-02]: Excluded folder IDs cachowane w sync_jobs.metadata — reuse miedzy batchami (1 API call per sync)
 - [02.1-02]: fetchDeltaPage calkowicie usuniete z sync/process — zastapione fetchMessagesSince
+- [02.1-03]: Legenda statusow zwijalna domyslnie (useState false) — minimalizacja zasmiecenia UI
+- [02.1-03]: Kolory legendy identyczne z ThreadCard STATUS_STYLES (rgba)
+- [02.1-03]: 60+ poprawek polskich znakow diakrytycznych w 9 plikach UI (plan mowil o 47 w 8 plikach, znaleziono wiecej)
 
 ### Blockers/Concerns
 
@@ -149,7 +152,7 @@ organizations, organization_members, **mailboxes** (extended: +8 cols, sync_stat
 
 ## Session Continuity
 
-Last session: 2026-02-15T08:33Z
-Stopped at: Completed 02.1-02-PLAN.md (sync route adaptation + email-parser folder_id)
-Resume file: .planning/phases/02.1-multi-folder-sync/02.1-02-SUMMARY.md
-Next step: Execute 02.1-03-PLAN.md (legenda statusow + polskie znaki diakrytyczne), then SQL migration, then re-sync
+Last session: 2026-02-15T08:41Z
+Stopped at: Completed 02.1-03-PLAN.md — Phase 2.1 COMPLETE
+Resume file: .planning/phases/02.1-multi-folder-sync/02.1-03-SUMMARY.md
+Next step: SQL migration (02.1-01) must be applied in Supabase SQL Editor, then re-sync mailboxes. After that: Phase 9 (Scraping Engine)
