@@ -47,7 +47,7 @@ export async function POST(request: Request) {
   // Check mailbox exists
   const { data: mailbox, error: mailboxError } = await adminClient
     .from('mailboxes')
-    .select('id, sync_status, delta_link')
+    .select('id, sync_status, last_sync_at')
     .eq('id', mailboxId)
     .single();
 
@@ -58,10 +58,10 @@ export async function POST(request: Request) {
     );
   }
 
-  // Delta sync requires existing delta_link (at least one full sync completed)
-  if (type === 'delta' && !mailbox.delta_link) {
+  // Delta sync requires at least one completed full sync (last_sync_at must exist)
+  if (type === 'delta' && !mailbox.last_sync_at) {
     return NextResponse.json(
-      { error: 'Delta sync wymaga wykonania pełnej synchronizacji najpierw' },
+      { error: 'Najpierw wykonaj pełną synchronizację' },
       { status: 400 }
     );
   }
