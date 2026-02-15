@@ -6,7 +6,7 @@ import type { ThreadStatus } from '@/types/email';
 
 export interface ThreadFilterValues {
   search: string;
-  status: ThreadStatus | '';
+  status: ThreadStatus | 'closed_all' | '';
   from: string;
   to: string;
 }
@@ -16,11 +16,11 @@ interface ThreadFiltersProps {
   onChange: (filters: ThreadFilterValues) => void;
 }
 
-const STATUS_OPTIONS: { value: ThreadStatus | ''; label: string }[] = [
+const STATUS_OPTIONS: { value: ThreadStatus | 'closed_all' | ''; label: string }[] = [
   { value: '', label: 'Wszystkie statusy' },
   { value: 'pending', label: 'Oczekujący' },
   { value: 'open', label: 'Otwarty' },
-  { value: 'closed', label: 'Zamknięty' },
+  { value: 'closed_all', label: 'Zamknięty (wszystkie)' },
   { value: 'closed_positive', label: 'Zamknięty (pozytywnie)' },
   { value: 'closed_negative', label: 'Zamknięty (negatywnie)' },
 ];
@@ -93,7 +93,7 @@ export default function ThreadFilters({ filters, onChange }: ThreadFiltersProps)
             </label>
             <select
               value={filters.status}
-              onChange={(e) => onChange({ ...filters, status: e.target.value as ThreadStatus | '' })}
+              onChange={(e) => onChange({ ...filters, status: e.target.value as ThreadStatus | 'closed_all' | '' })}
               className="rounded-md border px-2 py-1.5 text-sm outline-none"
               style={{
                 borderColor: 'var(--border-primary)',

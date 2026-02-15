@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 
-export type AnalysisUIStatus = 'idle' | 'starting' | 'processing' | 'completed' | 'error';
+export type AnalysisUIStatus = 'idle' | 'starting' | 'processing' | 'paused' | 'completed' | 'error';
 
 export interface AnalysisProgress {
   processedThreads: number;
@@ -12,11 +12,15 @@ export interface AnalysisProgress {
 
 export interface UseAnalysisJobReturn {
   startAnalysis: (mailboxId: string, dateFrom?: string, dateTo?: string) => Promise<void>;
+  resumeJob: (jobId: string, processedThreads: number, totalThreads: number, jobStartedAt?: string) => void;
+  pauseJob: () => Promise<void>;
   status: AnalysisUIStatus;
   progress: AnalysisProgress;
   error: string | null;
   jobId: string | null;
   startedAt: Date | null;
+  jobStartedAt: Date | null;
+  processedAtStart: number;
   reset: () => void;
 }
 
@@ -32,6 +36,8 @@ export function useAnalysisJob(onComplete?: () => void): UseAnalysisJobReturn {
   });
   const [error, setError] = useState<string | null>(null);
   const [startedAt, setStartedAt] = useState<Date | null>(null);
+  const [jobStartedAt, setJobStartedAt] = useState<Date | null>(null);
+  const [processedAtStart, setProcessedAtStart] = useState(0);
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
@@ -82,6 +88,11 @@ export function useAnalysisJob(onComplete?: () => void): UseAnalysisJobReturn {
           : 0,
       });
 
+      if (data.status === 'paused') {
+        setStatus('paused');
+        return;
+      }
+
       if (data.hasMore) {
         timeoutRef.current = setTimeout(() => {
           if (mountedRef.current) processBatch(jId);
@@ -108,6 +119,8 @@ export function useAnalysisJob(onComplete?: () => void): UseAnalysisJobReturn {
     setProgress({ processedThreads: 0, totalThreads: 0, percentage: 0 });
     setError(null);
     setStartedAt(null);
+    setJobStartedAt(null);
+    setProcessedAtStart(0);
     mountedRef.current = true;
 
     try {
@@ -134,9 +147,11 @@ export function useAnalysisJob(onComplete?: () => void): UseAnalysisJobReturn {
 
       if (!mountedRef.current) return;
 
+      const now = new Date();
       setJobId(data.jobId);
       setStatus('processing');
-      setStartedAt(new Date());
+      setStartedAt(now);
+      setJobStartedAt(now);
       setProgress({
         processedThreads: 0,
         totalThreads: data.totalThreads || 0,
@@ -151,6 +166,56 @@ export function useAnalysisJob(onComplete?: () => void): UseAnalysisJobReturn {
     }
   }, [clearBatchTimeout, processBatch]);
 
+  // Pause a running analysis
+  const pauseJob = useCallback(async () => {
+    const currentJobId = jobId;
+    if (!currentJobId) return;
+
+    // Immediately stop polling
+    clearBatchTimeout();
+    setStatus('paused');
+
+    try {
+      await fetch('/api/analysis/pause', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobId: currentJobId, action: 'pause' }),
+      });
+    } catch {
+      // Even if API fails, we've already stopped polling locally
+    }
+  }, [jobId, clearBatchTimeout]);
+
+  // Resume a processing job (e.g. after page reload / hot reload / manual resume from paused)
+  const resumeJob = useCallback(async (jId: string, processedThreads: number, totalThreads: number, realStartedAt?: string) => {
+    clearBatchTimeout();
+    setJobId(jId);
+    setStatus('processing');
+    setStartedAt(new Date()); // session start for ETA calculation
+    setJobStartedAt(realStartedAt ? new Date(realStartedAt) : new Date()); // real job start for duration display
+    setProcessedAtStart(processedThreads);
+    setError(null);
+    setProgress({
+      processedThreads,
+      totalThreads,
+      percentage: totalThreads > 0 ? Math.round((processedThreads / totalThreads) * 100) : 0,
+    });
+    mountedRef.current = true;
+
+    // Ensure DB status is 'processing' (handles resume from 'paused')
+    try {
+      await fetch('/api/analysis/pause', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobId: jId, action: 'resume' }),
+      });
+    } catch {
+      // Ignore — if status was already 'processing', the API returns 400 which is fine
+    }
+
+    processBatch(jId);
+  }, [clearBatchTimeout, processBatch]);
+
   const reset = useCallback(() => {
     clearBatchTimeout();
     setJobId(null);
@@ -158,6 +223,7 @@ export function useAnalysisJob(onComplete?: () => void): UseAnalysisJobReturn {
     setProgress({ processedThreads: 0, totalThreads: 0, percentage: 0 });
     setError(null);
     setStartedAt(null);
+    setJobStartedAt(null);
   }, [clearBatchTimeout]);
 
   useEffect(() => {
@@ -168,5 +234,5 @@ export function useAnalysisJob(onComplete?: () => void): UseAnalysisJobReturn {
     };
   }, [clearBatchTimeout]);
 
-  return { startAnalysis, status, progress, error, jobId, startedAt, reset };
+  return { startAnalysis, resumeJob, pauseJob, status, progress, error, jobId, startedAt, jobStartedAt, processedAtStart, reset };
 }

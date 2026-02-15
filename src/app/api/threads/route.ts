@@ -6,7 +6,7 @@ import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
  *
  * Query params:
  *   mailboxId  — filter by mailbox (required)
- *   status     — open | closed | pending
+ *   status     — open | closed_all | closed_positive | closed_negative | pending
  *   search     — keyword search in subject
  *   from       — ISO date range start
  *   to         — ISO date range end
@@ -42,7 +42,11 @@ export async function GET(request: NextRequest) {
     .select('*', { count: 'exact' })
     .eq('mailbox_id', mailboxId);
 
-  if (status) query = query.eq('status', status);
+  if (status === 'closed_all') {
+    query = query.in('status', ['closed', 'closed_positive', 'closed_negative']);
+  } else if (status) {
+    query = query.eq('status', status);
+  }
   if (search) query = query.ilike('subject_normalized', `%${search.toLowerCase()}%`);
   if (from) query = query.gte('last_message_at', from);
   if (to) query = query.lte('last_message_at', to);

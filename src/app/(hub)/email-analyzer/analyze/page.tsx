@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Brain, Play, Clock, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Brain, Play, Pause, Clock, CheckCircle, AlertCircle, Loader2, FileText } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAnalysisJob } from '@/hooks/useAnalysisJob';
 import DatePresets from '@/components/analysis/DatePresets';
@@ -22,8 +22,11 @@ interface AnalysisHistoryItem {
   date_range_from: string | null;
   date_range_to: string | null;
   created_at: string;
+  started_at: string | null;
   completed_at: string | null;
   error_message: string | null;
+  estimated_cost_usd: number | null;
+  total_tokens: number | null;
 }
 
 function formatHistoryDate(iso: string): string {
@@ -36,6 +39,14 @@ function formatHistoryDate(iso: string): string {
   });
 }
 
+function formatShortDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('pl-PL', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+}
+
 function getStatusLabel(status: string): { label: string; color: string; icon: typeof CheckCircle } {
   switch (status) {
     case 'completed':
@@ -43,6 +54,8 @@ function getStatusLabel(status: string): { label: string; color: string; icon: t
     case 'processing':
     case 'pending':
       return { label: 'W toku', color: 'var(--accent-primary)', icon: Loader2 };
+    case 'paused':
+      return { label: 'Wstrzymana', color: '#f59e0b', icon: Pause };
     case 'failed':
       return { label: 'Błąd', color: '#ef4444', icon: AlertCircle };
     default:
@@ -61,22 +74,36 @@ export default function AnalyzePage() {
   const [history, setHistory] = useState<AnalysisHistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
 
-  const fetchHistory = useCallback((mailboxId: string) => {
-    if (!mailboxId) return;
-    setHistoryLoading(true);
-    fetch(`/api/analysis?mailboxId=${mailboxId}`)
-      .then((res) => res.json())
-      .then((data) => setHistory(data.jobs || []))
-      .catch(() => setHistory([]))
-      .finally(() => setHistoryLoading(false));
-  }, []);
-
   const analysisJob = useAnalysisJob(() => {
     // Po zakończeniu odśwież historię
     if (selectedMailboxId) {
       fetchHistory(selectedMailboxId);
     }
   });
+
+  const fetchHistory = useCallback((mailboxId: string) => {
+    if (!mailboxId) return;
+    setHistoryLoading(true);
+    fetch(`/api/analysis?mailboxId=${mailboxId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setHistory(data.jobs || []);
+      })
+      .catch(() => setHistory([]))
+      .finally(() => setHistoryLoading(false));
+  }, []);
+
+  // Auto-resume: when history loads and there's an active job, resume polling
+  const hasAutoResumed = useRef(false);
+  useEffect(() => {
+    if (hasAutoResumed.current) return;
+    if (analysisJob.status !== 'idle') return;
+    const activeJob = history.find((j) => j.status === 'processing' || j.status === 'pending');
+    if (activeJob) {
+      hasAutoResumed.current = true;
+      analysisJob.resumeJob(activeJob.id, activeJob.processed_threads, activeJob.total_threads, activeJob.started_at || activeJob.created_at);
+    }
+  }, [history, analysisJob]);
 
   useEffect(() => {
     if (!authLoading && !isAdmin) router.push('/dashboard');
@@ -113,6 +140,18 @@ export default function AnalyzePage() {
     }
   }, [selectedMailboxId, fetchHistory]);
 
+  // Auto-refresh historii podczas trwającej analizy (co 15s)
+  useEffect(() => {
+    const isRunning = analysisJob.status === 'processing' || analysisJob.status === 'starting';
+    if (!isRunning || !selectedMailboxId) return;
+
+    const interval = setInterval(() => {
+      fetchHistory(selectedMailboxId);
+    }, 15_000);
+
+    return () => clearInterval(interval);
+  }, [analysisJob.status, selectedMailboxId, fetchHistory]);
+
   const handleStart = useCallback(() => {
     if (!selectedMailboxId) return;
     analysisJob.startAnalysis(
@@ -133,6 +172,26 @@ export default function AnalyzePage() {
   if (!isAdmin) return null;
 
   const isRunning = analysisJob.status === 'starting' || analysisJob.status === 'processing';
+  const isPaused = analysisJob.status === 'paused';
+
+  const handlePause = useCallback(() => {
+    analysisJob.pauseJob();
+  }, [analysisJob]);
+
+  const handleResume = useCallback(() => {
+    if (analysisJob.jobId) {
+      analysisJob.resumeJob(
+        analysisJob.jobId,
+        analysisJob.progress.processedThreads,
+        analysisJob.progress.totalThreads,
+        analysisJob.jobStartedAt?.toISOString()
+      );
+    }
+  }, [analysisJob]);
+
+  const handleResumeFromHistory = useCallback((job: AnalysisHistoryItem) => {
+    analysisJob.resumeJob(job.id, job.processed_threads, job.total_threads, job.started_at || job.created_at);
+  }, [analysisJob]);
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -159,7 +218,7 @@ export default function AnalyzePage() {
           <select
             value={selectedMailboxId}
             onChange={(e) => setSelectedMailboxId(e.target.value)}
-            disabled={isRunning}
+            disabled={isRunning || isPaused}
             className="rounded-md border px-3 py-2 text-sm outline-none disabled:opacity-50"
             style={{
               borderColor: 'var(--border-primary)',
@@ -185,7 +244,7 @@ export default function AnalyzePage() {
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              disabled={isRunning}
+              disabled={isRunning || isPaused}
               className="rounded-md border px-3 py-2 text-sm outline-none disabled:opacity-50"
               style={{
                 borderColor: 'var(--border-primary)',
@@ -202,7 +261,7 @@ export default function AnalyzePage() {
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              disabled={isRunning}
+              disabled={isRunning || isPaused}
               className="rounded-md border px-3 py-2 text-sm outline-none disabled:opacity-50"
               style={{
                 borderColor: 'var(--border-primary)',
@@ -219,19 +278,45 @@ export default function AnalyzePage() {
             setDateFrom(from);
             setDateTo(to);
           }}
-          disabled={isRunning}
+          disabled={isRunning || isPaused}
         />
 
-        {/* Start button */}
-        <button
-          onClick={handleStart}
-          disabled={isRunning || !selectedMailboxId}
-          className="flex items-center gap-2 rounded-md px-4 py-2.5 text-sm text-white transition-colors hover:opacity-90 disabled:opacity-50"
-          style={{ backgroundColor: 'var(--accent-primary)' }}
-        >
-          <Play className={`h-4 w-4 ${isRunning ? 'animate-pulse' : ''}`} />
-          {isRunning ? 'Analiza w toku...' : 'Rozpocznij analizę'}
-        </button>
+        {/* Action buttons */}
+        <div className="flex items-center gap-2">
+          {!isRunning && !isPaused && (
+            <button
+              onClick={handleStart}
+              disabled={!selectedMailboxId}
+              className="flex items-center gap-2 rounded-md px-4 py-2.5 text-sm text-white transition-colors hover:opacity-90 disabled:opacity-50"
+              style={{ backgroundColor: 'var(--accent-primary)' }}
+            >
+              <Play className="h-4 w-4" />
+              Rozpocznij analizę
+            </button>
+          )}
+
+          {isRunning && (
+            <button
+              onClick={handlePause}
+              className="flex items-center gap-2 rounded-md px-4 py-2.5 text-sm text-white transition-colors hover:opacity-90"
+              style={{ backgroundColor: '#f59e0b' }}
+            >
+              <Pause className="h-4 w-4" />
+              Wstrzymaj analizę
+            </button>
+          )}
+
+          {isPaused && (
+            <button
+              onClick={handleResume}
+              className="flex items-center gap-2 rounded-md px-4 py-2.5 text-sm text-white transition-colors hover:opacity-90"
+              style={{ backgroundColor: 'var(--accent-primary)' }}
+            >
+              <Play className="h-4 w-4" />
+              Wznów analizę
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Progress */}
@@ -242,6 +327,8 @@ export default function AnalyzePage() {
             progress={analysisJob.progress}
             error={analysisJob.error}
             startedAt={analysisJob.startedAt}
+            jobStartedAt={analysisJob.jobStartedAt}
+            processedAtStart={analysisJob.processedAtStart}
             onReset={analysisJob.reset}
           />
         </div>
@@ -280,7 +367,7 @@ export default function AnalyzePage() {
               const statusInfo = getStatusLabel(job.status);
               const StatusIcon = statusInfo.icon;
               const dateRange = job.date_range_from || job.date_range_to
-                ? `${job.date_range_from || '...'} — ${job.date_range_to || '...'}`
+                ? `${job.date_range_from ? formatShortDate(job.date_range_from) : '...'} — ${job.date_range_to ? formatShortDate(job.date_range_to) : '...'}`
                 : 'Cały zakres';
 
               return (
@@ -294,7 +381,7 @@ export default function AnalyzePage() {
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <StatusIcon
-                      className={`h-3.5 w-3.5 shrink-0 ${job.status === 'processing' || job.status === 'pending' ? 'animate-spin' : ''}`}
+                      className={`h-3.5 w-3.5 shrink-0 ${(job.status === 'processing' || job.status === 'pending') ? 'animate-spin' : ''}`}
                       style={{ color: statusInfo.color }}
                     />
                     <div className="min-w-0">
@@ -309,18 +396,55 @@ export default function AnalyzePage() {
                       <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-muted)' }}>
                         <span>{formatHistoryDate(job.created_at)}</span>
                         <span>{dateRange}</span>
+                        {job.estimated_cost_usd !== null && (
+                          <span
+                            className="font-medium"
+                            style={{ color: 'var(--text-secondary)' }}
+                            title={job.total_tokens ? `${job.total_tokens.toLocaleString('pl-PL')} tokenów` : ''}
+                          >
+                            ${job.estimated_cost_usd.toFixed(2)}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
-                  {job.error_message && (
-                    <span
-                      className="text-xs truncate max-w-[150px]"
-                      style={{ color: '#ef4444' }}
-                      title={job.error_message}
-                    >
-                      {job.error_message}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2 shrink-0">
+                    {job.error_message && (
+                      <span
+                        className="text-xs truncate max-w-[150px]"
+                        style={{ color: '#ef4444' }}
+                        title={job.error_message}
+                      >
+                        {job.error_message}
+                      </span>
+                    )}
+                    {job.status === 'paused' && analysisJob.status === 'idle' && (
+                      <button
+                        onClick={() => handleResumeFromHistory(job)}
+                        className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors hover:opacity-80"
+                        style={{
+                          backgroundColor: 'var(--accent-primary)',
+                          color: '#fff',
+                        }}
+                      >
+                        <Play className="h-3 w-3" />
+                        Wznów
+                      </button>
+                    )}
+                    {job.status === 'completed' && (
+                      <button
+                        onClick={() => router.push('/email-analyzer/reports')}
+                        className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors hover:opacity-80"
+                        style={{
+                          backgroundColor: 'var(--accent-primary)',
+                          color: '#fff',
+                        }}
+                      >
+                        <FileText className="h-3 w-3" />
+                        Generuj raport
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             })}

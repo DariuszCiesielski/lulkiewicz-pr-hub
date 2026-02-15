@@ -204,7 +204,6 @@ async function generateThreadSummaries(
   try {
     aiConfig = await loadAIConfig(supabase);
   } catch {
-    // AI not configured — no summaries generated
     return results;
   }
 

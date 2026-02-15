@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { CheckCircle, AlertCircle, RefreshCw, FileText, Loader2 } from 'lucide-react';
+import { CheckCircle, AlertCircle, RefreshCw, FileText, Loader2, Pause } from 'lucide-react';
 import type { AnalysisUIStatus, AnalysisProgress as AnalysisProgressData } from '@/hooks/useAnalysisJob';
 
 interface AnalysisProgressProps {
@@ -10,13 +10,16 @@ interface AnalysisProgressProps {
   progress: AnalysisProgressData;
   error: string | null;
   startedAt: Date | null;
+  jobStartedAt: Date | null;
+  processedAtStart?: number;
   onReset: () => void;
 }
 
-function getETA(processed: number, total: number, startedAt: Date | null): string {
-  if (!startedAt || processed === 0) return 'Obliczanie...';
+function getETA(processed: number, total: number, startedAt: Date | null, processedAtStart: number): string {
+  const processedInSession = processed - processedAtStart;
+  if (!startedAt || processedInSession <= 0) return 'Obliczanie...';
   const elapsedMs = Date.now() - startedAt.getTime();
-  const avgPerThread = elapsedMs / processed;
+  const avgPerThread = elapsedMs / processedInSession;
   const remainingMs = avgPerThread * (total - processed);
   const remainingMin = Math.ceil(remainingMs / 60000);
   if (remainingMin <= 1) return 'Mniej niż minuta';
@@ -54,10 +57,17 @@ export default function AnalysisProgress({
   progress,
   error,
   startedAt,
+  jobStartedAt,
+  processedAtStart = 0,
   onReset,
 }: AnalysisProgressProps) {
   const router = useRouter();
-  const [soundEnabled, setSoundEnabled] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('ea-sound-enabled') === '1';
+    }
+    return false;
+  });
   const soundPlayedRef = useRef(false);
   const prevStatusRef = useRef<AnalysisUIStatus>(status);
 
@@ -79,14 +89,15 @@ export default function AnalysisProgress({
   }, [status, soundEnabled]);
 
   const getDurationText = useCallback((): string => {
-    if (!startedAt) return '';
-    const elapsedMs = Date.now() - startedAt.getTime();
+    const ref = jobStartedAt || startedAt;
+    if (!ref) return '';
+    const elapsedMs = Date.now() - ref.getTime();
     const minutes = Math.round(elapsedMs / 60000);
     if (minutes < 1) return 'mniej niż minuta';
     if (minutes === 1) return '1 minuta';
     if (minutes < 5) return `${minutes} minuty`;
     return `${minutes} minut`;
-  }, [startedAt]);
+  }, [jobStartedAt, startedAt]);
 
   const isRunning = status === 'starting' || status === 'processing';
 
@@ -109,6 +120,9 @@ export default function AnalysisProgress({
               style={{ color: 'var(--accent-primary)' }}
             />
           )}
+          {status === 'paused' && (
+            <Pause className="h-4 w-4" style={{ color: '#f59e0b' }} />
+          )}
           {status === 'completed' && (
             <CheckCircle className="h-4 w-4" style={{ color: '#22c55e' }} />
           )}
@@ -121,6 +135,7 @@ export default function AnalysisProgress({
           >
             {status === 'starting' && 'Inicjalizacja...'}
             {status === 'processing' && 'Przetwarzanie wątków...'}
+            {status === 'paused' && 'Analiza wstrzymana'}
             {status === 'completed' && 'Analiza zakończona!'}
             {status === 'error' && 'Wystąpił błąd'}
           </span>
@@ -144,10 +159,19 @@ export default function AnalysisProgress({
                 ? '#ef4444'
                 : status === 'completed'
                   ? '#22c55e'
-                  : 'var(--accent-primary)',
+                  : status === 'paused'
+                    ? '#f59e0b'
+                    : 'var(--accent-primary)',
           }}
         />
       </div>
+
+      {/* Paused info */}
+      {status === 'paused' && (
+        <p className="text-xs mb-3" style={{ color: '#f59e0b' }}>
+          Analiza została wstrzymana. Możesz ją wznowić w dowolnym momencie — kontynuuje od miejsca przerwania.
+        </p>
+      )}
 
       {/* ETA */}
       {isRunning && (
@@ -155,7 +179,7 @@ export default function AnalysisProgress({
           <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
             Szacowany czas:{' '}
             <span style={{ color: 'var(--text-secondary)' }}>
-              {getETA(progress.processedThreads, progress.totalThreads, startedAt)}
+              {getETA(progress.processedThreads, progress.totalThreads, startedAt, processedAtStart)}
             </span>
           </p>
           {progress.processedThreads >= 3 && (
@@ -175,7 +199,10 @@ export default function AnalysisProgress({
           <input
             type="checkbox"
             checked={soundEnabled}
-            onChange={(e) => setSoundEnabled(e.target.checked)}
+            onChange={(e) => {
+              setSoundEnabled(e.target.checked);
+              localStorage.setItem('ea-sound-enabled', e.target.checked ? '1' : '0');
+            }}
             className="rounded"
           />
           Powiadom dźwiękiem po zakończeniu

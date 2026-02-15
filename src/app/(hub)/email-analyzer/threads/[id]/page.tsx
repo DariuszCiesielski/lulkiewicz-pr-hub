@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, MessageSquare, Clock, Users } from 'lucide-react';
+import { ArrowLeft, MessageSquare, Clock, Users, Sparkles } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import EmailMessage from '@/components/threads/EmailMessage';
 import type { EmailThread } from '@/types/email';
@@ -38,6 +38,8 @@ const STATUS_STYLES: Record<string, { bg: string; color: string; label: string }
   pending: { bg: 'rgba(234, 179, 8, 0.15)', color: '#eab308', label: 'Oczekujący' },
   open: { bg: 'rgba(34, 197, 94, 0.15)', color: '#22c55e', label: 'Otwarty' },
   closed: { bg: 'rgba(107, 114, 128, 0.15)', color: '#6b7280', label: 'Zamknięty' },
+  closed_positive: { bg: 'rgba(34, 197, 94, 0.15)', color: '#22c55e', label: 'Zamknięty (pozytywnie)' },
+  closed_negative: { bg: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', label: 'Zamknięty (negatywnie)' },
 };
 
 export default function ThreadDetailPage() {
@@ -146,6 +148,29 @@ export default function ThreadDetailPage() {
           <p className="text-sm mb-3" style={{ color: 'var(--text-muted)' }}>
             Skrzynka: {thread.mailbox.display_name || thread.mailbox.email_address}
           </p>
+        )}
+
+        {/* AI Summary */}
+        {thread.summary && (
+          <div
+            className="rounded-md border p-3 mb-3"
+            style={{
+              backgroundColor: 'rgba(139, 92, 246, 0.06)',
+              borderColor: 'rgba(139, 92, 246, 0.2)',
+            }}
+          >
+            <div className="flex items-start gap-2">
+              <Sparkles className="h-4 w-4 mt-0.5 shrink-0" style={{ color: '#8b5cf6' }} />
+              <div>
+                <p className="text-xs font-medium mb-1" style={{ color: '#8b5cf6' }}>
+                  Podsumowanie AI
+                </p>
+                <p className="text-sm leading-relaxed" style={{ color: 'var(--text-primary)' }}>
+                  {thread.summary}
+                </p>
+              </div>
+            </div>
+          </div>
         )}
 
         <div className="flex flex-wrap gap-4 text-sm" style={{ color: 'var(--text-muted)' }}>
