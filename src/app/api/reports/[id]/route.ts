@@ -42,6 +42,29 @@ export async function GET(
   });
 }
 
+/** DELETE /api/reports/[id] — delete report and its sections */
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  if (!(await verifyAdmin())) {
+    return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
+  }
+
+  const { id } = await params;
+  const adminClient = getAdminClient();
+
+  // Delete sections first (FK), then report
+  await adminClient.from('report_sections').delete().eq('report_id', id);
+  const { error } = await adminClient.from('reports').delete().eq('id', id);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true });
+}
+
 /** PATCH /api/reports/[id] — update report section content */
 export async function PATCH(
   request: NextRequest,

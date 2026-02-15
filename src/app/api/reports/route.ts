@@ -138,10 +138,51 @@ export async function POST(request: NextRequest) {
     sectionResultsMap.set(r.section_key, existing);
   }
 
-  // Filter sections based on template type
-  const sectionsToInclude = templateType === 'client'
-    ? CLIENT_REPORT_SECTIONS
-    : DEFAULT_PROMPTS.map((p) => p.section_key);
+  // Load user-configured prompt overrides from DB
+  const { data: dbPrompts } = await adminClient
+    .from('prompt_templates')
+    .select('section_key, title, section_order, system_prompt, user_prompt_template, in_internal_report, in_client_report')
+    .eq('tier', 'global')
+    .eq('is_active', true);
+
+  const dbPromptMap = new Map(
+    (dbPrompts || []).map((p: Record<string, unknown>) => [p.section_key as string, p])
+  );
+
+  // Build full prompt definitions: defaults merged with DB overrides + custom sections
+  const allPromptDefs = [
+    ...DEFAULT_PROMPTS.map((def) => {
+      const override = dbPromptMap.get(def.section_key);
+      return {
+        ...def,
+        in_internal_report: override ? (override.in_internal_report as boolean) : true,
+        in_client_report: override ? (override.in_client_report as boolean) : CLIENT_REPORT_SECTIONS.includes(def.section_key),
+      };
+    }),
+    ...(dbPrompts || [])
+      .filter((p: Record<string, unknown>) =>
+        !DEFAULT_PROMPTS.some((d) => d.section_key === (p.section_key as string))
+      )
+      .map((p: Record<string, unknown>) => ({
+        section_key: p.section_key as string,
+        title: p.title as string,
+        section_order: (p.section_order as number) || 0,
+        system_prompt: p.system_prompt as string,
+        user_prompt_template: p.user_prompt_template as string,
+        in_internal_report: p.in_internal_report as boolean,
+        in_client_report: p.in_client_report as boolean,
+      })),
+  ];
+
+  const promptDefMap = new Map(allPromptDefs.map((p) => [p.section_key, p]));
+
+  // Filter sections: respect user's in_internal_report/in_client_report flags, exclude _global_context
+  const sectionsToInclude = allPromptDefs
+    .filter((p) => {
+      if (p.section_key === '_global_context') return false;
+      return templateType === 'client' ? p.in_client_report : p.in_internal_report;
+    })
+    .map((p) => p.section_key);
 
   // Count unique threads
   const uniqueThreadIds = new Set(results.map((r) => r.thread_id));
@@ -171,16 +212,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: `Błąd tworzenia raportu: ${reportError?.message}` }, { status: 500 });
   }
 
-  // Load global report prompt (if user configured one)
-  const { data: globalPromptRow } = await adminClient
-    .from('prompt_templates')
-    .select('user_prompt_template')
-    .eq('section_key', 'report_global')
-    .eq('tier', 'global')
-    .eq('is_active', true)
-    .maybeSingle();
-
-  const globalContext = globalPromptRow?.user_prompt_template || undefined;
+  // Load global context from _global_context prompt (DB override or default)
+  const globalContextOverride = dbPromptMap.get('_global_context');
+  const globalContext = (globalContextOverride?.user_prompt_template as string) ||
+    DEFAULT_PROMPTS.find((p) => p.section_key === '_global_context')?.user_prompt_template ||
+    undefined;
 
   // Date range for synthesis context
   const dateRange = job.date_range_from && job.date_range_to
@@ -211,7 +247,7 @@ export async function POST(request: NextRequest) {
     }
 
     const synthesisPromises = sectionsToInclude.map(async (sectionKey) => {
-      const promptDef = DEFAULT_PROMPTS.find((p) => p.section_key === sectionKey);
+      const promptDef = promptDefMap.get(sectionKey);
       if (!promptDef) return null;
 
       const perThreadResults = sectionResultsMap.get(sectionKey) || [];
@@ -278,7 +314,7 @@ export async function POST(request: NextRequest) {
   } else {
     // ---- DETAILED: original thread-by-thread concatenation ----
     for (const sectionKey of sectionsToInclude) {
-      const promptDef = DEFAULT_PROMPTS.find((p) => p.section_key === sectionKey);
+      const promptDef = promptDefMap.get(sectionKey);
       if (!promptDef) continue;
 
       const perThreadResults = sectionResultsMap.get(sectionKey) || [];

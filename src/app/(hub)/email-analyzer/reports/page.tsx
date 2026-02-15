@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { FileText, Plus, RefreshCw, Loader2 } from 'lucide-react';
+import { FileText, Plus, RefreshCw, Loader2, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 
@@ -89,6 +89,20 @@ export default function ReportsPage() {
       localStorage.setItem('ea-selected-mailbox', selectedMailboxId);
     }
   }, [selectedMailboxId]);
+
+  const handleDelete = async (e: React.MouseEvent, reportId: string) => {
+    e.preventDefault(); // Don't navigate to report
+    e.stopPropagation();
+    if (!confirm('Czy na pewno chcesz usunąć ten raport?')) return;
+
+    try {
+      const res = await fetch(`/api/reports/${reportId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Błąd usuwania');
+      setReports((prev) => prev.filter((r) => r.id !== reportId));
+    } catch {
+      setError('Błąd usuwania raportu');
+    }
+  };
 
   const handleGenerate = async () => {
     if (!selectedMailboxId) return;
@@ -207,12 +221,12 @@ export default function ReportsPage() {
                   color: 'var(--text-primary)',
                 }}
               >
-                <option value="internal">Wewnetrzny (7 sekcji)</option>
+                <option value="internal">Wewnętrzny (7 sekcji)</option>
                 <option value="client">Kliencki (4 sekcje)</option>
               </select>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Poziom szczegolowosci</label>
+              <label className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Poziom szczegółowości</label>
               <select
                 value={detailLevel}
                 onChange={(e) => setDetailLevel(e.target.value as 'synthetic' | 'detailed')}
@@ -224,7 +238,7 @@ export default function ReportsPage() {
                 }}
               >
                 <option value="synthetic">Syntetyczny (~5-15 stron)</option>
-                <option value="detailed">Szczegolowy (watek po watku)</option>
+                <option value="detailed">Szczegółowy (wątek po wątku)</option>
               </select>
             </div>
           </div>
@@ -282,7 +296,7 @@ export default function ReportsPage() {
             <Link
               key={report.id}
               href={`/email-analyzer/reports/${report.id}`}
-              className="block rounded-lg border p-4 transition-all hover:shadow-md"
+              className="group block rounded-lg border p-4 transition-all hover:shadow-md"
               style={{
                 borderColor: 'var(--border-primary)',
                 backgroundColor: 'var(--bg-secondary)',
@@ -308,6 +322,14 @@ export default function ReportsPage() {
                     </span>
                   </div>
                 </div>
+                <button
+                  onClick={(e) => handleDelete(e, report.id)}
+                  className="p-2 rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
+                  style={{ color: '#ef4444' }}
+                  title="Usuń raport"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
               </div>
             </Link>
           ))}

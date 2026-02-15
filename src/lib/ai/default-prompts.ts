@@ -16,11 +16,11 @@ export const DEFAULT_PROMPTS: DefaultPrompt[] = [
     section_key: '_global_context',
     title: 'Kontekst globalny raportu',
     section_order: 0,
-    system_prompt: `Jestes ekspertem ds. zarzadzania nieruchomosciami. Analizujesz korespondencje email miedzy administracja osiedla a mieszkancami. Odpowiadasz po polsku.`,
-    user_prompt_template: `Kontekst dla calego raportu:
+    system_prompt: `Jesteś ekspertem ds. zarządzania nieruchomościami. Analizujesz korespondencję email między administracją osiedla a mieszkańcami. Odpowiadasz po polsku.`,
+    user_prompt_template: `Kontekst dla całego raportu:
 - Raport dotyczy analizy korespondencji email administracji osiedla
-- Oceniamy jakosc obslugi mieszkancow, czas reakcji i zgodnosc z procedurami
-- Dane sa zanonimizowane — uzywaj identyfikatorow zamiast prawdziwych danych osobowych`,
+- Oceniamy jakość obsługi mieszkańców, czas reakcji i zgodność z procedurami
+- Dane są zanonimizowane — używaj identyfikatorów zamiast prawdziwych danych osobowych`,
   },
   {
     section_key: 'summary',

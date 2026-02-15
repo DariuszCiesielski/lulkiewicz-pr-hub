@@ -91,7 +91,7 @@ export default function PromptsPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || 'Blad zapisu');
+        throw new Error(data.error || 'Błąd zapisu');
       }
 
       setMessage({ type: 'success', text: 'Prompt zapisany.' });
@@ -105,7 +105,7 @@ export default function PromptsPage() {
         setEditedPrompt(fetched[newIdx]);
       }
     } catch (err) {
-      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Blad' });
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Błąd' });
     } finally {
       setIsSaving(false);
     }
@@ -120,7 +120,7 @@ export default function PromptsPage() {
     );
 
     if (!defaultPrompt) {
-      setMessage({ type: 'error', text: 'Brak domyslnego promptu dla tej sekcji.' });
+      setMessage({ type: 'error', text: 'Brak domyślnego promptu dla tej sekcji.' });
       return;
     }
 
@@ -143,9 +143,9 @@ export default function PromptsPage() {
         }),
       });
 
-      if (!res.ok) throw new Error('Blad resetowania');
+      if (!res.ok) throw new Error('Błąd resetowania');
 
-      setMessage({ type: 'success', text: 'Przywrocono domyslna tresc promptu.' });
+      setMessage({ type: 'success', text: 'Przywrócono domyślną treść promptu.' });
       const fetched = await fetchPrompts();
       const newIdx = fetched.findIndex(
         (p: PromptTemplate) => p.section_key === defaultPrompt.section_key
@@ -155,14 +155,14 @@ export default function PromptsPage() {
         setEditedPrompt(fetched[newIdx]);
       }
     } catch (err) {
-      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Blad' });
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Błąd' });
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleDelete = async (sectionKey: string) => {
-    if (!confirm('Czy na pewno chcesz usunac te sekcje?')) return;
+    if (!confirm('Czy na pewno chcesz usunąć tę sekcję?')) return;
 
     try {
       const res = await fetch('/api/prompts', {
@@ -171,9 +171,9 @@ export default function PromptsPage() {
         body: JSON.stringify({ section_key: sectionKey }),
       });
 
-      if (!res.ok) throw new Error('Blad usuwania');
+      if (!res.ok) throw new Error('Błąd usuwania');
 
-      setMessage({ type: 'success', text: 'Sekcja usunieta.' });
+      setMessage({ type: 'success', text: 'Sekcja usunięta.' });
       const fetched = await fetchPrompts();
       if (fetched.length > 0) {
         const newIdx = Math.min(selectedIndex, fetched.length - 1);
@@ -183,7 +183,7 @@ export default function PromptsPage() {
         setEditedPrompt(null);
       }
     } catch (err) {
-      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Blad' });
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Błąd' });
     }
   };
 
@@ -206,7 +206,7 @@ export default function PromptsPage() {
         }),
       });
 
-      if (!res.ok) throw new Error('Blad kopiowania');
+      if (!res.ok) throw new Error('Błąd kopiowania');
 
       setMessage({ type: 'success', text: 'Sekcja skopiowana.' });
       const fetched = await fetchPrompts();
@@ -216,7 +216,7 @@ export default function PromptsPage() {
         setEditedPrompt(fetched[newIdx]);
       }
     } catch (err) {
-      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Blad' });
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Błąd' });
     }
   };
 
@@ -233,15 +233,15 @@ export default function PromptsPage() {
         body: JSON.stringify({
           section_key: newKey,
           title: newSectionTitle.trim(),
-          system_prompt: 'Jestes ekspertem ds. zarzadzania nieruchomosciami. Odpowiadasz po polsku.',
-          user_prompt_template: 'Przeanalizuj ponizsze watki email.\n\nWATKI:\n{{threads}}\n\nNapisz analize.',
+          system_prompt: 'Jesteś ekspertem ds. zarządzania nieruchomościami. Odpowiadasz po polsku.',
+          user_prompt_template: 'Przeanalizuj poniższe wątki email.\n\nWĄTKI:\n{{threads}}\n\nNapisz analizę.',
           section_order: maxOrder + 1,
           in_internal_report: true,
           in_client_report: false,
         }),
       });
 
-      if (!res.ok) throw new Error('Blad dodawania');
+      if (!res.ok) throw new Error('Błąd dodawania');
 
       setMessage({ type: 'success', text: 'Nowa sekcja dodana.' });
       setNewSectionTitle('');
@@ -253,7 +253,7 @@ export default function PromptsPage() {
         setEditedPrompt(fetched[newIdx]);
       }
     } catch (err) {
-      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Blad' });
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Błąd' });
     }
   };
 
@@ -304,7 +304,7 @@ export default function PromptsPage() {
         setEditedPrompt(fetched[newIdx]);
       }
     } catch {
-      setMessage({ type: 'error', text: 'Blad zmiany kolejnosci' });
+      setMessage({ type: 'error', text: 'Błąd zmiany kolejności' });
     }
   };
 
@@ -316,7 +316,7 @@ export default function PromptsPage() {
   if (authLoading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <p style={{ color: 'var(--text-muted)' }}>Ladowanie...</p>
+        <p style={{ color: 'var(--text-muted)' }}>Ładowanie...</p>
       </div>
     );
   }
@@ -329,7 +329,7 @@ export default function PromptsPage() {
         <div className="flex items-center gap-3">
           <FileText className="h-6 w-6" style={{ color: 'var(--text-muted)' }} />
           <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-            Zarzadzanie promptami
+            Zarządzanie promptami
           </h1>
         </div>
         <button
@@ -338,7 +338,7 @@ export default function PromptsPage() {
           style={{ backgroundColor: 'var(--accent-primary)' }}
         >
           <Plus className="h-4 w-4" />
-          Dodaj sekcje
+          Dodaj sekcję
         </button>
       </div>
 
@@ -359,7 +359,7 @@ export default function PromptsPage() {
               type="text"
               value={newSectionTitle}
               onChange={(e) => setNewSectionTitle(e.target.value)}
-              placeholder="np. Analiza kosztow"
+              placeholder="np. Analiza kosztów"
               className="rounded-md border px-3 py-2 text-sm outline-none"
               style={{
                 borderColor: 'var(--border-primary)',
@@ -409,7 +409,7 @@ export default function PromptsPage() {
                 <div className="font-medium text-xs leading-tight">{prompt.title}</div>
                 <div className="flex items-center gap-1 mt-0.5">
                   <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                    {prompt.tier === 'default' ? 'Domyslny' : 'Zmodyfikowany'}
+                    {prompt.tier === 'default' ? 'Domyślny' : 'Zmodyfikowany'}
                   </span>
                 </div>
               </button>
@@ -423,7 +423,7 @@ export default function PromptsPage() {
                     onClick={(e) => { e.stopPropagation(); handleReorder(i, 'up'); }}
                     className="p-0.5 rounded hover:opacity-70"
                     style={{ color: 'var(--text-muted)' }}
-                    title="W gore"
+                    title="W górę"
                   >
                     <ChevronUp className="h-3 w-3" />
                   </button>
@@ -433,7 +433,7 @@ export default function PromptsPage() {
                     onClick={(e) => { e.stopPropagation(); handleReorder(i, 'down'); }}
                     className="p-0.5 rounded hover:opacity-70"
                     style={{ color: 'var(--text-muted)' }}
-                    title="W dol"
+                    title="W dół"
                   >
                     <ChevronDown className="h-3 w-3" />
                   </button>
@@ -451,7 +451,7 @@ export default function PromptsPage() {
                     onClick={(e) => { e.stopPropagation(); handleDelete(prompt.section_key); }}
                     className="p-0.5 rounded hover:opacity-70"
                     style={{ color: 'var(--error)' }}
-                    title="Usun"
+                    title="Usuń"
                   >
                     <Trash2 className="h-3 w-3" />
                   </button>
@@ -474,7 +474,7 @@ export default function PromptsPage() {
               {/* Section title */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                  Tytul sekcji
+                  Tytuł sekcji
                 </label>
                 <input
                   type="text"
@@ -501,7 +501,7 @@ export default function PromptsPage() {
                       }
                       className="rounded"
                     />
-                    Raport wewnetrzny
+                    Raport wewnętrzny
                   </label>
                   <label className="flex items-center gap-2 text-sm cursor-pointer" style={{ color: 'var(--text-secondary)' }}>
                     <input
@@ -566,14 +566,14 @@ export default function PromptsPage() {
                 >
                   <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
                   <span>
-                    Tresc watkow email zostanie automatycznie dolaczona do promptu (zmienna{' '}
+                    Treść wątków email zostanie automatycznie dołączona do promptu (zmienna{' '}
                     <code
                       className="px-1 py-0.5 rounded text-xs font-mono"
                       style={{ backgroundColor: 'var(--bg-tertiary)' }}
                     >
                       {'{{threads}}'}
                     </code>
-                    ). Nie musisz jej recznie dodawac.
+                    ). Nie musisz jej ręcznie dodawać.
                   </span>
                 </div>
               )}
@@ -598,10 +598,10 @@ export default function PromptsPage() {
                       borderColor: 'var(--border-primary)',
                       color: 'var(--text-secondary)',
                     }}
-                    title="Przywroc domyslna tresc z default-prompts.ts"
+                    title="Przywróć domyślną treść z default-prompts.ts"
                   >
                     <RotateCcw className="h-4 w-4" />
-                    Resetuj do domyslnego
+                    Resetuj do domyślnego
                   </button>
                 )}
               </div>
