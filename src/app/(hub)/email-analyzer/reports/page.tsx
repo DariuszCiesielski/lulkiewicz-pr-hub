@@ -70,6 +70,7 @@ export default function ReportsPage() {
     }
   }, []);
 
+  // Fetch reports + mailboxes + restore persisted selection
   useEffect(() => {
     if (isAdmin) {
       fetchReports();
@@ -78,11 +79,22 @@ export default function ReportsPage() {
         .then((data) => {
           const list = Array.isArray(data) ? data : [];
           setMailboxes(list);
-          if (list.length > 0) setSelectedMailboxId(list[0].id);
+          if (list.length > 0) {
+            const saved = localStorage.getItem('ea-selected-mailbox');
+            const validSaved = saved && list.some((m: MailboxOption) => m.id === saved);
+            setSelectedMailboxId(validSaved ? saved : list[0].id);
+          }
         })
         .catch(() => {});
     }
   }, [isAdmin, fetchReports]);
+
+  // Persist mailbox selection
+  useEffect(() => {
+    if (selectedMailboxId) {
+      localStorage.setItem('ea-selected-mailbox', selectedMailboxId);
+    }
+  }, [selectedMailboxId]);
 
   const handleGenerate = async () => {
     if (!selectedMailboxId) return;

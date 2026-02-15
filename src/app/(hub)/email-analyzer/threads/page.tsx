@@ -43,7 +43,7 @@ export default function ThreadsPage() {
     }
   }, [isAdmin, authLoading, router]);
 
-  // Fetch mailboxes
+  // Fetch mailboxes + restore persisted selection
   useEffect(() => {
     if (!isAdmin) return;
     fetch('/api/mailboxes')
@@ -52,11 +52,20 @@ export default function ThreadsPage() {
         const list = Array.isArray(data) ? data : [];
         setMailboxes(list);
         if (list.length > 0 && !selectedMailboxId) {
-          setSelectedMailboxId(list[0].id);
+          const saved = localStorage.getItem('ea-selected-mailbox');
+          const validSaved = saved && list.some((m: MailboxOption) => m.id === saved);
+          setSelectedMailboxId(validSaved ? saved : list[0].id);
         }
       })
       .catch(() => setMailboxes([]));
   }, [isAdmin, selectedMailboxId]);
+
+  // Persist mailbox selection
+  useEffect(() => {
+    if (selectedMailboxId) {
+      localStorage.setItem('ea-selected-mailbox', selectedMailboxId);
+    }
+  }, [selectedMailboxId]);
 
   // Fetch threads
   const fetchThreads = useCallback(async (page = 1) => {
