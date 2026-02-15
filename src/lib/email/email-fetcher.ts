@@ -18,23 +18,28 @@ const MESSAGE_SELECT_FIELDS = [
   'hasAttachments',
   'internetMessageHeaders',
   'isRead',
+  'parentFolderId',  // Phase 2.1: identyfikacja folderu źródłowego
 ].join(',');
 
 // --- Message count ---
 
 /**
- * Get total message count in the inbox folder.
+ * Get total message count across all folders.
+ * Uses /messages with $count for accurate cross-folder total.
  */
 export async function getMailboxMessageCount(
   graphClient: Client,
   emailAddress: string
 ): Promise<number> {
-  const folder = await graphClient
-    .api(`/users/${emailAddress}/mailFolders/inbox`)
-    .select('totalItemCount')
+  const response = await graphClient
+    .api(`/users/${emailAddress}/messages`)
+    .top(1)
+    .select('id')
+    .header('ConsistencyLevel', 'eventual')
+    .count(true)
     .get();
 
-  return folder?.totalItemCount ?? 0;
+  return response?.['@odata.count'] ?? 0;
 }
 
 // --- Full sync pagination ---
@@ -60,7 +65,7 @@ export async function fetchMessagesPage(
   } else {
     // First page — build full query
     response = await graphClient
-      .api(`/users/${emailAddress}/mailFolders/inbox/messages`)
+      .api(`/users/${emailAddress}/messages`)
       .top(100)
       .select(MESSAGE_SELECT_FIELDS)
       .header('Prefer', 'outlook.body-content-type="text"')
@@ -74,9 +79,65 @@ export async function fetchMessagesPage(
   };
 }
 
-// --- Delta sync pagination ---
+// --- Smart resync (all-folders replacement for delta) ---
 
 /**
+ * Fetch messages received since a given date (all folders).
+ * Used as replacement for delta sync (which is per-folder only).
+ *
+ * Returns paginated results identical to fetchMessagesPage.
+ */
+export async function fetchMessagesSince(
+  graphClient: Client,
+  emailAddress: string,
+  sinceDate: string,
+  pageUrl: string | null
+): Promise<{ messages: any[]; nextLink: string | null }> {
+  let response: any;
+
+  if (pageUrl) {
+    response = await graphClient.api(pageUrl).get();
+  } else {
+    // ISO date for OData filter
+    const filterDate = new Date(sinceDate).toISOString();
+    response = await graphClient
+      .api(`/users/${emailAddress}/messages`)
+      .top(100)
+      .select(MESSAGE_SELECT_FIELDS)
+      .header('Prefer', 'outlook.body-content-type="text"')
+      .filter(`receivedDateTime ge ${filterDate}`)
+      .orderby('receivedDateTime DESC')
+      .get();
+  }
+
+  return {
+    messages: response?.value || [],
+    nextLink: response?.['@odata.nextLink'] || null,
+  };
+}
+
+// --- Folder filtering ---
+
+/**
+ * Filter out messages from excluded folders.
+ * Call after fetching a batch from Graph API.
+ */
+export function filterExcludedFolders(
+  messages: any[],
+  excludedFolderIds: string[]
+): any[] {
+  if (excludedFolderIds.length === 0) return messages;
+  return messages.filter(
+    (msg) => !excludedFolderIds.includes(msg.parentFolderId)
+  );
+}
+
+// --- Delta sync pagination (DEPRECATED) ---
+
+/**
+ * @deprecated Use fetchMessagesSince instead.
+ * Delta sync is per-folder only in Graph API — not compatible with all-folders sync.
+ *
  * Fetch a delta page of messages (new/changed/removed since last sync).
  *
  * If deltaLink is provided, uses it directly (resume delta).
