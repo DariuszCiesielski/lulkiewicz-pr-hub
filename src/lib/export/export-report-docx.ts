@@ -15,10 +15,57 @@ interface ReportSection {
 
 interface ReportMeta {
   title: string;
+  template_type?: string;
   mailbox?: { display_name: string | null; email_address: string } | null;
   date_range_from?: string | null;
   date_range_to?: string | null;
   created_at: string;
+}
+
+/**
+ * Generate a unique DOCX filename: Raport_typ_skrzynka_data-zakres.docx
+ * Polish chars preserved, special chars sanitized.
+ */
+function generateDocxFilename(report: ReportMeta): string {
+  const templateLabel = report.template_type === 'client' ? 'kliencki' : 'wewnetrzny';
+
+  const mailboxName = report.mailbox?.display_name || report.mailbox?.email_address || 'skrzynka';
+  const safeMailbox = sanitizeForFilename(mailboxName);
+
+  const parts = ['Raport', templateLabel, safeMailbox];
+
+  // Add date range if available
+  if (report.date_range_from && report.date_range_to) {
+    const from = formatDateShort(report.date_range_from);
+    const to = formatDateShort(report.date_range_to);
+    parts.push(`${from}_${to}`);
+  } else {
+    // Fallback: use created_at date
+    parts.push(formatDateShort(report.created_at));
+  }
+
+  return `${parts.join('_')}.docx`;
+}
+
+/** Format date as YYYY-MM-DD for filenames */
+function formatDateShort(iso: string): string {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return 'nieznana-data';
+  return d.toISOString().split('T')[0];
+}
+
+/**
+ * Sanitize text for use in filenames.
+ * Preserves Polish characters, removes special chars, replaces spaces with underscores.
+ */
+function sanitizeForFilename(text: string): string {
+  return text
+    .replace(/[<>:"/\\|?*]/g, '')     // Remove forbidden filename chars
+    .replace(/[@#$%^&+=!~`'{}[\]()]/g, '') // Remove other special chars
+    .replace(/\s+/g, '_')             // Spaces → underscores
+    .replace(/_+/g, '_')              // Collapse multiple underscores
+    .replace(/^_|_$/g, '')            // Trim leading/trailing underscores
+    .slice(0, 80);                    // Limit length
 }
 
 export async function exportReportToDocx(
@@ -146,10 +193,6 @@ export async function exportReportToDocx(
   });
 
   const blob = await Packer.toBlob(doc);
-  const date = new Date().toISOString().split('T')[0];
-  const safeName = (mailboxName || 'raport')
-    .replace(/[^a-zA-Z0-9\u0080-\uFFFF\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .toLowerCase();
-  saveAs(blob, `raport-${safeName}-${date}.docx`);
+  const filename = generateDocxFilename(report);
+  saveAs(blob, filename);
 }
