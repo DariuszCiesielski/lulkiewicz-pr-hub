@@ -35,11 +35,11 @@ export default function FbGroupsPage() {
 
       if (!groupsRes.ok) {
         const data = await groupsRes.json().catch(() => ({}));
-        throw new Error(data.error || `Blad pobierania grup (${groupsRes.status})`);
+        throw new Error(data.error || `Błąd pobierania grup (${groupsRes.status})`);
       }
       if (!devsRes.ok) {
         const data = await devsRes.json().catch(() => ({}));
-        throw new Error(data.error || `Blad pobierania deweloperow (${devsRes.status})`);
+        throw new Error(data.error || `Błąd pobierania deweloperów (${devsRes.status})`);
       }
 
       const [groupsData, devsData] = await Promise.all([
@@ -50,7 +50,7 @@ export default function FbGroupsPage() {
       setGroups(groupsData as FbGroupEnriched[]);
       setDevelopers(devsData as string[]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Wystapil blad');
+      setError(err instanceof Error ? err.message : 'Wystąpił błąd');
     } finally {
       setLoading(false);
     }
@@ -112,7 +112,7 @@ export default function FbGroupsPage() {
 
     if (!res.ok) {
       const json = await res.json().catch(() => ({}));
-      throw new Error(json.error || 'Blad dodawania grupy');
+      throw new Error(json.error || 'Błąd dodawania grupy');
     }
 
     setShowAddModal(false);
@@ -135,7 +135,7 @@ export default function FbGroupsPage() {
 
     if (!res.ok) {
       const json = await res.json().catch(() => ({}));
-      throw new Error(json.error || 'Blad edycji grupy');
+      throw new Error(json.error || 'Błąd edycji grupy');
     }
 
     setEditingGroup(null);
@@ -143,7 +143,7 @@ export default function FbGroupsPage() {
   };
 
   const handleDeleteGroup = async (group: FbGroupEnriched) => {
-    if (!confirm(`Czy na pewno chcesz usunac grupe "${group.name}"? Ta operacja jest odwracalna (soft delete).`)) {
+    if (!confirm(`Czy na pewno chcesz usunąć grupę "${group.name}"? Ta operacja jest odwracalna (soft delete).`)) {
       return;
     }
 
@@ -153,7 +153,7 @@ export default function FbGroupsPage() {
 
     if (!res.ok) {
       const json = await res.json().catch(() => ({}));
-      setError(json.error || 'Blad usuwania grupy');
+      setError(json.error || 'Błąd usuwania grupy');
       return;
     }
 
@@ -171,7 +171,7 @@ export default function FbGroupsPage() {
 
     if (!res.ok) {
       const json = await res.json().catch(() => ({}));
-      setError(json.error || 'Blad zmiany statusu');
+      setError(json.error || 'Błąd zmiany statusu');
       return;
     }
 
@@ -191,7 +191,7 @@ export default function FbGroupsPage() {
 
     if (!res.ok) {
       const json = await res.json().catch(() => ({}));
-      setError(json.error || 'Blad operacji masowej');
+      setError(json.error || 'Błąd operacji masowej');
       return;
     }
 
@@ -294,7 +294,7 @@ export default function FbGroupsPage() {
             style={{ backgroundColor: 'var(--accent-primary)' }}
           >
             <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">Dodaj grupe</span>
+            <span className="hidden sm:inline">Dodaj grupę</span>
           </button>
         </div>
       </div>
