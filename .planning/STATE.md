@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-10)
 
 **Core value:** Hub narzędziowy — AI analizuje maile (email-analyzer) i posty z grup FB (fb-analyzer) dla audytu komunikacji administracji osiedli
-**Current focus:** Phase 2.2 (Email Analyzer Quality) — Plan 04 COMPLETE. Milestone v1.1 — FB Analyzer (phase 8 COMPLETE, ready for phase 9).
+**Current focus:** Phase 2.2 (Email Analyzer Quality) — ALL COMPLETE. Milestone v1.1 — FB Analyzer (phase 8 COMPLETE, ready for phase 9).
 
 ## Current Position
 
-Phase: Phase 2.2 (Email Analyzer Quality) — Plan 04 COMPLETE
+Phase: Phase 2.2 (Email Analyzer Quality) — ALL COMPLETE
 Plan: 4 of 4
-Status: Plan 02.2-04 COMPLETE. Wave 2 done (02.2-03 may still be in progress in parallel).
-Last activity: 2026-02-15 — Completed 02.2-04-PLAN.md (UI/UX Polish)
+Status: All plans (02.2-01 through 02.2-04) COMPLETE. Phase 2.2 done.
+Last activity: 2026-02-15 — Completed 02.2-03-PLAN.md (Synthetic Reports)
 
-Progress (v1.0 Email Analyzer): [####################] 100% (Phases 1-6 + Phase 2.1 + Phase 2.2 COMPLETE)
+Progress (v1.0 Email Analyzer): [####################] 100% (Phases 1-6 + Phase 2.1 + Phase 2.2 ALL COMPLETE)
 Progress (v1.1 FB Analyzer): [########............] 40% (phases 7-8 COMPLETE, ready for phase 9)
 
 ## Planning Status
@@ -58,10 +58,10 @@ Progress (v1.1 FB Analyzer): [########............] 40% (phases 7-8 COMPLETE, re
 - [x] 02.1-02-PLAN.md (Wave 1, autonomous) — Sync API routes adaptacja + email-parser folder_id (3b3624b, d8c0874, b7db1b8)
 - [x] 02.1-03-PLAN.md (Wave 2, autonomous) — Legenda statusow + polskie znaki diakrytyczne (c4ce978, b33137d, 56864cc, 153eaa4, 4868dbf, aec9b43)
 
-**Phase 2.2 plans (4 plans, 2 waves) — IN PROGRESS:**
+**Phase 2.2 plans (4 plans, 2 waves) — ALL COMPLETE:**
 - [x] 02.2-01-PLAN.md (Wave 1, autonomous) — Thread Intelligence: AI summary per wątek, ulepszone statusy, persisted mailbox (d5cee2a, 8ad58e6, 1e67f83, 3f2d708, 4f42b83)
 - [x] 02.2-02-PLAN.md (Wave 1, autonomous) — Analysis UX: date presets, spinner+ETA, dźwięk, historia analiz (27cb22b, b7b9d60, d4659db, 2bd0bcc)
-- [ ] 02.2-03-PLAN.md (Wave 2, checkpoint) — Synthetic Reports: AI REDUCE, formatowanie, nazwy DOCX (parallel, may still be in progress)
+- [x] 02.2-03-PLAN.md (Wave 2, checkpoint) — Synthetic Reports: AI REDUCE, formatowanie, nazwy DOCX (427b15e, 36c5b09, ecc1517, 0d56339, 51646c3)
 - [x] 02.2-04-PLAN.md (Wave 2, autonomous) — UI/UX Polish: kontrast WCAG AA, nawigacja, prompt CRUD, podglad klucza API (0697333, a23305e, 4a1a902, 0c99fda)
 
 **Phase 8 plans (4 plans, 3 waves) — ALL COMPLETE:**
@@ -148,6 +148,11 @@ Progress (v1.1 FB Analyzer): [########............] 40% (phases 7-8 COMPLETE, re
 - [02.2-04]: maskApiKey: 6 pierwszych + ... + 4 ostatnie znaki (decrypt server-side)
 - [02.2-04]: Soft delete promptow: is_active=false, custom sections usuwalne, default nie
 - [02.2-04]: Checkboxy in_internal_report/in_client_report per sekcja (SQL migration required)
+- [02.2-03]: Two-level AI synthesis: single-pass <=100 watkow, batch 30 + meta-synthesis >100
+- [02.2-03]: Promise.allSettled per sekcja raportu (parallel synthesis, Vercel 60s timeout)
+- [02.2-03]: Globalny prompt raportu: report_global w prompt_templates jako kontekst syntezy
+- [02.2-03]: DOCX filename: Raport_typ_skrzynka_daty.docx z polskimi znakami
+- [02.2-03]: Spis tresci z anchor links per sekcja, CSS formatting .report-content
 
 ### Blockers/Concerns
 
@@ -174,7 +179,7 @@ organizations, organization_members, **mailboxes** (extended: +8 cols, sync_stat
 
 ## Session Continuity
 
-Last session: 2026-02-15T13:45Z
-Stopped at: Completed 02.2-04-PLAN.md (UI/UX Polish)
-Resume file: .planning/phases/02.2-email-analyzer-quality/02.2-04-SUMMARY.md
-Next step: Wait for 02.2-03 (Synthetic Reports) to complete, then Phase 9 (FB Scraping Engine)
+Last session: 2026-02-15T13:46Z
+Stopped at: Completed 02.2-03-PLAN.md (Synthetic Reports) — Phase 2.2 ALL COMPLETE
+Resume file: .planning/phases/02.2-email-analyzer-quality/02.2-03-SUMMARY.md
+Next step: Phase 9 (FB Scraping Engine) — /gsd:discuss-phase 9
