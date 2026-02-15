@@ -39,7 +39,7 @@ export default function MailboxesPage() {
       const res = await fetch('/api/mailboxes');
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || 'Nie udalo sie pobrac skrzynek');
+        throw new Error(data.error || 'Nie udało się pobrać skrzynek');
       }
       const data = await res.json();
       setMailboxes(data);
@@ -68,7 +68,7 @@ export default function MailboxesPage() {
 
     if (!res.ok) {
       const data = await res.json();
-      throw new Error(data.error || 'Nie udalo sie dodac skrzynki');
+      throw new Error(data.error || 'Nie udało się dodać skrzynki');
     }
 
     await fetchMailboxes();
@@ -113,7 +113,7 @@ export default function MailboxesPage() {
     const res = await fetch(`/api/mailboxes/${id}`, { method: 'DELETE' });
     if (!res.ok) {
       const data = await res.json();
-      throw new Error(data.error || 'Nie udalo sie usunac skrzynki');
+      throw new Error(data.error || 'Nie udało się usunąć skrzynki');
     }
     await fetchMailboxes();
   };
@@ -173,7 +173,7 @@ export default function MailboxesPage() {
   if (authLoading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <p style={{ color: 'var(--text-muted)' }}>Ladowanie...</p>
+        <p style={{ color: 'var(--text-muted)' }}>Ładowanie...</p>
       </div>
     );
   }
@@ -186,7 +186,7 @@ export default function MailboxesPage() {
         <div className="flex items-center gap-3">
           <Mail className="h-6 w-6" style={{ color: 'var(--text-muted)' }} />
           <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-            Zarzadzanie skrzynkami
+            Zarządzanie skrzynkami
           </h1>
         </div>
         <div className="flex gap-2">
@@ -199,7 +199,7 @@ export default function MailboxesPage() {
             }}
           >
             <RefreshCw className="h-4 w-4" />
-            Odswiez
+            Odśwież
           </button>
           <button
             onClick={() => setShowForm(true)}
@@ -207,7 +207,7 @@ export default function MailboxesPage() {
             style={{ backgroundColor: 'var(--accent-primary)' }}
           >
             <Plus className="h-4 w-4" />
-            Dodaj skrzynke
+            Dodaj skrzynkę
           </button>
         </div>
       </div>
@@ -241,7 +241,7 @@ export default function MailboxesPage() {
 
       {isLoading ? (
         <p className="text-center py-8" style={{ color: 'var(--text-muted)' }}>
-          Ladowanie skrzynek...
+          Ładowanie skrzynek...
         </p>
       ) : (
         <MailboxList
