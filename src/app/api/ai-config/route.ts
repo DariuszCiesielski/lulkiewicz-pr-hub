@@ -1,16 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { encrypt } from '@/lib/crypto/encrypt';
+import { encrypt, decrypt } from '@/lib/crypto/encrypt';
 import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
 
-/** GET /api/ai-config — get active AI configuration (without API key) */
+/**
+ * Mask an API key for safe display: first 6 chars + "..." + last 4 chars.
+ * Short keys (<=10 chars) show first 3 + "..." + last 2.
+ */
+function maskApiKey(key: string): string {
+  if (key.length <= 10) {
+    return key.slice(0, 3) + '...' + key.slice(-2);
+  }
+  return key.slice(0, 6) + '...' + key.slice(-4);
+}
+
+/** GET /api/ai-config — get active AI configuration with masked API key preview */
 export async function GET() {
   if (!(await verifyAdmin())) {
-    return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
+    return NextResponse.json({ error: 'Brak uprawnien' }, { status: 403 });
   }
 
   const { data, error } = await getAdminClient()
     .from('ai_config')
-    .select('id, provider, model, temperature, max_tokens, is_active, created_at, updated_at')
+    .select('id, provider, model, temperature, max_tokens, api_key_encrypted, is_active, created_at, updated_at')
     .eq('is_active', true)
     .single();
 
@@ -18,7 +29,29 @@ export async function GET() {
     return NextResponse.json({ config: null });
   }
 
-  return NextResponse.json({ config: { ...data, has_api_key: true } });
+  let apiKeyPreview: string | null = null;
+  const hasApiKey = !!data.api_key_encrypted;
+
+  if (data.api_key_encrypted) {
+    try {
+      const decrypted = decrypt(data.api_key_encrypted as string);
+      apiKeyPreview = maskApiKey(decrypted);
+    } catch {
+      // Decryption failed — key exists but cannot be previewed
+      apiKeyPreview = null;
+    }
+  }
+
+  // Remove encrypted key from response
+  const { api_key_encrypted: _, ...safeData } = data;
+
+  return NextResponse.json({
+    config: {
+      ...safeData,
+      has_api_key: hasApiKey,
+      api_key_preview: apiKeyPreview,
+    },
+  });
 }
 
 /** POST /api/ai-config — create or update AI configuration */

@@ -12,6 +12,7 @@ interface AIConfigState {
   max_tokens: number;
   api_key: string;
   has_api_key: boolean;
+  api_key_preview: string | null;
 }
 
 const modelsByProvider: Record<string, { value: string; label: string }[]> = {
@@ -47,6 +48,7 @@ export default function AISettingsPage() {
     max_tokens: 16384,
     api_key: '',
     has_api_key: false,
+    api_key_preview: null,
   });
   const [isSaving, setIsSaving] = useState(false);
   const [showKey, setShowKey] = useState(false);
@@ -70,6 +72,7 @@ export default function AISettingsPage() {
             temperature: data.config.temperature ?? 0.3,
             max_tokens: data.config.max_tokens ?? 4096,
             has_api_key: !!data.config.has_api_key,
+            api_key_preview: data.config.api_key_preview || null,
           }));
         }
       })
@@ -101,7 +104,15 @@ export default function AISettingsPage() {
       }
 
       setMessage({ type: 'success', text: 'Konfiguracja zapisana pomyślnie.' });
-      setConfig((prev) => ({ ...prev, api_key: '', has_api_key: true }));
+      // Reload config to get updated api_key_preview
+      const reloadRes = await fetch('/api/ai-config');
+      const reloadData = await reloadRes.json();
+      setConfig((prev) => ({
+        ...prev,
+        api_key: '',
+        has_api_key: true,
+        api_key_preview: reloadData.config?.api_key_preview || null,
+      }));
     } catch (err) {
       setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Błąd' });
     } finally {
@@ -227,6 +238,18 @@ export default function AISettingsPage() {
               {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
+          {config.has_api_key && (
+            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+              {config.api_key_preview
+                ? <>Aktualny klucz: <span className="font-mono" style={{ color: 'var(--text-secondary)' }}>{config.api_key_preview}</span></>
+                : 'Klucz skonfigurowany'}
+            </p>
+          )}
+          {!config.has_api_key && (
+            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+              Nie skonfigurowano
+            </p>
+          )}
         </div>
 
         {/* Temperature */}
