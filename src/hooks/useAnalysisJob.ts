@@ -16,6 +16,7 @@ export interface UseAnalysisJobReturn {
   progress: AnalysisProgress;
   error: string | null;
   jobId: string | null;
+  startedAt: Date | null;
   reset: () => void;
 }
 
@@ -30,6 +31,7 @@ export function useAnalysisJob(onComplete?: () => void): UseAnalysisJobReturn {
     percentage: 0,
   });
   const [error, setError] = useState<string | null>(null);
+  const [startedAt, setStartedAt] = useState<Date | null>(null);
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
@@ -105,6 +107,7 @@ export function useAnalysisJob(onComplete?: () => void): UseAnalysisJobReturn {
     setStatus('starting');
     setProgress({ processedThreads: 0, totalThreads: 0, percentage: 0 });
     setError(null);
+    setStartedAt(null);
     mountedRef.current = true;
 
     try {
@@ -133,6 +136,7 @@ export function useAnalysisJob(onComplete?: () => void): UseAnalysisJobReturn {
 
       setJobId(data.jobId);
       setStatus('processing');
+      setStartedAt(new Date());
       setProgress({
         processedThreads: 0,
         totalThreads: data.totalThreads || 0,
@@ -153,6 +157,7 @@ export function useAnalysisJob(onComplete?: () => void): UseAnalysisJobReturn {
     setStatus('idle');
     setProgress({ processedThreads: 0, totalThreads: 0, percentage: 0 });
     setError(null);
+    setStartedAt(null);
   }, [clearBatchTimeout]);
 
   useEffect(() => {
@@ -163,5 +168,5 @@ export function useAnalysisJob(onComplete?: () => void): UseAnalysisJobReturn {
     };
   }, [clearBatchTimeout]);
 
-  return { startAnalysis, status, progress, error, jobId, reset };
+  return { startAnalysis, status, progress, error, jobId, startedAt, reset };
 }
