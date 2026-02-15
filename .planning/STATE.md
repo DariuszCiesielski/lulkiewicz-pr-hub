@@ -153,6 +153,10 @@ Progress (v1.1 FB Analyzer): [########............] 40% (phases 7-8 COMPLETE, re
 - [02.2-03]: Globalny prompt raportu: report_global w prompt_templates jako kontekst syntezy
 - [02.2-03]: DOCX filename: Raport_typ_skrzynka_daty.docx z polskimi znakami
 - [02.2-03]: Spis tresci z anchor links per sekcja, CSS formatting .report-content
+- [Cost tracking]: Exact cost (prompt_tokens + completion_tokens) zamiast blended rate estimate
+- [Cost tracking]: pricing.ts — 10 modeli, 3 providerzy (OpenAI GPT-5.x, Anthropic Claude 4.x, Google Gemini 2.5/3)
+- [Cost tracking]: Legacy fallback — stare dane bez split tokens uzywaja blended rate 70/30
+- [Cost tracking]: SQL migration: prompt_tokens, completion_tokens, cost_usd na analysis_results
 
 ### Blockers/Concerns
 
@@ -179,7 +183,8 @@ organizations, organization_members, **mailboxes** (extended: +8 cols, sync_stat
 
 ## Session Continuity
 
-Last session: 2026-02-15T14:30Z
-Stopped at: Phase 2.2 COMPLETE — verified 29/29 must-haves
+Last session: 2026-02-15T20:00Z
+Stopped at: Phase 2.2 COMPLETE + exact cost tracking + analysis pause/resume
 Resume file: .planning/phases/02.2-email-analyzer-quality/02.2-VERIFICATION.md
 Next step: Phase 9 (FB Scraping Engine) — /gsd:discuss-phase 9
+Version tag: v1.0.2
