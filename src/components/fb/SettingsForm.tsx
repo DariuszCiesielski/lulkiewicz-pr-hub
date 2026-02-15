@@ -41,8 +41,8 @@ export default function SettingsForm() {
         fetch('/api/fb-groups/developers'),
       ]);
 
-      if (!settingsRes.ok) throw new Error('Blad ladowania ustawien');
-      if (!developersRes.ok) throw new Error('Blad ladowania deweloperow');
+      if (!settingsRes.ok) throw new Error('Błąd ładowania ustawień');
+      if (!developersRes.ok) throw new Error('Błąd ładowania deweloperów');
 
       const settingsData = await settingsRes.json();
       const developersData: string[] = await developersRes.json();
@@ -54,7 +54,7 @@ export default function SettingsForm() {
       setDeveloperInstructions(settingsData.developer_instructions || {});
       setDevelopers(developersData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Blad ladowania ustawien');
+      setError(err instanceof Error ? err.message : 'Błąd ładowania ustawień');
     } finally {
       setLoading(false);
     }
@@ -92,10 +92,10 @@ export default function SettingsForm() {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || 'Blad zapisu');
+        throw new Error(data.error || 'Błąd zapisu');
       }
 
-      showSuccess(`${label} zapisano pomyslnie`);
+      showSuccess(`${label} zapisano pomyślnie`);
 
       // Re-fetch to update flags
       const settingsRes = await fetch('/api/fb-settings');
@@ -115,7 +115,7 @@ export default function SettingsForm() {
         if (fileInputRef.current) fileInputRef.current.value = '';
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Blad zapisu');
+      setError(err instanceof Error ? err.message : 'Błąd zapisu');
     } finally {
       setSaving(null);
     }
@@ -133,7 +133,7 @@ export default function SettingsForm() {
       }
     };
     reader.onerror = () => {
-      setError('Blad odczytu pliku');
+      setError('Błąd odczytu pliku');
     };
     reader.readAsText(file);
   };
@@ -143,7 +143,7 @@ export default function SettingsForm() {
       <div className="flex items-center justify-center py-12">
         <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--text-muted)' }} />
         <span className="ml-2 text-sm" style={{ color: 'var(--text-muted)' }}>
-          Ladowanie ustawien...
+          Ładowanie ustawień...
         </span>
       </div>
     );
@@ -312,7 +312,7 @@ export default function SettingsForm() {
               />
               {newFbCookies && cookiesInputMode === 'file' && (
                 <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
-                  Zaladowano {newFbCookies.length} znakow
+                  Załadowano {newFbCookies.length} znaków
                 </p>
               )}
             </div>
@@ -346,7 +346,7 @@ export default function SettingsForm() {
           >
             <Shield className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: '#eab308' }} />
             <p className="text-xs" style={{ color: '#eab308' }}>
-              Uzywaj dedykowanego konta Facebook do scrapowania. Nie uzywaj osobistego konta — ryzyko blokady.
+              Używaj dedykowanego konta Facebook do scrapowania. Nie używaj osobistego konta — ryzyko blokady.
             </p>
           </div>
         </div>
@@ -388,7 +388,7 @@ export default function SettingsForm() {
 
             <div className="flex items-center justify-between">
               <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                Zmiana actora wymaga uprawnien super admina
+                Zmiana actora wymaga uprawnień super admina
               </p>
               <button
                 onClick={() => saveSetting('apify_actor_id', newActorId, 'Actor ID')}
@@ -420,13 +420,13 @@ export default function SettingsForm() {
         <div className="flex items-center gap-2 mb-3">
           <Brain className="h-4 w-4" style={{ color: 'var(--text-muted)' }} />
           <h2 className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
-            Domyslne instrukcje AI
+            Domyślne instrukcje AI
           </h2>
         </div>
 
         {developers.length === 0 ? (
           <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-            Dodaj grupy z deweloperem aby ustawic domyslne instrukcje
+            Dodaj grupy z deweloperem aby ustawić domyślne instrukcje
           </p>
         ) : (
           <div className="space-y-4">
@@ -499,7 +499,7 @@ function DeveloperInstructionField({
         value={localValue}
         onChange={(e) => setLocalValue(e.target.value)}
         rows={3}
-        placeholder="Opisz co AI ma szukac w postach grup tego dewelopera..."
+        placeholder="Opisz co AI ma szukać w postach grup tego dewelopera..."
         className="w-full rounded-md border p-3 text-xs resize-none"
         style={{
           borderColor: 'var(--border-primary)',
