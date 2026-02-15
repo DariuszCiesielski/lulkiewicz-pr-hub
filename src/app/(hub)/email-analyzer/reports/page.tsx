@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { FileText, Plus, RefreshCw } from 'lucide-react';
+import { FileText, Plus, RefreshCw, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 
@@ -42,7 +42,9 @@ export default function ReportsPage() {
   const [mailboxes, setMailboxes] = useState<MailboxOption[]>([]);
   const [selectedMailboxId, setSelectedMailboxId] = useState('');
   const [templateType, setTemplateType] = useState<'internal' | 'client'>('internal');
+  const [detailLevel, setDetailLevel] = useState<'synthetic' | 'detailed'>('synthetic');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generatingMessage, setGeneratingMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -92,6 +94,11 @@ export default function ReportsPage() {
     if (!selectedMailboxId) return;
     setIsGenerating(true);
     setError(null);
+    setGeneratingMessage(
+      detailLevel === 'synthetic'
+        ? 'AI syntetyzuje wyniki analizy... To może potrwać do 60 sekund.'
+        : 'Generowanie raportu szczegółowego...'
+    );
 
     try {
       const res = await fetch('/api/reports', {
@@ -100,6 +107,7 @@ export default function ReportsPage() {
         body: JSON.stringify({
           mailboxId: selectedMailboxId,
           templateType,
+          detailLevel,
         }),
       });
 
@@ -114,6 +122,7 @@ export default function ReportsPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Błąd');
       setIsGenerating(false);
+      setGeneratingMessage('');
     }
   };
 
@@ -168,7 +177,7 @@ export default function ReportsPage() {
             backgroundColor: 'var(--bg-secondary)',
           }}
         >
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Skrzynka</label>
               <select
@@ -198,13 +207,42 @@ export default function ReportsPage() {
                   color: 'var(--text-primary)',
                 }}
               >
-                <option value="internal">Wewnętrzny (7 sekcji)</option>
+                <option value="internal">Wewnetrzny (7 sekcji)</option>
                 <option value="client">Kliencki (4 sekcje)</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Poziom szczegolowosci</label>
+              <select
+                value={detailLevel}
+                onChange={(e) => setDetailLevel(e.target.value as 'synthetic' | 'detailed')}
+                className="rounded-md border px-2 py-1.5 text-sm outline-none"
+                style={{
+                  borderColor: 'var(--border-primary)',
+                  backgroundColor: 'var(--bg-primary)',
+                  color: 'var(--text-primary)',
+                }}
+              >
+                <option value="synthetic">Syntetyczny (~5-15 stron)</option>
+                <option value="detailed">Szczegolowy (watek po watku)</option>
               </select>
             </div>
           </div>
           {error && (
             <p className="text-sm" style={{ color: '#ef4444' }}>{error}</p>
+          )}
+          {isGenerating && generatingMessage && (
+            <div
+              className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
+              style={{
+                borderColor: 'rgba(59, 130, 246, 0.3)',
+                backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                color: 'var(--text-secondary)',
+              }}
+            >
+              <Loader2 className="h-4 w-4 animate-spin" style={{ color: '#3b82f6' }} />
+              {generatingMessage}
+            </div>
           )}
           <button
             onClick={handleGenerate}
