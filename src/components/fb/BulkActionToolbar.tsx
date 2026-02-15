@@ -74,7 +74,7 @@ export default function BulkActionToolbar({
         Wstrzymaj
       </button>
 
-      {/* Zmien dewelopera */}
+      {/* Zmień dewelopera */}
       {!showDevSelect ? (
         <button
           onClick={() => setShowDevSelect(true)}
@@ -86,7 +86,7 @@ export default function BulkActionToolbar({
           }}
         >
           <Users className="h-3 w-3" />
-          Zmien dewelopera
+          Zmień dewelopera
         </button>
       ) : (
         <div className="flex items-center gap-1">
@@ -133,7 +133,7 @@ export default function BulkActionToolbar({
       {/* Usun */}
       <button
         onClick={() => {
-          if (confirm(`Czy na pewno chcesz usunac ${selectedCount} zaznaczonych grup?`)) {
+          if (confirm(`Czy na pewno chcesz usunąć ${selectedCount} zaznaczonych grup?`)) {
             handleAction('soft_delete');
           }
         }}
@@ -145,7 +145,7 @@ export default function BulkActionToolbar({
         }}
       >
         <Trash2 className="h-3 w-3" />
-        Usun
+        Usuń
       </button>
 
       {/* Separator + Odznacz */}

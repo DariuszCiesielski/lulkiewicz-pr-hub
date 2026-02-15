@@ -38,7 +38,7 @@ function parseUrls(text: string): ParseResult {
     const url = lines[i];
 
     if (!isValidFbGroupUrl(url)) {
-      errors.push({ line: i + 1, url, reason: 'Nieprawidlowy URL grupy Facebook' });
+      errors.push({ line: i + 1, url, reason: 'Nieprawidłowy URL grupy Facebook' });
       continue;
     }
 
@@ -92,7 +92,7 @@ export default function GroupBulkUpload({
 
     const lines = urlText.split('\n').map((l) => l.trim()).filter(Boolean);
     if (lines.length > 100) {
-      setError('Maksymalnie 100 URL-ow na raz. Obecna liczba: ' + lines.length);
+      setError('Maksymalnie 100 URL-ów na raz. Obecna liczba: ' + lines.length);
       return;
     }
 
@@ -117,14 +117,14 @@ export default function GroupBulkUpload({
 
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
-        throw new Error(json.error || 'Blad dodawania grup');
+        throw new Error(json.error || 'Błąd dodawania grup');
       }
 
       const data = await res.json();
       setResult(data);
       onComplete();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Wystapil blad');
+      setError(err instanceof Error ? err.message : 'Wystąpił błąd');
     } finally {
       setIsLoading(false);
     }
@@ -142,7 +142,7 @@ export default function GroupBulkUpload({
             className="text-lg font-semibold"
             style={{ color: 'var(--text-primary)' }}
           >
-            Upload URL-ow grup
+            Upload URL-ów grup
           </h2>
           <button
             onClick={onClose}
@@ -202,7 +202,7 @@ export default function GroupBulkUpload({
               className="hidden"
             />
             <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              lub wklej URL-e powyzej
+              lub wklej URL-e powyżej
             </span>
           </div>
 
@@ -260,7 +260,7 @@ export default function GroupBulkUpload({
                 {parseResult.errors.length > 0 && (
                   <span className="flex items-center gap-1" style={{ color: '#ef4444' }}>
                     <AlertCircle className="h-4 w-4" />
-                    {parseResult.errors.length} blednych
+                    {parseResult.errors.length} błędnych
                   </span>
                 )}
               </div>

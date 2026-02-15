@@ -63,12 +63,12 @@ export default function GroupFormModal({
 
     // Walidacja client-side
     if (name.trim().length < 2) {
-      setError('Nazwa grupy musi miec co najmniej 2 znaki');
+      setError('Nazwa grupy musi mieć co najmniej 2 znaki');
       return;
     }
 
     if (!isValidFbGroupUrl(facebookUrl.trim())) {
-      setError('URL musi byc prawidlowym adresem grupy Facebook (facebook.com/groups/...)');
+      setError('URL musi być prawidłowym adresem grupy Facebook (facebook.com/groups/...)');
       return;
     }
 
@@ -81,7 +81,7 @@ export default function GroupFormModal({
         ai_instruction: aiInstruction.trim(),
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Wystapil blad');
+      setError(err instanceof Error ? err.message : 'Wystąpił błąd');
     } finally {
       setIsLoading(false);
     }
@@ -99,7 +99,7 @@ export default function GroupFormModal({
             className="text-lg font-semibold"
             style={{ color: 'var(--text-primary)' }}
           >
-            {isEditing ? 'Edytuj grupe' : 'Dodaj grupe FB'}
+            {isEditing ? 'Edytuj grupę' : 'Dodaj grupę FB'}
           </h2>
           <button
             onClick={onClose}
@@ -125,7 +125,7 @@ export default function GroupFormModal({
               onChange={(e) => setName(e.target.value)}
               required
               minLength={2}
-              placeholder="np. Mieszkancy Osiedla Slonecznego"
+              placeholder="np. Mieszkańcy Osiedla Słonecznego"
               className="w-full rounded-md border px-3 py-2 text-sm outline-none transition-colors focus:ring-1"
               style={{
                 borderColor: 'var(--border-primary)',
@@ -198,7 +198,7 @@ export default function GroupFormModal({
               value={aiInstruction}
               onChange={(e) => setAiInstruction(e.target.value)}
               rows={3}
-              placeholder="Opisz co AI ma szukac w postach tej grupy..."
+              placeholder="Opisz co AI ma szukać w postach tej grupy..."
               className="w-full rounded-md border px-3 py-2 text-sm outline-none transition-colors focus:ring-1 resize-y"
               style={{
                 borderColor: 'var(--border-primary)',
@@ -207,7 +207,7 @@ export default function GroupFormModal({
               }}
             />
             <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-              Opcjonalne. Dodatkowe instrukcje dla AI podczas analizy postow z tej grupy.
+              Opcjonalne. Dodatkowe instrukcje dla AI podczas analizy postów z tej grupy.
             </p>
           </div>
 
@@ -246,7 +246,7 @@ export default function GroupFormModal({
             >
               {isLoading
                 ? (isEditing ? 'Zapisywanie...' : 'Dodawanie...')
-                : (isEditing ? 'Zapisz zmiany' : 'Dodaj grupe')
+                : (isEditing ? 'Zapisz zmiany' : 'Dodaj grupę')
               }
             </button>
           </div>

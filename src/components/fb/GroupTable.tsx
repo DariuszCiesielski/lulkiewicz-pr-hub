@@ -10,7 +10,7 @@ function timeAgo(iso: string | null): string {
   if (!iso) return 'Nigdy';
   const diff = Date.now() - new Date(iso).getTime();
   const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return 'Przed chwila';
+  if (minutes < 1) return 'Przed chwilą';
   if (minutes < 60) return `${minutes} min temu`;
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours} godz. temu`;
@@ -84,7 +84,7 @@ export default function GroupTable({
           color: 'var(--text-muted)',
         }}
       >
-        <p className="text-sm">Brak grup do wyswietlenia. Dodaj pierwsza grupe.</p>
+        <p className="text-sm">Brak grup do wyświetlenia. Dodaj pierwszą grupę.</p>
       </div>
     );
   }
@@ -93,7 +93,7 @@ export default function GroupTable({
     <div className="space-y-6">
       {sections.map((section) => (
         <div key={section.developer}>
-          {/* Naglowek sekcji dewelopera */}
+          {/* Nagłówek sekcji dewelopera */}
           <div className="flex items-center gap-2 mb-2">
             <h3
               className="text-sm font-semibold"
@@ -289,7 +289,7 @@ export default function GroupTable({
                           </button>
                           <button
                             onClick={() => onDelete(group)}
-                            title="Usun"
+                            title="Usuń"
                             className="rounded p-1 transition-colors hover:opacity-80"
                             style={{ color: '#ef4444' }}
                           >
