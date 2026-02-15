@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-10)
 ## Current Position
 
 Phase: Phase 2.1 (Multi-Folder Sync) — IN PROGRESS
-Plan: 01 of 3 COMPLETE, next: 02
-Status: 3 plans created, 1 executed. Hotfix do email-analyzer — synchronizacja wszystkich folderów.
-Last activity: 2026-02-15 — Completed 02.1-01-PLAN.md (DB schema + graph-folders + all-folders endpoints)
+Plan: 02 of 3 COMPLETE, next: 03
+Status: 3 plans created, 2 executed. Sync routes adaptowane do multi-folder, pozostaje 02.1-03 (UX).
+Last activity: 2026-02-15 — Completed 02.1-02-PLAN.md (sync route adaptation + email-parser folder_id)
 
-Progress (v1.0 Email Analyzer): [##################..] ~90% (Phases 1-6 complete, Phase 2.1 INSERTED for multi-folder sync)
+Progress (v1.0 Email Analyzer): [##################..] ~93% (Phases 1-6 complete, Phase 2.1 plan 02/03 done)
 Progress (v1.1 FB Analyzer): [########............] 40% (phases 7-8 COMPLETE, ready for phase 9)
 
 ## Planning Status
@@ -55,7 +55,7 @@ Progress (v1.1 FB Analyzer): [########............] 40% (phases 7-8 COMPLETE, re
 
 **Phase 2.1 plans (3 plans, 2 waves) — INSERTED, READY FOR EXECUTION:**
 - [x] 02.1-01-PLAN.md (Wave 1, autonomous) — Schema DB + graph-folders helper + email-fetcher all-folders endpoints (a487504, 7f7a227, 0bde990)
-- [ ] 02.1-02-PLAN.md (Wave 1, autonomous) — Sync API routes adaptacja + email-parser folder_id
+- [x] 02.1-02-PLAN.md (Wave 1, autonomous) — Sync API routes adaptacja + email-parser folder_id (3b3624b, d8c0874, b7db1b8)
 - [ ] 02.1-03-PLAN.md (Wave 2, autonomous) — Legenda statusów + polskie znaki diakrytyczne (47 poprawek w 8 plikach)
 
 **Phase 8 plans (4 plans, 3 waves) — ALL COMPLETE:**
@@ -119,6 +119,10 @@ Progress (v1.1 FB Analyzer): [########............] 40% (phases 7-8 COMPLETE, re
 - [02.1-01]: getMailboxMessageCount zmieniony na /messages z $count (ConsistencyLevel: eventual)
 - [02.1-01]: fetchDeltaPage zachowany z @deprecated — backward compatibility do czasu migracji route
 - [02.1-01]: filterExcludedFolders jako pure function — filtrowanie in-memory po pobraniu batcha
+- [02.1-02]: folder_id dodany do Email interface, parsera i upsert rows — dane folderu zapisywane do bazy
+- [02.1-02]: Delta sync walidacja zmieniona z delta_link na last_sync_at (sync/route.ts)
+- [02.1-02]: Excluded folder IDs cachowane w sync_jobs.metadata — reuse miedzy batchami (1 API call per sync)
+- [02.1-02]: fetchDeltaPage calkowicie usuniete z sync/process — zastapione fetchMessagesSince
 
 ### Blockers/Concerns
 
@@ -145,7 +149,7 @@ organizations, organization_members, **mailboxes** (extended: +8 cols, sync_stat
 
 ## Session Continuity
 
-Last session: 2026-02-15T08:27Z
-Stopped at: Completed 02.1-01-PLAN.md (DB schema + graph-folders helper + all-folders endpoints)
-Resume file: .planning/phases/02.1-multi-folder-sync/02.1-01-SUMMARY.md
-Next step: Execute 02.1-02-PLAN.md (sync route adaptation + email-parser folder_id), then 02.1-03, then SQL migration, then re-sync
+Last session: 2026-02-15T08:33Z
+Stopped at: Completed 02.1-02-PLAN.md (sync route adaptation + email-parser folder_id)
+Resume file: .planning/phases/02.1-multi-folder-sync/02.1-02-SUMMARY.md
+Next step: Execute 02.1-03-PLAN.md (legenda statusow + polskie znaki diakrytyczne), then SQL migration, then re-sync
