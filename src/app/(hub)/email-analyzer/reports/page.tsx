@@ -16,14 +16,6 @@ interface Report {
   created_at: string;
 }
 
-interface AnalysisJob {
-  id: string;
-  mailbox_id: string;
-  status: string;
-  total_threads: number;
-  created_at: string;
-}
-
 interface MailboxOption {
   id: string;
   display_name: string | null;
@@ -117,12 +109,10 @@ export default function ReportsPage() {
       }
 
       const data = await res.json();
-      setShowGenerate(false);
-      await fetchReports();
+      // Nawigacja bezposrednio na podglad — bez fetchReports() ani state updates po push
       router.push(`/email-analyzer/reports/${data.reportId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Błąd');
-    } finally {
       setIsGenerating(false);
     }
   };
