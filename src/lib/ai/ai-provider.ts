@@ -17,6 +17,8 @@ export interface AIConfig {
 export interface AIResponse {
   content: string;
   tokensUsed: number;
+  promptTokens: number;
+  completionTokens: number;
   processingTimeMs: number;
 }
 
@@ -96,6 +98,8 @@ export async function callAI(
   return {
     content: data.choices?.[0]?.message?.content || '',
     tokensUsed: data.usage?.total_tokens || 0,
+    promptTokens: data.usage?.prompt_tokens || 0,
+    completionTokens: data.usage?.completion_tokens || 0,
     processingTimeMs,
   };
 }

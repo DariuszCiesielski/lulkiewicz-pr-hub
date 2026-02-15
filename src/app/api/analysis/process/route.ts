@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { loadAIConfig, callAI } from '@/lib/ai/ai-provider';
+import { calculateCost } from '@/lib/ai/pricing';
 import { Anonymizer } from '@/lib/ai/anonymizer';
 import { DEFAULT_PROMPTS } from '@/lib/ai/default-prompts';
 import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
@@ -46,6 +47,10 @@ export async function POST(request: NextRequest) {
 
   if (job.status === 'completed' || job.status === 'failed') {
     return NextResponse.json({ status: job.status, processedThreads: job.processed_threads, totalThreads: job.total_threads });
+  }
+
+  if (job.status === 'paused') {
+    return NextResponse.json({ status: 'paused', processedThreads: job.processed_threads, totalThreads: job.total_threads, hasMore: false });
   }
 
   // Update status to processing
@@ -174,6 +179,9 @@ export async function POST(request: NextRequest) {
                 thread_subject: thread.subject_normalized,
               },
               tokens_used: response.tokensUsed,
+              prompt_tokens: response.promptTokens,
+              completion_tokens: response.completionTokens,
+              cost_usd: calculateCost(aiConfig.model, response.promptTokens, response.completionTokens),
               processing_time_ms: response.processingTimeMs,
             });
           } catch (aiError) {

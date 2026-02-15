@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
+import { calculateCostBlended } from '@/lib/ai/pricing';
 
 /**
  * GET /api/analysis — Lista zadań analizy.
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
 
   let query = adminClient
     .from('analysis_jobs')
-    .select('id, status, total_threads, processed_threads, date_range_from, date_range_to, created_at, completed_at, error_message')
+    .select('id, status, total_threads, processed_threads, date_range_from, date_range_to, created_at, started_at, completed_at, error_message')
     .order('created_at', { ascending: false })
     .limit(10);
 
@@ -30,7 +31,59 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ jobs: data || [] });
+  // Enrich with exact cost from stored data (or blended fallback for legacy rows)
+  const jobs = data || [];
+  const enrichedJobs = await Promise.all(
+    jobs.map(async (job) => {
+      if (job.status !== 'completed' && job.status !== 'processing' && job.status !== 'paused') {
+        return { ...job, estimated_cost_usd: null, total_tokens: null, model_used: null };
+      }
+
+      // Get the model from the AI config used for this job
+      const { data: jobDetail } = await adminClient
+        .from('analysis_jobs')
+        .select('ai_config_id')
+        .eq('id', job.id)
+        .single();
+
+      let modelUsed: string | null = null;
+      if (jobDetail?.ai_config_id) {
+        const { data: aiConfig } = await adminClient
+          .from('ai_config')
+          .select('model')
+          .eq('id', jobDetail.ai_config_id)
+          .single();
+        modelUsed = aiConfig?.model || null;
+      }
+
+      const { data: tokenData } = await adminClient
+        .from('analysis_results')
+        .select('tokens_used, prompt_tokens, completion_tokens, cost_usd')
+        .eq('analysis_job_id', job.id);
+
+      const results = tokenData || [];
+      let totalCost = 0;
+      let totalTokens = 0;
+
+      for (const r of results) {
+        if ((r.cost_usd || 0) > 0) {
+          // Exact cost from new data
+          totalCost += r.cost_usd;
+          totalTokens += (r.prompt_tokens || 0) + (r.completion_tokens || 0);
+        } else if ((r.tokens_used || 0) > 0) {
+          // Legacy fallback: blended rate
+          totalTokens += r.tokens_used;
+          totalCost += calculateCostBlended(modelUsed || 'gpt-5.2', r.tokens_used);
+        }
+      }
+
+      const estimatedCost = totalTokens > 0 ? +totalCost.toFixed(4) : null;
+
+      return { ...job, estimated_cost_usd: estimatedCost, total_tokens: totalTokens, model_used: modelUsed };
+    })
+  );
+
+  return NextResponse.json({ jobs: enrichedJobs });
 }
 
 /**
