@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Wifi, Trash2, Mail, Play, RotateCcw, CheckCircle2, XCircle, CircleDashed, Pencil } from 'lucide-react';
+import { Wifi, Trash2, Mail, Play, RotateCcw, CheckCircle2, XCircle, CircleDashed, Pencil, Info } from 'lucide-react';
 import ConnectionStatus from './ConnectionStatus';
 import SyncProgress from './SyncProgress';
 import type { SyncStatus, SyncJobType } from '@/types/email';
@@ -229,42 +229,43 @@ export default function MailboxList({
               </div>
 
               {/* Actions */}
-              <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-                {/* Sync button — full sync */}
-                {!showSyncProgress && canFullSync && (
-                  <button
-                    onClick={() => onStartSync(mailbox.id)}
-                    disabled={disableActions}
-                    className="flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm transition-colors hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{
-                      borderColor: 'var(--accent-primary)',
-                      color: 'var(--accent-primary)',
-                    }}
-                    title="Pelna synchronizacja"
-                  >
-                    <Play className="h-4 w-4" />
-                    Synchronizuj
-                  </button>
-                )}
+              <div className="flex flex-col items-end gap-2 shrink-0">
+                <div className="flex items-center gap-2 flex-wrap justify-end">
+                  {/* Delta sync button — primary action after first full sync */}
+                  {!showSyncProgress && canDeltaSync && (
+                    <button
+                      onClick={() => onDeltaSync(mailbox.id)}
+                      disabled={disableActions}
+                      className="flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm transition-colors hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{
+                        borderColor: 'var(--accent-primary)',
+                        color: 'var(--accent-primary)',
+                      }}
+                      title="Pobierz tylko nowe wiadomości od ostatniej synchronizacji. Usunięte maile zostaną oznaczone i pominięte w analizie."
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                      Odśwież
+                    </button>
+                  )}
 
-                {/* Delta sync button — only after first full sync */}
-                {!showSyncProgress && canDeltaSync && (
-                  <button
-                    onClick={() => onDeltaSync(mailbox.id)}
-                    disabled={disableActions}
-                    className="flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm transition-colors hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{
-                      borderColor: 'var(--border-primary)',
-                      color: 'var(--text-secondary)',
-                    }}
-                    title="Pobierz nowe wiadomosci (delta sync)"
-                  >
-                    <RotateCcw className="h-4 w-4" />
-                    Odswiez
-                  </button>
-                )}
+                  {/* Full sync button — primary before first sync, secondary after */}
+                  {!showSyncProgress && canFullSync && (
+                    <button
+                      onClick={() => onStartSync(mailbox.id)}
+                      disabled={disableActions}
+                      className="flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm transition-colors hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{
+                        borderColor: canDeltaSync ? 'var(--border-primary)' : 'var(--accent-primary)',
+                        color: canDeltaSync ? 'var(--text-secondary)' : 'var(--accent-primary)',
+                      }}
+                      title="Pełna synchronizacja — pobiera wszystkie wiadomości od nowa. Wcześniej usunięte maile pozostaną w bazie."
+                    >
+                      <Play className="h-4 w-4" />
+                      Synchronizuj
+                    </button>
+                  )}
 
-                {/* Edit */}
+                  {/* Edit */}
                 <button
                   onClick={() => onEdit(mailbox)}
                   disabled={disableActions}
@@ -306,8 +307,23 @@ export default function MailboxList({
                   title="Usun skrzynke"
                 >
                   <Trash2 className="h-4 w-4" />
-                  {deletingId === mailbox.id ? 'Usuwanie...' : 'Usun'}
+                  {deletingId === mailbox.id ? 'Usuwanie...' : 'Usuń'}
                 </button>
+                </div>
+
+                {/* Sync info hint — visible when both sync options are available */}
+                {!showSyncProgress && canDeltaSync && (
+                  <div
+                    className="flex items-start gap-1.5 max-w-xs text-right"
+                    style={{ color: 'var(--text-muted)' }}
+                  >
+                    <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                    <span className="text-xs leading-relaxed">
+                      <strong>Odśwież</strong> — pobiera nowe maile i oznacza usunięte.{' '}
+                      <strong>Synchronizuj</strong> — pobiera wszystko od nowa (usunięte maile pozostaną w bazie).
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </div>

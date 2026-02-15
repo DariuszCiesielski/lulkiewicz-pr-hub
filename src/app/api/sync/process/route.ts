@@ -272,12 +272,24 @@ export async function POST(request: Request) {
         .eq('id', mailbox.id);
     }
 
+    // Include total emails in database when completed
+    let totalInDatabase: number | null = null;
+    if (newStatus === 'completed') {
+      const { count } = await adminClient
+        .from('emails')
+        .select('*', { count: 'exact', head: true })
+        .eq('mailbox_id', mailbox.id)
+        .eq('is_deleted', false);
+      totalInDatabase = count ?? null;
+    }
+
     return NextResponse.json({
       status: newStatus,
       fetched: fetchedCount,
       totalFetched,
       estimatedTotal,
       hasMore,
+      totalInDatabase,
     });
   } catch (error: unknown) {
     // Handle Graph API errors

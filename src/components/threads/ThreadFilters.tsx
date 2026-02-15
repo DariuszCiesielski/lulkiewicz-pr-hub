@@ -17,10 +17,10 @@ interface ThreadFiltersProps {
 }
 
 const STATUS_OPTIONS: { value: ThreadStatus | ''; label: string }[] = [
-  { value: '', label: 'Wszystkie' },
-  { value: 'pending', label: 'Oczekujące' },
-  { value: 'open', label: 'Otwarte' },
-  { value: 'closed', label: 'Zamknięte' },
+  { value: '', label: 'Wszystkie statusy' },
+  { value: 'pending', label: 'Oczekujący' },
+  { value: 'open', label: 'Otwarty' },
+  { value: 'closed', label: 'Zamknięty' },
 ];
 
 export default function ThreadFilters({ filters, onChange }: ThreadFiltersProps) {

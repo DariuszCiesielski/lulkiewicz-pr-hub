@@ -13,7 +13,7 @@ interface SyncProgressProps {
 }
 
 export default function SyncProgress({ status, progress, error, syncType, onRetry }: SyncProgressProps) {
-  const { fetched, estimatedTotal } = progress;
+  const { fetched, estimatedTotal, totalInDatabase } = progress;
 
   // Calculate percentage (0-100)
   const percentage = estimatedTotal && estimatedTotal > 0
@@ -88,7 +88,12 @@ export default function SyncProgress({ status, progress, error, syncType, onRetr
         <div className="flex items-center gap-2">
           <Check className="h-4 w-4" style={{ color: '#22c55e' }} />
           <span className="text-sm" style={{ color: '#22c55e' }}>
-            Synchronizacja zakończona. Pobrano {fetched} wiadomości.
+            Synchronizacja zakończona.
+            {totalInDatabase !== null ? (
+              <> W bazie: <strong>{totalInDatabase}</strong> wiadomości.</>
+            ) : (
+              <> Przetworzono {fetched} wiadomości.</>
+            )}
           </span>
         </div>
       )}

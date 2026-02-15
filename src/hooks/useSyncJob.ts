@@ -11,6 +11,7 @@ export interface SyncProgress {
   fetched: number;
   estimatedTotal: number | null;
   currentBatch: number;
+  totalInDatabase: number | null;
 }
 
 export interface UseSyncJobReturn {
@@ -36,6 +37,7 @@ export function useSyncJob(onComplete?: () => void): UseSyncJobReturn {
     fetched: 0,
     estimatedTotal: null,
     currentBatch: 0,
+    totalInDatabase: null,
   });
   const [error, setError] = useState<string | null>(null);
   const [syncType, setSyncType] = useState<SyncJobType | null>(null);
@@ -92,6 +94,7 @@ export function useSyncJob(onComplete?: () => void): UseSyncJobReturn {
         fetched: data.totalFetched ?? 0,
         estimatedTotal: data.estimatedTotal ?? null,
         currentBatch: batchNumber,
+        totalInDatabase: data.totalInDatabase ?? null,
       });
 
       if (data.status === 'has_more' || data.hasMore) {
@@ -119,7 +122,7 @@ export function useSyncJob(onComplete?: () => void): UseSyncJobReturn {
     clearBatchTimeout();
     setJobId(null);
     setStatus('starting');
-    setProgress({ fetched: 0, estimatedTotal: null, currentBatch: 0 });
+    setProgress({ fetched: 0, estimatedTotal: null, currentBatch: 0, totalInDatabase: null });
     setError(null);
     setSyncType(type);
     mountedRef.current = true;
@@ -162,7 +165,7 @@ export function useSyncJob(onComplete?: () => void): UseSyncJobReturn {
     mountedRef.current = false;
     setJobId(null);
     setStatus('idle');
-    setProgress({ fetched: 0, estimatedTotal: null, currentBatch: 0 });
+    setProgress({ fetched: 0, estimatedTotal: null, currentBatch: 0, totalInDatabase: null });
     setError(null);
     setSyncType(null);
   }, [clearBatchTimeout]);

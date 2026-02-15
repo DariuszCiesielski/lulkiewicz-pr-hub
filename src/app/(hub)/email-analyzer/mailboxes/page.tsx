@@ -139,10 +139,11 @@ export default function MailboxesPage() {
   // Show notification and auto-clear sync state when completed
   useEffect(() => {
     if (syncJob.status === 'completed') {
-      // Show notification with actual fetched count
-      setSyncNotification(
-        `Synchronizacja zakonczona: ${syncJob.progress.fetched} wiadomosci`
-      );
+      // Show notification with total in database (primary) or fetched count (fallback)
+      const message = syncJob.progress.totalInDatabase
+        ? `Synchronizacja zakończona. W bazie: ${syncJob.progress.totalInDatabase} wiadomości.`
+        : `Synchronizacja zakończona. Przetworzono ${syncJob.progress.fetched} wiadomości.`;
+      setSyncNotification(message);
       // Auto-clear notification after 5s
       const notifTimer = setTimeout(() => setSyncNotification(null), 5000);
       // Auto-clear active sync after a delay so user sees the completed state
