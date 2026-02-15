@@ -21,6 +21,8 @@ const STATUS_OPTIONS: { value: ThreadStatus | ''; label: string }[] = [
   { value: 'pending', label: 'Oczekujący' },
   { value: 'open', label: 'Otwarty' },
   { value: 'closed', label: 'Zamknięty' },
+  { value: 'closed_positive', label: 'Zamknięty (pozytywnie)' },
+  { value: 'closed_negative', label: 'Zamknięty (negatywnie)' },
 ];
 
 export default function ThreadFilters({ filters, onChange }: ThreadFiltersProps) {

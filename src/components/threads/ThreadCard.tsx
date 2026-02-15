@@ -29,6 +29,8 @@ const STATUS_STYLES: Record<string, { bg: string; color: string; label: string }
   pending: { bg: 'rgba(234, 179, 8, 0.15)', color: '#eab308', label: 'Oczekujący' },
   open: { bg: 'rgba(34, 197, 94, 0.15)', color: '#22c55e', label: 'Otwarty' },
   closed: { bg: 'rgba(107, 114, 128, 0.15)', color: '#6b7280', label: 'Zamknięty' },
+  closed_positive: { bg: 'rgba(34, 197, 94, 0.15)', color: '#22c55e', label: 'Zamknięty (pozytywnie)' },
+  closed_negative: { bg: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', label: 'Zamknięty (negatywnie)' },
 };
 
 export default function ThreadCard({ thread }: ThreadCardProps) {
@@ -52,6 +54,16 @@ export default function ThreadCard({ thread }: ThreadCardProps) {
           >
             {thread.subject_normalized || '(brak tematu)'}
           </h3>
+
+          {/* AI Summary */}
+          {thread.summary && (
+            <p
+              className="mt-1 text-xs line-clamp-2"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              {thread.summary}
+            </p>
+          )}
 
           {/* Meta row */}
           <div className="mt-2 flex flex-wrap items-center gap-3 text-xs" style={{ color: 'var(--text-muted)' }}>
