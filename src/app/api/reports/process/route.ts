@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { DEFAULT_PROMPTS, CLIENT_REPORT_SECTIONS } from '@/lib/ai/default-prompts';
+import { THREAD_SUMMARY_SECTION_KEY } from '@/lib/ai/thread-summary-prompt';
 import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
 import { synthesizeReportSection } from '@/lib/ai/report-synthesizer';
 import { loadAIConfig } from '@/lib/ai/ai-provider';
@@ -75,32 +76,56 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ status: 'completed', processedSections: 0, totalSections: 0, hasMore: false });
     }
 
-    // Group by section — track both successful results and error counts
+    // Detect analysis format: new (thread summaries) vs old (per-section)
+    const hasThreadSummaries = results.some((r) => r.section_key === THREAD_SUMMARY_SECTION_KEY);
+
+    // Build per-thread results based on format
+    let threadSummaries: PerThreadResult[] | null = null;
     const sectionResultsMap = new Map<string, PerThreadResult[]>();
     const sectionErrorsMap = new Map<string, number>();
     let totalWithContent = 0;
     let totalWithError = 0;
 
-    for (const r of results) {
-      const content = r.result_data?.content;
-      if (!content) {
-        if (r.result_data?.error) {
-          sectionErrorsMap.set(r.section_key, (sectionErrorsMap.get(r.section_key) || 0) + 1);
-          totalWithError++;
+    if (hasThreadSummaries) {
+      // NEW FORMAT: all results are _thread_summary — load into single list
+      threadSummaries = [];
+      for (const r of results) {
+        if (r.section_key !== THREAD_SUMMARY_SECTION_KEY) continue;
+        const content = r.result_data?.content;
+        if (!content) {
+          if (r.result_data?.error) totalWithError++;
+          continue;
         }
-        continue;
+        totalWithContent++;
+        threadSummaries.push({
+          threadId: r.thread_id,
+          threadSubject: r.result_data?.thread_subject || '',
+          content,
+        });
       }
-      totalWithContent++;
-      const existing = sectionResultsMap.get(r.section_key) || [];
-      existing.push({
-        threadId: r.thread_id,
-        threadSubject: r.result_data?.thread_subject || '',
-        content,
-      });
-      sectionResultsMap.set(r.section_key, existing);
+      console.log(`Report ${report.id}: NEW format — ${threadSummaries.length} thread summaries loaded, ${totalWithError} errors`);
+    } else {
+      // OLD FORMAT: group by section_key
+      for (const r of results) {
+        const content = r.result_data?.content;
+        if (!content) {
+          if (r.result_data?.error) {
+            sectionErrorsMap.set(r.section_key, (sectionErrorsMap.get(r.section_key) || 0) + 1);
+            totalWithError++;
+          }
+          continue;
+        }
+        totalWithContent++;
+        const existing = sectionResultsMap.get(r.section_key) || [];
+        existing.push({
+          threadId: r.thread_id,
+          threadSubject: r.result_data?.thread_subject || '',
+          content,
+        });
+        sectionResultsMap.set(r.section_key, existing);
+      }
+      console.log(`Report ${report.id}: OLD format — ${totalWithContent} results, ${totalWithError} errors. Sections: [${[...sectionResultsMap.keys()].join(', ')}]`);
     }
-
-    console.log(`Report ${report.id}: ${results.length} analysis results loaded, ${totalWithContent} with content, ${totalWithError} with errors. Sections with data: [${[...sectionResultsMap.keys()].join(', ')}]`);
 
     // Load prompt definitions (same merge logic as POST /api/reports)
     const { data: dbPrompts } = await adminClient
@@ -200,10 +225,14 @@ export async function POST(request: NextRequest) {
       const promptDef = promptDefMap.get(sectionKey);
       if (!promptDef) return null;
 
-      const perThreadResults = sectionResultsMap.get(sectionKey) || [];
+      // New format: all sections get the same thread summaries
+      // Old format: each section gets its own per-section results
+      const perThreadResults = threadSummaries ?? (sectionResultsMap.get(sectionKey) || []);
 
       if (perThreadResults.length === 0) {
-        const errorCount = sectionErrorsMap.get(sectionKey) || 0;
+        const errorCount = threadSummaries
+          ? totalWithError
+          : (sectionErrorsMap.get(sectionKey) || 0);
         const message = errorCount > 0
           ? `*Analiza AI nie powiodła się dla tej sekcji (${errorCount} błędów). Uruchom analizę ponownie, aby uzupełnić dane.*`
           : '*Brak danych analizy dla tej sekcji. Upewnij się, że analiza AI została ukończona przed generowaniem raportu.*';

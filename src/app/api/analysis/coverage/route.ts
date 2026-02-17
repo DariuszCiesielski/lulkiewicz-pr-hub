@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { DEFAULT_PROMPTS, CLIENT_REPORT_SECTIONS } from '@/lib/ai/default-prompts';
+import { THREAD_SUMMARY_SECTION_KEY } from '@/lib/ai/thread-summary-prompt';
 import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
 
 /**
@@ -47,6 +48,9 @@ export async function GET(request: NextRequest) {
     (results || []).map((r: { section_key: string }) => r.section_key)
   );
 
+  // New format: _thread_summary covers all report sections
+  const hasThreadSummaries = analyzedSections.has(THREAD_SUMMARY_SECTION_KEY);
+
   // Load DB prompt overrides to get current section config
   const { data: dbPrompts } = await adminClient
     .from('prompt_templates')
@@ -77,6 +81,18 @@ export async function GET(request: NextRequest) {
     })
     .map((p) => ({ key: p.section_key, title: p.title }));
 
+  // Thread summaries cover all sections — no missing data
+  if (hasThreadSummaries) {
+    return NextResponse.json({
+      hasAnalysis: true,
+      analysisDate: latestJob.created_at,
+      analyzedSectionKeys: allPromptDefs.map((p) => p.section_key),
+      internal: { total: internalSections.length, covered: internalSections.length, missing: [] },
+      client: { total: clientSections.length, covered: clientSections.length, missing: [] },
+    });
+  }
+
+  // Old format: check per-section coverage
   const missingInternal = internalSections.filter((s) => !analyzedSections.has(s.key));
   const missingClient = clientSections.filter((s) => !analyzedSections.has(s.key));
 

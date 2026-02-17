@@ -17,18 +17,18 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 // ---------------------------------------------------------------------------
 
 /** Max characters sent per synthesis request.
- *  20K chars ≈ 5000 tokens input — keeps AI calls fast (<25s). */
-const MAX_INPUT_CHARS = 20_000;
+ *  60K chars ≈ 15K tokens input — thread summaries are longer than per-section results. */
+const MAX_INPUT_CHARS = 60_000;
 
 /** Batch size for large thread sets — synthesize in sub-batches then merge. */
-const SUB_BATCH_SIZE = 30;
+const SUB_BATCH_SIZE = 50;
 
 /** Max completion tokens per section — ~0.4 page.
  *  13 sections × 600 tokens ≈ 7800 tokens ≈ 5-6 pages total. */
 const SYNTHESIS_MAX_TOKENS = 600;
 
 /** Threshold: if more per-thread results than this, use two-level synthesis. */
-const TWO_LEVEL_THRESHOLD = 100;
+const TWO_LEVEL_THRESHOLD = 80;
 
 // ---------------------------------------------------------------------------
 // System prompt
@@ -108,14 +108,43 @@ function formatResultsForPrompt(results: PerThreadResult[]): string {
 }
 
 /**
+ * Maps section_key to a focus instruction for the synthesizer.
+ * Tells AI which dimension to extract from comprehensive thread summaries.
+ */
+function getSectionFocusPrompt(sectionKey: string): string | null {
+  const focusMap: Record<string, string> = {
+    'metadata_analysis': 'Wyodrębnij informacje o typach spraw, uczestnikach, zakresie dat i ograniczeniach analizy. Szukaj wzorców w wymiarze "1. METADANE".',
+    'response_speed': 'Skup się na wymiarze "2. SZYBKOŚĆ REAKCJI" — czasy odpowiedzi, potwierdzenia odbioru, benchmarki. Podaj statystyki (% poniżej 4h, % powyżej 3 dni).',
+    'service_effectiveness': 'Skup się na wymiarze "3. EFEKTYWNOŚĆ OBSŁUGI" — zamknięcie tematu, kompletność informacji, proaktywność w odpowiedziach.',
+    'client_relationship': 'Skup się na wymiarze "4. JAKOŚĆ RELACJI Z KLIENTEM" — ton komunikacji, budowanie zaufania, indywidualne podejście.',
+    'communication_cycle': 'Skup się na wymiarze "5. CYKL KOMUNIKACJI" — liczba wymian, ciągłość, spójność, status rozwiązania.',
+    'client_feedback': 'Skup się na wymiarze "6. SATYSFAKCJA KLIENTA" — sygnały pozytywne/negatywne, zmiana tonu.',
+    'expression_form': 'Skup się na wymiarze "7. FORMA WYPOWIEDZI" — styl językowy, powitania, personalizacja, konsekwencja.',
+    'recipient_clarity': 'Skup się na wymiarze "8. JASNOŚĆ KOMUNIKACJI" — przejrzystość, czytelność, profesjonalizm.',
+    'organization_consistency': 'Skup się na wymiarze "9. SPÓJNOŚĆ ORGANIZACYJNA" — standardy, podpisy, jednolitość stylu.',
+    'proactive_actions': 'Skup się na wymiarze "10. PROAKTYWNOŚĆ" — inicjatywa własna, monitorowanie, zapobieganie.',
+    'internal_communication': 'Skup się na wymiarze "11. KOMUNIKACJA WEWNĘTRZNA" — przepływ informacji, współpraca, RODO.',
+    'data_security': 'Skup się na wymiarze "12. BEZPIECZEŃSTWO DANYCH" — UDW, ochrona danych osobowych, procedury.',
+    'recommendations': 'Skup się na wymiarze "13. REKOMENDACJE" — zbierz rekomendacje ze wszystkich wątków, pogrupuj, ustal priorytety.',
+  };
+  return focusMap[sectionKey] || null;
+}
+
+/**
  * Build the user prompt for synthesis — enforces brevity.
  */
 function buildUserPrompt(input: SynthesisInput, resultsBlock: string): string {
   const parts: string[] = [];
 
   parts.push(
-    `Napisz ZWIĘZŁE podsumowanie sekcji "${input.sectionTitle}" na podstawie analizy ${input.perThreadResults.length} wątków email.`
+    `Napisz ZWIĘZŁE podsumowanie sekcji "${input.sectionTitle}" na podstawie kompleksowych analiz ${input.perThreadResults.length} wątków email.`
   );
+
+  const focusPrompt = getSectionFocusPrompt(input.sectionKey);
+  if (focusPrompt) {
+    parts.push(`\nFOKUS SEKCJI: ${focusPrompt}`);
+  }
+
   parts.push(`Skrzynka: ${input.mailboxName}`);
 
   if (input.dateRange) {
@@ -128,7 +157,7 @@ function buildUserPrompt(input: SynthesisInput, resultsBlock: string): string {
     parts.push(`\nKONTEKST:\n${input.globalContext}`);
   }
 
-  parts.push(`\nDANE ŹRÓDŁOWE:\n${resultsBlock}`);
+  parts.push(`\nDANE ŹRÓDŁOWE (podsumowania wątków):\n${resultsBlock}`);
 
   parts.push(
     `\nINSTRUKCJA: Napisz MAX 8-12 zdań. Podaj ogólną ocenę, główne wzorce i 1-2 kluczowe rekomendacje. Przytaczaj konkretne wątki TYLKO jako krótkie wzmianki przy ekstremalnych przypadkach. NIE opisuj każdego wątku z osobna.`

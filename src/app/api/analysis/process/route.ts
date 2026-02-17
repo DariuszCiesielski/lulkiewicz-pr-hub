@@ -2,26 +2,27 @@ import { NextRequest, NextResponse } from 'next/server';
 import { loadAIConfig, callAI } from '@/lib/ai/ai-provider';
 import { calculateCost } from '@/lib/ai/pricing';
 import { Anonymizer } from '@/lib/ai/anonymizer';
-import { DEFAULT_PROMPTS } from '@/lib/ai/default-prompts';
+import {
+  THREAD_SUMMARY_SECTION_KEY,
+  THREAD_SUMMARY_SYSTEM_PROMPT,
+  THREAD_SUMMARY_USER_PROMPT_TEMPLATE,
+} from '@/lib/ai/thread-summary-prompt';
 import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
 
 export const maxDuration = 60;
 
-/** Max sections to process per request — keeps each request well under 60s. */
-const SECTIONS_PER_REQUEST = 3;
+/** Max threads to process per HTTP request — 2 concurrent AI calls fit under 60s. */
+const THREADS_PER_REQUEST = 2;
 
-/** All section keys that need to be analyzed per thread. */
-const ALL_SECTION_KEYS = DEFAULT_PROMPTS.map((p) => p.section_key);
-
-/** Max retry attempts per section before treating as permanent failure. */
+/** Max retry attempts per thread before treating as permanent failure. */
 const MAX_RETRIES = 3;
 
 /**
- * POST /api/analysis/process — Process a small batch of sections.
+ * POST /api/analysis/process — Process a batch of thread summaries.
  * Body: { jobId }
  *
- * Each request processes up to SECTIONS_PER_REQUEST sections for ONE thread.
- * The polling loop in the frontend keeps calling until all threads × sections are done.
+ * Each request processes up to THREADS_PER_REQUEST threads (1 AI call each).
+ * The polling loop in the frontend keeps calling until all threads are done.
  *
  * Returns: { status, processedThreads, totalThreads, hasMore }
  */
@@ -74,29 +75,27 @@ export async function POST(request: NextRequest) {
     // Load AI config
     const aiConfig = await loadAIConfig(adminClient);
 
-    // Get ALL existing results for this job — include result_data to distinguish success vs error
+    // Get ALL existing results for this job (only _thread_summary entries)
     const { data: existingResults } = await adminClient
       .from('analysis_results')
       .select('id, thread_id, section_key, result_data')
       .eq('analysis_job_id', job.id)
+      .eq('section_key', THREAD_SUMMARY_SECTION_KEY)
       .limit(10000);
 
-    // Build set of "thread_id::section_key" for fast lookup
-    // Only count entries WITH content as completed (errors can be retried)
-    // Permanently failed entries (retry_count >= MAX_RETRIES) also count as completed
-    const completedPairs = new Set<string>();
+    // Build sets: completed threads and retryable errors
+    const completedThreads = new Set<string>();
     const errorEntries = new Map<string, { id: string; retryCount: number }>();
 
-    for (const r of (existingResults || [])) {
-      const key = `${r.thread_id}::${r.section_key}`;
+    for (const r of existingResults || []) {
       if (r.result_data?.content) {
-        completedPairs.add(key);
+        completedThreads.add(r.thread_id);
       } else if (r.result_data?.error) {
         const retryCount: number = r.result_data.retry_count || 1;
         if (retryCount >= MAX_RETRIES) {
-          completedPairs.add(key); // permanent failure — stop retrying
+          completedThreads.add(r.thread_id); // permanent failure
         } else {
-          errorEntries.set(key, { id: r.id, retryCount });
+          errorEntries.set(r.thread_id, { id: r.id, retryCount });
         }
       }
     }
@@ -113,27 +112,11 @@ export async function POST(request: NextRequest) {
     const { data: allThreads } = await threadQuery.order('last_message_at', { ascending: false });
     const threads = allThreads || [];
 
-    // Find first thread with missing sections
-    let targetThread: typeof threads[0] | null = null;
-    let missingSections: typeof DEFAULT_PROMPTS = [];
+    // Find threads still needing processing
+    const pendingThreads = threads.filter((t) => !completedThreads.has(t.id));
+    const fullyCompleted = threads.length - pendingThreads.length;
 
-    for (const thread of threads) {
-      const missing = DEFAULT_PROMPTS.filter(
-        (p) => !completedPairs.has(`${thread.id}::${p.section_key}`)
-      );
-      if (missing.length > 0) {
-        targetThread = thread;
-        missingSections = missing;
-        break;
-      }
-    }
-
-    // Count fully completed threads (all section_keys present — success or permanent failure)
-    const fullyCompletedThreads = threads.filter((thread) =>
-      ALL_SECTION_KEYS.every((sk) => completedPairs.has(`${thread.id}::${sk}`))
-    ).length;
-
-    if (!targetThread || missingSections.length === 0) {
+    if (pendingThreads.length === 0) {
       // All done
       await adminClient
         .from('analysis_jobs')
@@ -153,115 +136,105 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Take up to SECTIONS_PER_REQUEST sections for this thread
-    const sectionBatch = missingSections.slice(0, SECTIONS_PER_REQUEST);
+    // Take next batch of threads
+    const threadBatch = pendingThreads.slice(0, THREADS_PER_REQUEST);
 
-    // Load prompts (merge defaults with DB overrides)
-    const { data: dbPrompts } = await adminClient
-      .from('prompt_templates')
-      .select('*')
-      .eq('tier', 'global')
-      .eq('is_active', true);
+    // Process threads in parallel
+    await Promise.allSettled(
+      threadBatch.map(async (thread) => {
+        const existingError = errorEntries.get(thread.id);
 
-    const globalOverrides = new Map(
-      (dbPrompts || []).map((p) => [p.section_key, p])
+        // Delete existing error entry before retry
+        if (existingError) {
+          console.log(`Retrying thread ${thread.id} (attempt ${existingError.retryCount + 1}/${MAX_RETRIES})`);
+          await adminClient.from('analysis_results').delete().eq('id', existingError.id);
+        }
+
+        // Get emails for this thread
+        const { data: emails } = await adminClient
+          .from('emails')
+          .select('id, from_address, from_name, to_addresses, subject, sent_at, received_at, body_text, is_incoming')
+          .eq('thread_id', thread.id)
+          .order('received_at', { ascending: true });
+
+        if (!emails || emails.length === 0) {
+          await adminClient.from('analysis_results').insert({
+            analysis_job_id: job.id,
+            thread_id: thread.id,
+            section_key: THREAD_SUMMARY_SECTION_KEY,
+            result_data: {
+              content: '(brak wiadomości w wątku)',
+              thread_subject: thread.subject_normalized,
+            },
+          });
+          return;
+        }
+
+        // Anonymize
+        const anonymizer = new Anonymizer();
+        const { anonymizedEmails, allMatches } = anonymizer.anonymizeThread(emails);
+
+        // Save anonymization map
+        if (allMatches.length > 0) {
+          await adminClient.from('anonymization_map').insert(
+            allMatches.map((m) => ({
+              analysis_job_id: job.id,
+              original_value: m.original,
+              anonymized_value: m.anonymized,
+              pii_type: m.type,
+              context: m.context,
+            }))
+          );
+        }
+
+        // Build thread text
+        const threadText = emails
+          .map((e, i) => {
+            const direction = e.is_incoming ? '[PRZYCHODZĄCY]' : '[WYCHODZĄCY]';
+            const date = new Date(e.sent_at || e.received_at).toLocaleString('pl-PL');
+            const body = anonymizedEmails.get(e.id) || '';
+            return `--- Email ${i + 1} ${direction} ---\nOd: ${e.from_name || e.from_address}\nData: ${date}\nTemat: ${e.subject || '(brak)'}\n\n${body}`;
+          })
+          .join('\n\n');
+
+        const userPrompt = THREAD_SUMMARY_USER_PROMPT_TEMPLATE.replace('{{threads}}', threadText);
+
+        try {
+          const response = await callAI(aiConfig, THREAD_SUMMARY_SYSTEM_PROMPT, userPrompt);
+
+          await adminClient.from('analysis_results').insert({
+            analysis_job_id: job.id,
+            thread_id: thread.id,
+            section_key: THREAD_SUMMARY_SECTION_KEY,
+            result_data: {
+              content: response.content,
+              thread_subject: thread.subject_normalized,
+            },
+            tokens_used: response.tokensUsed,
+            prompt_tokens: response.promptTokens,
+            completion_tokens: response.completionTokens,
+            cost_usd: calculateCost(aiConfig.model, response.promptTokens, response.completionTokens),
+            processing_time_ms: response.processingTimeMs,
+          });
+        } catch (aiError) {
+          const newRetryCount = (existingError?.retryCount || 0) + 1;
+          console.error(`AI error for thread ${thread.id} (attempt ${newRetryCount}/${MAX_RETRIES}):`, aiError);
+          await adminClient.from('analysis_results').insert({
+            analysis_job_id: job.id,
+            thread_id: thread.id,
+            section_key: THREAD_SUMMARY_SECTION_KEY,
+            result_data: {
+              error: aiError instanceof Error ? aiError.message : 'Błąd AI',
+              thread_subject: thread.subject_normalized,
+              retry_count: newRetryCount,
+            },
+          });
+        }
+      })
     );
 
-    // Get emails for this thread
-    const { data: emails } = await adminClient
-      .from('emails')
-      .select('id, from_address, from_name, to_addresses, subject, sent_at, received_at, body_text, is_incoming')
-      .eq('thread_id', targetThread.id)
-      .order('received_at', { ascending: true });
-
-    if (emails && emails.length > 0) {
-      // Anonymize
-      const anonymizer = new Anonymizer();
-      const { anonymizedEmails, allMatches } = anonymizer.anonymizeThread(emails);
-
-      // Save anonymization map (only on first batch for this thread)
-      const isFirstBatchForThread = missingSections.length === DEFAULT_PROMPTS.length;
-      if (isFirstBatchForThread && allMatches.length > 0) {
-        await adminClient.from('anonymization_map').insert(
-          allMatches.map((m) => ({
-            analysis_job_id: job.id,
-            original_value: m.original,
-            anonymized_value: m.anonymized,
-            pii_type: m.type,
-            context: m.context,
-          }))
-        );
-      }
-
-      // Build thread text for prompts
-      const threadText = emails
-        .map((e, i) => {
-          const direction = e.is_incoming ? '[PRZYCHODZĄCY]' : '[WYCHODZĄCY]';
-          const date = new Date(e.sent_at || e.received_at).toLocaleString('pl-PL');
-          const body = anonymizedEmails.get(e.id) || '';
-          return `--- Email ${i + 1} ${direction} ---\nOd: ${e.from_name || e.from_address}\nData: ${date}\nTemat: ${e.subject || '(brak)'}\n\n${body}`;
-        })
-        .join('\n\n');
-
-      // Process section batch in parallel (with retry support for previously failed sections)
-      await Promise.allSettled(
-        sectionBatch.map(async (defaultPrompt) => {
-          const pairKey = `${targetThread!.id}::${defaultPrompt.section_key}`;
-          const existingError = errorEntries.get(pairKey);
-
-          // Delete existing error entry before retry
-          if (existingError) {
-            console.log(`Retrying section ${defaultPrompt.section_key} for thread ${targetThread!.id} (attempt ${existingError.retryCount + 1}/${MAX_RETRIES})`);
-            await adminClient.from('analysis_results').delete().eq('id', existingError.id);
-          }
-
-          const prompt = globalOverrides.get(defaultPrompt.section_key) || defaultPrompt;
-          const userPrompt = (prompt.user_prompt_template || defaultPrompt.user_prompt_template)
-            .replace('{{threads}}', threadText);
-
-          try {
-            const response = await callAI(
-              aiConfig,
-              prompt.system_prompt || defaultPrompt.system_prompt,
-              userPrompt
-            );
-
-            await adminClient.from('analysis_results').insert({
-              analysis_job_id: job.id,
-              thread_id: targetThread!.id,
-              section_key: defaultPrompt.section_key,
-              result_data: {
-                content: response.content,
-                thread_subject: targetThread!.subject_normalized,
-              },
-              tokens_used: response.tokensUsed,
-              prompt_tokens: response.promptTokens,
-              completion_tokens: response.completionTokens,
-              cost_usd: calculateCost(aiConfig.model, response.promptTokens, response.completionTokens),
-              processing_time_ms: response.processingTimeMs,
-            });
-          } catch (aiError) {
-            const newRetryCount = (existingError?.retryCount || 0) + 1;
-            console.error(`AI error for thread ${targetThread!.id}, section ${defaultPrompt.section_key} (attempt ${newRetryCount}/${MAX_RETRIES}):`, aiError);
-            await adminClient.from('analysis_results').insert({
-              analysis_job_id: job.id,
-              thread_id: targetThread!.id,
-              section_key: defaultPrompt.section_key,
-              result_data: {
-                error: aiError instanceof Error ? aiError.message : 'Błąd AI',
-                thread_subject: targetThread!.subject_normalized,
-                retry_count: newRetryCount,
-              },
-            });
-          }
-        })
-      );
-    }
-
-    // Recalculate completed threads after this batch
-    // If this thread just finished all sections, increment count
-    const remainingAfter = missingSections.length - sectionBatch.length;
-    const newCompleted = remainingAfter === 0 ? fullyCompletedThreads + 1 : fullyCompletedThreads;
+    // Recalculate completed threads
+    const newCompleted = fullyCompleted + threadBatch.length;
     const progress = Math.round((newCompleted / job.total_threads) * 100);
     const hasMore = newCompleted < job.total_threads;
 
