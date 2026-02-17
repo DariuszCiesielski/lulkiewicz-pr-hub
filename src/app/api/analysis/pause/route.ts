@@ -18,8 +18,8 @@ export async function POST(request: NextRequest) {
   }
 
   const { jobId, action } = body;
-  if (!jobId || !action || !['pause', 'resume'].includes(action)) {
-    return NextResponse.json({ error: 'jobId i action (pause/resume) są wymagane' }, { status: 400 });
+  if (!jobId || !action || !['pause', 'resume', 'cancel'].includes(action)) {
+    return NextResponse.json({ error: 'jobId i action (pause/resume/cancel) są wymagane' }, { status: 400 });
   }
 
   const adminClient = getAdminClient();
@@ -58,6 +58,19 @@ export async function POST(request: NextRequest) {
       .eq('id', jobId);
 
     return NextResponse.json({ status: 'processing', processedThreads: job.processed_threads, totalThreads: job.total_threads });
+  }
+
+  if (action === 'cancel') {
+    if (!['processing', 'pending', 'paused'].includes(job.status)) {
+      return NextResponse.json({ error: 'Można anulować tylko aktywną lub wstrzymaną analizę' }, { status: 400 });
+    }
+
+    await adminClient
+      .from('analysis_jobs')
+      .update({ status: 'failed', error_message: 'Anulowano przez użytkownika' })
+      .eq('id', jobId);
+
+    return NextResponse.json({ status: 'failed', processedThreads: job.processed_threads, totalThreads: job.total_threads });
   }
 
   return NextResponse.json({ error: 'Nieznana akcja' }, { status: 400 });

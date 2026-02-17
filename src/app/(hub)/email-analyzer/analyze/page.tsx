@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Brain, Play, Pause, Clock, CheckCircle, AlertCircle, Loader2, FileText } from 'lucide-react';
+import { Brain, Play, Pause, Clock, CheckCircle, AlertCircle, Loader2, FileText, XCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAnalysisJob } from '@/hooks/useAnalysisJob';
 import DatePresets from '@/components/analysis/DatePresets';
@@ -179,6 +179,20 @@ export default function AnalyzePage() {
   const handleResumeFromHistory = useCallback((job: AnalysisHistoryItem) => {
     analysisJob.resumeJob(job.id, job.processed_threads, job.total_threads, job.started_at || job.created_at);
   }, [analysisJob]);
+
+  const handleCancel = useCallback(async (jobId: string) => {
+    try {
+      const res = await fetch('/api/analysis/pause', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobId, action: 'cancel' }),
+      });
+      if (res.ok) {
+        analysisJob.reset();
+        if (selectedMailboxId) fetchHistory(selectedMailboxId);
+      }
+    } catch { /* ignore */ }
+  }, [analysisJob, selectedMailboxId, fetchHistory]);
 
   if (authLoading) {
     return (
@@ -417,6 +431,19 @@ export default function AnalyzePage() {
                       >
                         {job.error_message}
                       </span>
+                    )}
+                    {(job.status === 'processing' || job.status === 'pending') && (
+                      <button
+                        onClick={() => handleCancel(job.id)}
+                        className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors hover:opacity-80"
+                        style={{
+                          backgroundColor: '#ef4444',
+                          color: '#fff',
+                        }}
+                      >
+                        <XCircle className="h-3 w-3" />
+                        Anuluj
+                      </button>
                     )}
                     {job.status === 'paused' && analysisJob.status === 'idle' && (
                       <button
