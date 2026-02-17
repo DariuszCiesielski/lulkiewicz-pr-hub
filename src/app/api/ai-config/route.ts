@@ -76,14 +76,23 @@ export async function POST(request: NextRequest) {
 
   const adminClient = getAdminClient();
 
+  // Load existing config to preserve API key if not provided
+  const { data: existing } = await adminClient
+    .from('ai_config')
+    .select('api_key_encrypted')
+    .eq('is_active', true)
+    .single();
+
   // Deactivate existing configs
   await adminClient
     .from('ai_config')
     .update({ is_active: false })
     .eq('is_active', true);
 
-  // Encrypt API key
-  const encryptedKey = body.api_key ? encrypt(body.api_key) : null;
+  // Encrypt new API key, or preserve existing one
+  const encryptedKey = body.api_key
+    ? encrypt(body.api_key)
+    : (existing?.api_key_encrypted as string) || null;
 
   // Insert new config
   const { data, error } = await adminClient
