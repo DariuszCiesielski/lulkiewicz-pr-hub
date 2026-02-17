@@ -150,8 +150,10 @@ export default function ReportsPage() {
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Błąd generowania raportu');
+        const text = await res.text();
+        let errMsg = 'Błąd generowania raportu';
+        try { errMsg = JSON.parse(text).error || errMsg; } catch { errMsg = res.status === 504 ? 'Przekroczono limit czasu serwera (504)' : errMsg; }
+        throw new Error(errMsg);
       }
 
       const data = await res.json();
@@ -175,8 +177,10 @@ export default function ReportsPage() {
         });
 
         if (!processRes.ok) {
-          const errData = await processRes.json();
-          throw new Error(errData.error || 'Błąd syntezy raportu');
+          const text = await processRes.text();
+          let errMsg = 'Błąd syntezy raportu';
+          try { errMsg = JSON.parse(text).error || errMsg; } catch { errMsg = processRes.status === 504 ? 'Przekroczono limit czasu serwera (504). Spróbuj ponownie.' : errMsg; }
+          throw new Error(errMsg);
         }
 
         const processData = await processRes.json();

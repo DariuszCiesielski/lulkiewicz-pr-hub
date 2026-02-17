@@ -68,22 +68,38 @@ export async function callAI(
     ? process.env.AZURE_OPENAI_ENDPOINT
     : 'https://api.openai.com/v1';
 
-  const res = await fetch(`${baseUrl}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${config.apiKey}`,
-    },
-    body: JSON.stringify({
-      model: config.model,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      temperature: config.temperature,
-      max_completion_tokens: config.maxTokens,
-    }),
-  });
+  // 50s timeout — leaves 10s headroom within Vercel's 60s function limit
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 50_000);
+
+  let res: Response;
+  try {
+    res = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${config.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: config.model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: config.temperature,
+        max_completion_tokens: config.maxTokens,
+      }),
+      signal: controller.signal,
+    });
+  } catch (err) {
+    clearTimeout(timeout);
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw new Error('Przekroczono limit czasu wywołania AI (50s). Spróbuj ponownie.');
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
 
   if (!res.ok) {
     const errData = await res.json().catch(() => ({}));
