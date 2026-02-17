@@ -308,6 +308,49 @@ export default function PromptsPage() {
     }
   };
 
+  const handleToggleReportType = async (
+    index: number,
+    type: 'internal' | 'client',
+    checked: boolean
+  ) => {
+    const prompt = prompts[index];
+    const updated = {
+      ...prompt,
+      ...(type === 'internal'
+        ? { in_internal_report: checked }
+        : { in_client_report: checked }),
+    };
+
+    // Optimistic update
+    const prev = [...prompts];
+    const newPrompts = [...prompts];
+    newPrompts[index] = updated;
+    setPrompts(newPrompts);
+    if (index === selectedIndex) setEditedPrompt(updated);
+
+    try {
+      const res = await fetch('/api/prompts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          section_key: updated.section_key,
+          title: updated.title,
+          system_prompt: updated.system_prompt,
+          user_prompt_template: updated.user_prompt_template,
+          section_order: updated.section_order,
+          in_internal_report: updated.in_internal_report ?? true,
+          in_client_report: updated.in_client_report ?? false,
+        }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      // Revert on error
+      setPrompts(prev);
+      if (index === selectedIndex) setEditedPrompt(prev[index]);
+      setMessage({ type: 'error', text: 'Błąd aktualizacji typu raportu' });
+    }
+  };
+
   const isGlobalContext = editedPrompt?.section_key === '_global_context';
   const isDefaultSection = editedPrompt
     ? DEFAULT_PROMPTS.some((d) => d.section_key === editedPrompt.section_key)
@@ -411,6 +454,44 @@ export default function PromptsPage() {
                   <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
                     {prompt.tier === 'default' ? 'Domyślny' : 'Zmodyfikowany'}
                   </span>
+                  {prompt.section_key !== '_global_context' && (
+                    <div className="flex items-center gap-1.5 ml-auto">
+                      <label
+                        className="flex items-center gap-0.5 cursor-pointer"
+                        title="Raport wewnętrzny"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={prompt.in_internal_report ?? true}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            handleToggleReportType(i, 'internal', e.target.checked);
+                          }}
+                          className="rounded"
+                          style={{ width: 12, height: 12, accentColor: 'var(--accent-primary)' }}
+                        />
+                        <span className="text-[10px] select-none" style={{ color: 'var(--text-muted)' }}>W</span>
+                      </label>
+                      <label
+                        className="flex items-center gap-0.5 cursor-pointer"
+                        title="Raport kliencki"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={prompt.in_client_report ?? false}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            handleToggleReportType(i, 'client', e.target.checked);
+                          }}
+                          className="rounded"
+                          style={{ width: 12, height: 12, accentColor: 'var(--accent-primary)' }}
+                        />
+                        <span className="text-[10px] select-none" style={{ color: 'var(--text-muted)' }}>K</span>
+                      </label>
+                    </div>
+                  )}
                 </div>
               </button>
               {/* Reorder + actions overlay */}
@@ -488,34 +569,6 @@ export default function PromptsPage() {
                   }}
                 />
               </div>
-
-              {/* Report type checkboxes (not for _global_context) */}
-              {!isGlobalContext && (
-                <div className="flex items-center gap-6">
-                  <label className="flex items-center gap-2 text-sm cursor-pointer" style={{ color: 'var(--text-secondary)' }}>
-                    <input
-                      type="checkbox"
-                      checked={editedPrompt.in_internal_report ?? true}
-                      onChange={(e) =>
-                        setEditedPrompt({ ...editedPrompt, in_internal_report: e.target.checked })
-                      }
-                      className="rounded"
-                    />
-                    Raport wewnętrzny
-                  </label>
-                  <label className="flex items-center gap-2 text-sm cursor-pointer" style={{ color: 'var(--text-secondary)' }}>
-                    <input
-                      type="checkbox"
-                      checked={editedPrompt.in_client_report ?? false}
-                      onChange={(e) =>
-                        setEditedPrompt({ ...editedPrompt, in_client_report: e.target.checked })
-                      }
-                      className="rounded"
-                    />
-                    Raport kliencki
-                  </label>
-                </div>
-              )}
 
               {/* System prompt */}
               <div className="flex flex-col gap-1.5">
