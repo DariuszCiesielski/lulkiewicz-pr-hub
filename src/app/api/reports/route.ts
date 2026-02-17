@@ -246,69 +246,75 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const synthesisPromises = sectionsToInclude.map(async (sectionKey) => {
-      const promptDef = promptDefMap.get(sectionKey);
-      if (!promptDef) return null;
+    // Batch sections to avoid rate limiting and stay within Vercel 60s timeout.
+    // 13 sections / 4 per batch = 3-4 batches × ~10s each ≈ 35s total.
+    const SECTION_BATCH_SIZE = 4;
 
-      const perThreadResults = sectionResultsMap.get(sectionKey) || [];
+    for (let batchIdx = 0; batchIdx < sectionsToInclude.length; batchIdx += SECTION_BATCH_SIZE) {
+      const batchKeys = sectionsToInclude.slice(batchIdx, batchIdx + SECTION_BATCH_SIZE);
 
-      if (perThreadResults.length === 0) {
-        return {
-          report_id: report.id,
-          section_key: sectionKey,
-          section_order: promptDef.section_order,
-          title: promptDef.title,
-          content_markdown: '*Brak danych dla tej sekcji.*',
-          is_edited: false,
+      const batchPromises = batchKeys.map(async (sectionKey) => {
+        const promptDef = promptDefMap.get(sectionKey);
+        if (!promptDef) return null;
+
+        const perThreadResults = sectionResultsMap.get(sectionKey) || [];
+
+        if (perThreadResults.length === 0) {
+          return {
+            report_id: report.id,
+            section_key: sectionKey,
+            section_order: promptDef.section_order,
+            title: promptDef.title,
+            content_markdown: '*Brak danych dla tej sekcji.*',
+            is_edited: false,
+          };
+        }
+
+        const input: SynthesisInput = {
+          sectionKey,
+          sectionTitle: promptDef.title,
+          perThreadResults,
+          templateType,
+          mailboxName,
+          dateRange,
+          globalContext,
+          includeThreadSummaries,
         };
-      }
 
-      const input: SynthesisInput = {
-        sectionKey,
-        sectionTitle: promptDef.title,
-        perThreadResults,
-        templateType,
-        mailboxName,
-        dateRange,
-        globalContext,
-        includeThreadSummaries,
-      };
+        try {
+          const output = await synthesizeReportSection(aiConfig, input);
+          return {
+            report_id: report.id,
+            section_key: sectionKey,
+            section_order: promptDef.section_order,
+            title: promptDef.title,
+            content_markdown: output.markdown || '*Brak danych dla tej sekcji.*',
+            is_edited: false,
+          };
+        } catch (err) {
+          console.error(`Synthesis error for section ${sectionKey}:`, err);
+          const contents = perThreadResults.map((r) => r.content);
+          const markdown = contents.length === 1
+            ? contents[0]
+            : contents.map((c, i) => `### Wątek ${i + 1}\n\n${c}`).join('\n\n---\n\n');
 
-      try {
-        const output = await synthesizeReportSection(aiConfig, input);
-        return {
-          report_id: report.id,
-          section_key: sectionKey,
-          section_order: promptDef.section_order,
-          title: promptDef.title,
-          content_markdown: output.markdown || '*Brak danych dla tej sekcji.*',
-          is_edited: false,
-        };
-      } catch (err) {
-        console.error(`Synthesis error for section ${sectionKey}:`, err);
-        // Fallback: use detailed concatenation for failed section
-        const contents = perThreadResults.map((r) => r.content);
-        const markdown = contents.length === 1
-          ? contents[0]
-          : contents.map((c, i) => `### Wątek ${i + 1}\n\n${c}`).join('\n\n---\n\n');
+          return {
+            report_id: report.id,
+            section_key: sectionKey,
+            section_order: promptDef.section_order,
+            title: `${promptDef.title} (synteza nieudana — dane surowe)`,
+            content_markdown: markdown,
+            is_edited: false,
+          };
+        }
+      });
 
-        return {
-          report_id: report.id,
-          section_key: sectionKey,
-          section_order: promptDef.section_order,
-          title: `${promptDef.title} (synteza nieudana — dane surowe)`,
-          content_markdown: markdown,
-          is_edited: false,
-        };
-      }
-    });
+      const batchResults = await Promise.allSettled(batchPromises);
 
-    // Parallel synthesis — Promise.allSettled for Vercel 60s timeout resilience
-    const synthesisResults = await Promise.allSettled(synthesisPromises);
-
-    for (const result of synthesisResults) {
-      if (result.status === 'fulfilled' && result.value) {
-        sections.push(result.value);
+      for (const result of batchResults) {
+        if (result.status === 'fulfilled' && result.value) {
+          sections.push(result.value);
+        }
       }
     }
   } else {

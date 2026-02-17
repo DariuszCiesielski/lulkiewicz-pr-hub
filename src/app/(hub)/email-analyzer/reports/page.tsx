@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { FileText, Plus, RefreshCw, Loader2, Trash2 } from 'lucide-react';
+import { FileText, Plus, RefreshCw, Loader2, Trash2, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 
@@ -20,6 +20,14 @@ interface MailboxOption {
   id: string;
   display_name: string | null;
   email_address: string;
+}
+
+interface CoverageInfo {
+  hasAnalysis: boolean;
+  message?: string;
+  analysisDate?: string;
+  internal?: { total: number; covered: number; missing: { key: string; title: string }[] };
+  client?: { total: number; covered: number; missing: { key: string; title: string }[] };
 }
 
 function formatDate(iso: string): string {
@@ -46,6 +54,8 @@ export default function ReportsPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingMessage, setGeneratingMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [coverage, setCoverage] = useState<CoverageInfo | null>(null);
+  const [coverageLoading, setCoverageLoading] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !isAdmin) router.push('/dashboard');
@@ -89,6 +99,20 @@ export default function ReportsPage() {
       localStorage.setItem('ea-selected-mailbox', selectedMailboxId);
     }
   }, [selectedMailboxId]);
+
+  // Check coverage when mailbox or form visibility changes
+  useEffect(() => {
+    if (!showGenerate || !selectedMailboxId) {
+      setCoverage(null);
+      return;
+    }
+    setCoverageLoading(true);
+    fetch(`/api/analysis/coverage?mailboxId=${selectedMailboxId}`)
+      .then((res) => res.json())
+      .then((data) => setCoverage(data))
+      .catch(() => setCoverage(null))
+      .finally(() => setCoverageLoading(false));
+  }, [showGenerate, selectedMailboxId]);
 
   const handleDelete = async (e: React.MouseEvent, reportId: string) => {
     e.preventDefault(); // Don't navigate to report
@@ -221,8 +245,8 @@ export default function ReportsPage() {
                   color: 'var(--text-primary)',
                 }}
               >
-                <option value="internal">Wewnętrzny (7 sekcji)</option>
-                <option value="client">Kliencki (4 sekcje)</option>
+                <option value="internal">Wewnętrzny ({coverage?.internal?.total ?? 13} sekcji)</option>
+                <option value="client">Kliencki ({coverage?.client?.total ?? 12} sekcji)</option>
               </select>
             </div>
             <div className="flex flex-col gap-1">
@@ -242,6 +266,55 @@ export default function ReportsPage() {
               </select>
             </div>
           </div>
+          {/* Coverage warning */}
+          {coverageLoading && (
+            <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-muted)' }}>
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Sprawdzanie pokrycia sekcji...
+            </div>
+          )}
+          {coverage && !coverage.hasAnalysis && (
+            <div
+              className="flex items-start gap-2 rounded-md border px-3 py-2 text-sm"
+              style={{
+                borderColor: 'rgba(239, 68, 68, 0.3)',
+                backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                color: 'var(--text-secondary)',
+              }}
+            >
+              <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" style={{ color: '#ef4444' }} />
+              <span>{coverage.message}</span>
+            </div>
+          )}
+          {coverage?.hasAnalysis && (() => {
+            const info = templateType === 'client' ? coverage.client : coverage.internal;
+            if (!info || info.missing.length === 0) return null;
+            return (
+              <div
+                className="flex items-start gap-2 rounded-md border px-3 py-2 text-sm"
+                style={{
+                  borderColor: 'rgba(234, 179, 8, 0.3)',
+                  backgroundColor: 'rgba(234, 179, 8, 0.08)',
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" style={{ color: '#eab308' }} />
+                <div>
+                  <p className="font-medium">
+                    Brak danych analizy dla {info.missing.length} z {info.total} sekcji
+                  </p>
+                  <p className="mt-1" style={{ color: 'var(--text-muted)' }}>
+                    Ponownie uruchom analiz\u0119 AI, aby uwzgl\u0119dni\u0107 nowe sekcje. Brakuj\u0105ce sekcje:
+                  </p>
+                  <ul className="mt-1 list-disc list-inside" style={{ color: 'var(--text-muted)' }}>
+                    {info.missing.map((s) => (
+                      <li key={s.key}>{s.title}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            );
+          })()}
           {error && (
             <p className="text-sm" style={{ color: '#ef4444' }}>{error}</p>
           )}
