@@ -7,9 +7,9 @@ import type { PerThreadResult, SynthesisInput } from '@/lib/ai/report-synthesize
 
 export const maxDuration = 60;
 
-/** Max sections to synthesize per request — 1 keeps each request well under 60s.
- *  Report synthesis is heavier than analysis (aggregates all threads per section). */
-const SECTIONS_PER_REQUEST = 1;
+/** Max sections to synthesize per request.
+ *  Each section now produces ~600 tokens output, so 3 fit well under 60s. */
+const SECTIONS_PER_REQUEST = 3;
 
 /**
  * POST /api/reports/process — Synthesize a batch of report sections.
@@ -222,17 +222,14 @@ export async function POST(request: NextRequest) {
         };
       } catch (err) {
         console.error(`Synthesis error for section ${sectionKey}:`, err);
-        const contents = perThreadResults.map((r) => r.content);
-        const markdown = contents.length === 1
-          ? contents[0]
-          : contents.map((c, i) => `### Wątek ${i + 1}\n\n${c}`).join('\n\n---\n\n');
+        const errorMsg = err instanceof Error ? err.message : 'Nieznany błąd';
 
         return {
           report_id: report.id,
           section_key: sectionKey,
           section_order: promptDef.section_order,
-          title: `${promptDef.title} (synteza nieudana — dane surowe)`,
-          content_markdown: markdown,
+          title: promptDef.title,
+          content_markdown: `*Synteza tej sekcji nie powiodła się (${errorMsg}). Spróbuj wygenerować raport ponownie.*`,
           is_edited: false,
         };
       }

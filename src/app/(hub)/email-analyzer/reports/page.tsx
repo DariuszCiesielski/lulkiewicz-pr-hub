@@ -50,7 +50,7 @@ export default function ReportsPage() {
   const [mailboxes, setMailboxes] = useState<MailboxOption[]>([]);
   const [selectedMailboxId, setSelectedMailboxId] = useState('');
   const [templateType, setTemplateType] = useState<'internal' | 'client'>('internal');
-  const [detailLevel, setDetailLevel] = useState<'synthetic' | 'detailed'>('synthetic');
+  const detailLevel = 'synthetic' as const;
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingMessage, setGeneratingMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -132,11 +132,7 @@ export default function ReportsPage() {
     if (!selectedMailboxId) return;
     setIsGenerating(true);
     setError(null);
-    setGeneratingMessage(
-      detailLevel === 'synthetic'
-        ? 'Tworzenie raportu...'
-        : 'Generowanie raportu szczegółowego...'
-    );
+    setGeneratingMessage('Tworzenie raportu syntetycznego...');
 
     try {
       const res = await fetch('/api/reports', {
@@ -158,13 +154,13 @@ export default function ReportsPage() {
 
       const data = await res.json();
 
-      // Detailed reports are ready immediately
+      // Safety net: if report is already complete
       if (data.status === 'draft') {
         router.push(`/email-analyzer/reports/${data.reportId}`);
         return;
       }
 
-      // Synthetic reports: poll /api/reports/process until all sections are done
+      // Poll /api/reports/process until all sections are synthesized
       const reportId = data.reportId;
       const totalSections = data.totalSections || 0;
       let hasMore = true;
@@ -255,7 +251,7 @@ export default function ReportsPage() {
             backgroundColor: 'var(--bg-secondary)',
           }}
         >
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Skrzynka</label>
               <select
@@ -289,23 +285,10 @@ export default function ReportsPage() {
                 <option value="client">Kliencki ({coverage?.client?.total ?? 12} sekcji)</option>
               </select>
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Poziom szczegółowości</label>
-              <select
-                value={detailLevel}
-                onChange={(e) => setDetailLevel(e.target.value as 'synthetic' | 'detailed')}
-                className="rounded-md border px-2 py-1.5 text-sm outline-none"
-                style={{
-                  borderColor: 'var(--border-primary)',
-                  backgroundColor: 'var(--bg-primary)',
-                  color: 'var(--text-primary)',
-                }}
-              >
-                <option value="synthetic">Syntetyczny (~5-15 stron)</option>
-                <option value="detailed">Szczegółowy (wątek po wątku)</option>
-              </select>
-            </div>
           </div>
+          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            Raport syntetyczny ~5-6 stron — zwięzłe podsumowania i wnioski per sekcja.
+          </p>
           {/* Coverage warning */}
           {coverageLoading && (
             <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-muted)' }}>

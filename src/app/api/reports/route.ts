@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { DEFAULT_PROMPTS, CLIENT_REPORT_SECTIONS } from '@/lib/ai/default-prompts';
 import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
-import type { PerThreadResult } from '@/lib/ai/report-synthesizer';
 
 export const maxDuration = 60;
 
@@ -58,7 +57,6 @@ export async function POST(request: NextRequest) {
   }
 
   const templateType = body.templateType === 'client' ? 'client' : 'internal';
-  const detailLevel = body.detailLevel === 'detailed' ? 'detailed' : 'synthetic';
   const adminClient = getAdminClient();
 
   // Resolve analysisJobId — accept directly or find latest completed job for mailbox
@@ -121,20 +119,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Brak wyników analizy' }, { status: 400 });
   }
 
-  // Group by section — collect content + thread metadata
-  const sectionResultsMap = new Map<string, PerThreadResult[]>();
-  for (const r of results) {
-    const content = r.result_data?.content;
-    if (!content) continue;
-    const existing = sectionResultsMap.get(r.section_key) || [];
-    existing.push({
-      threadId: r.thread_id,
-      threadSubject: r.result_data?.thread_subject || '',
-      content,
-    });
-    sectionResultsMap.set(r.section_key, existing);
-  }
-
   // Load user-configured prompt overrides from DB
   const { data: dbPrompts } = await adminClient
     .from('prompt_templates')
@@ -171,8 +155,6 @@ export async function POST(request: NextRequest) {
       })),
   ];
 
-  const promptDefMap = new Map(allPromptDefs.map((p) => [p.section_key, p]));
-
   // Filter sections: respect user's in_internal_report/in_client_report flags, exclude _global_context
   const sectionsToInclude = allPromptDefs
     .filter((p) => {
@@ -186,11 +168,10 @@ export async function POST(request: NextRequest) {
   const threadCount = uniqueThreadIds.size;
 
   // Build title
-  const detailLabel = detailLevel === 'synthetic' ? 'syntetyczny' : 'szczegółowy';
   const title = body.title ||
-    `Raport ${detailLabel} ${templateType === 'client' ? 'kliencki' : 'wewnętrzny'} — ${mailboxName} (${threadCount} wątków)`;
+    `Raport syntetyczny ${templateType === 'client' ? 'kliencki' : 'wewnętrzny'} — ${mailboxName} (${threadCount} wątków)`;
 
-  // Create report record
+  // Create report record (always synthetic — polling-driven)
   const { data: report, error: reportError } = await adminClient
     .from('reports')
     .insert({
@@ -200,7 +181,7 @@ export async function POST(request: NextRequest) {
       title,
       date_range_from: job.date_range_from,
       date_range_to: job.date_range_to,
-      status: detailLevel === 'synthetic' ? 'generating' : 'draft',
+      status: 'generating',
     })
     .select('id')
     .single();
@@ -209,73 +190,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: `Błąd tworzenia raportu: ${reportError?.message}` }, { status: 500 });
   }
 
-  // ----- REDUCE PHASE -----
-  if (detailLevel === 'synthetic') {
-    // Synthetic reports use polling-driven batch processing (like analysis).
-    // Return immediately — frontend polls POST /api/reports/process.
-    return NextResponse.json({
-      reportId: report.id,
-      title,
-      totalSections: sectionsToInclude.length,
-      detailLevel,
-      threadCount,
-      status: 'generating',
-    });
-  }
-
-  // ---- DETAILED: original thread-by-thread concatenation (no AI, fast) ----
-  const sections: {
-    report_id: string;
-    section_key: string;
-    section_order: number;
-    title: string;
-    content_markdown: string;
-    is_edited: boolean;
-  }[] = [];
-
-  for (const sectionKey of sectionsToInclude) {
-    const promptDef = promptDefMap.get(sectionKey);
-    if (!promptDef) continue;
-
-    const perThreadResults = sectionResultsMap.get(sectionKey) || [];
-    const contents = perThreadResults.map((r) => r.content);
-
-    const markdown = contents.length === 0
-      ? '*Brak danych dla tej sekcji.*'
-      : contents.length === 1
-        ? contents[0]
-        : contents.map((c, i) => {
-            const subject = perThreadResults[i]?.threadSubject;
-            const header = subject ? `### Wątek ${i + 1}: ${subject}` : `### Wątek ${i + 1}`;
-            return `${header}\n\n${c}`;
-          }).join('\n\n---\n\n');
-
-    sections.push({
-      report_id: report.id,
-      section_key: sectionKey,
-      section_order: promptDef.section_order,
-      title: promptDef.title,
-      content_markdown: markdown,
-      is_edited: false,
-    });
-  }
-
-  if (sections.length > 0) {
-    const { error: sectionsError } = await adminClient
-      .from('report_sections')
-      .insert(sections);
-
-    if (sectionsError) {
-      return NextResponse.json({ error: `Błąd tworzenia sekcji: ${sectionsError.message}` }, { status: 500 });
-    }
-  }
-
+  // Return immediately — frontend polls POST /api/reports/process
   return NextResponse.json({
     reportId: report.id,
     title,
-    sectionsCount: sections.length,
-    detailLevel,
+    totalSections: sectionsToInclude.length,
     threadCount,
-    status: 'draft',
+    status: 'generating',
   });
 }

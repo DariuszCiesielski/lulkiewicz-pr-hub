@@ -1,8 +1,9 @@
 /**
  * Report Synthesizer — AI-driven REDUCE phase.
  *
- * Aggregates per-thread analysis results into a concise synthetic report.
+ * Aggregates per-thread analysis results into a concise executive report.
  * Each section is synthesized independently via a callAI request.
+ * Target: entire report = 5-6 pages, so each section ≈ 0.3-0.5 page.
  *
  * For >100 threads: batches of 30 → synthesize each → meta-synthesis.
  */
@@ -16,14 +17,15 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 // ---------------------------------------------------------------------------
 
 /** Max characters sent per synthesis request.
- *  30K chars ≈ 7500 tokens input — keeps AI calls fast (<30s). */
-const MAX_INPUT_CHARS = 30_000;
+ *  20K chars ≈ 5000 tokens input — keeps AI calls fast (<25s). */
+const MAX_INPUT_CHARS = 20_000;
 
 /** Batch size for large thread sets — synthesize in sub-batches then merge. */
 const SUB_BATCH_SIZE = 30;
 
-/** Max completion tokens for synthesis — keeps output concise (3-5 pages per section). */
-const SYNTHESIS_MAX_TOKENS = 4096;
+/** Max completion tokens per section — ~0.4 page.
+ *  13 sections × 600 tokens ≈ 7800 tokens ≈ 5-6 pages total. */
+const SYNTHESIS_MAX_TOKENS = 600;
 
 /** Threshold: if more per-thread results than this, use two-level synthesis. */
 const TWO_LEVEL_THRESHOLD = 100;
@@ -32,17 +34,19 @@ const TWO_LEVEL_THRESHOLD = 100;
 // System prompt
 // ---------------------------------------------------------------------------
 
-const SYNTHESIS_SYSTEM_PROMPT = `Jesteś ekspertem ds. zarządzania nieruchomościami, tworzącym profesjonalny raport syntetyczny.
+const SYNTHESIS_SYSTEM_PROMPT = `Jesteś ekspertem ds. zarządzania nieruchomościami. Tworzysz ZWIĘZŁY raport kierowniczy.
 
-ZASADY:
+KRYTYCZNE ZASADY ZWIĘZŁOŚCI:
 1. Pisz po polsku, językiem formalnym i rzeczowym.
-2. Dla każdej sekcji raportu napisz 1-3 strony — zwięźle, ale treściwie.
-3. Wyciągaj KLUCZOWE wnioski, nie przepisuj surowych danych.
-4. Odwołuj się do konkretnych wątków (podaj tematy lub numery referencyjne).
-5. Identyfikuj wzorce i trendy powtarzające się w wielu wątkach.
-6. Używaj nagłówków, list i tabel markdown dla czytelności.
-7. Unikaj redundancji — jeśli temat pojawia się w wielu wątkach, opisz go RAZ z listą źródeł.
-8. Priorytetyzuj — najważniejsze wnioski na początku sekcji.`;
+2. Każda sekcja raportu to MAKSYMALNIE 8-12 zdań (pół strony A4).
+3. NIE opisuj każdego wątku z osobna — wyciągaj OGÓLNE wnioski i wzorce.
+4. Podawaj konkretne przykłady TYLKO w przypadkach ekstremalnych (rażące naruszenia, wyjątkowe osiągnięcia).
+5. Przykłady: max 1-2 per sekcja, jako krótkie wzmianki w nawiasie (np. „wątek: Awaria windy").
+6. Używaj wypunktowań zamiast rozbudowanej prozy.
+7. NIE twórz tabel, NIE wymieniaj każdego wątku z osobna.
+8. Zamiast „w wątku X zaobserwowano Y, w wątku Z zaobserwowano W" napisz „Zaobserwowano trend Y (np. wątki X, Z)".
+9. Skup się na: (a) ogólna ocena, (b) główne wzorce/trendy, (c) kluczowe rekomendacje.
+10. Cały raport (wszystkie sekcje razem) ma zmieścić się w 5-6 stronach A4.`;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -91,25 +95,26 @@ function truncateToLimit(text: string, limit: number): string {
 }
 
 /**
- * Format per-thread results into a single prompt block.
+ * Format per-thread results into a compact prompt block.
+ * Uses minimal formatting to save tokens — no markdown headers, just separators.
  */
 function formatResultsForPrompt(results: PerThreadResult[]): string {
   return results
     .map(
       (r, i) =>
-        `### Wątek ${i + 1}: ${r.threadSubject || '(brak tematu)'}\n\n${r.content}`
+        `[${i + 1}] ${r.threadSubject || '(brak tematu)'}: ${r.content}`
     )
-    .join('\n\n---\n\n');
+    .join('\n---\n');
 }
 
 /**
- * Build the user prompt for synthesis.
+ * Build the user prompt for synthesis — enforces brevity.
  */
 function buildUserPrompt(input: SynthesisInput, resultsBlock: string): string {
   const parts: string[] = [];
 
   parts.push(
-    `Zsyntetyzuj wyniki analizy sekcji "${input.sectionTitle}" z ${input.perThreadResults.length} wątków email.`
+    `Napisz ZWIĘZŁE podsumowanie sekcji "${input.sectionTitle}" na podstawie analizy ${input.perThreadResults.length} wątków email.`
   );
   parts.push(`Skrzynka: ${input.mailboxName}`);
 
@@ -120,13 +125,13 @@ function buildUserPrompt(input: SynthesisInput, resultsBlock: string): string {
   parts.push(`Typ raportu: ${input.templateType === 'client' ? 'kliencki (zewnętrzny)' : 'wewnętrzny (pełny)'}`);
 
   if (input.globalContext) {
-    parts.push(`\nKONTEKST RAPORTU (instrukcja użytkownika):\n${input.globalContext}`);
+    parts.push(`\nKONTEKST:\n${input.globalContext}`);
   }
 
-  parts.push(`\nWYNIKI ANALIZY PER WĄTEK:\n\n${resultsBlock}`);
+  parts.push(`\nDANE ŹRÓDŁOWE:\n${resultsBlock}`);
 
   parts.push(
-    `\nNapisz syntetyczne podsumowanie tej sekcji. Odwołuj się do konkretnych wątków (podaj ich temat). Wyciągnij kluczowe wnioski i wzorce.`
+    `\nINSTRUKCJA: Napisz MAX 8-12 zdań. Podaj ogólną ocenę, główne wzorce i 1-2 kluczowe rekomendacje. Przytaczaj konkretne wątki TYLKO jako krótkie wzmianki przy ekstremalnych przypadkach. NIE opisuj każdego wątku z osobna.`
   );
 
   return parts.join('\n');
@@ -146,16 +151,11 @@ export async function synthesizeReportSection(
   aiConfig: AIConfig,
   input: SynthesisInput
 ): Promise<SynthesisOutput> {
-  const { perThreadResults, sectionKey, sectionTitle } = input;
+  const { perThreadResults } = input;
 
-  // Single-thread: return as-is (no synthesis needed)
+  // Single-thread: still synthesize to enforce brevity
   if (perThreadResults.length === 1) {
-    return {
-      sectionKey,
-      markdown: perThreadResults[0].content,
-      tokensUsed: 0,
-      processingTimeMs: 0,
-    };
+    return singlePassSynthesis(aiConfig, input);
   }
 
   // Small set (<=100): single-pass synthesis
@@ -200,7 +200,7 @@ async function twoLevelSynthesis(
   input: SynthesisInput
 ): Promise<SynthesisOutput> {
   const synthConfig = { ...aiConfig, maxTokens: Math.min(aiConfig.maxTokens, SYNTHESIS_MAX_TOKENS) };
-  const { perThreadResults, sectionKey, sectionTitle } = input;
+  const { perThreadResults, sectionTitle } = input;
   const startTime = Date.now();
   let totalTokens = 0;
 
@@ -231,18 +231,17 @@ async function twoLevelSynthesis(
     totalTokens += response.tokensUsed;
   }
 
-  // Meta-synthesis: combine batch summaries
+  // Meta-synthesis: combine batch summaries into brief final output
   const metaPrompt = `Masz ${batches.length} częściowych syntez sekcji "${sectionTitle}" z łącznie ${perThreadResults.length} wątków email.
 
 Skrzynka: ${input.mailboxName}
 ${input.dateRange ? `Okres: ${input.dateRange.from} — ${input.dateRange.to}` : ''}
-${input.globalContext ? `\nKONTEKST RAPORTU:\n${input.globalContext}` : ''}
 
 CZĘŚCIOWE SYNTEZY:
 
-${batchSummaries.join('\n\n---\n\n')}
+${batchSummaries.join('\n---\n')}
 
-Napisz KOŃCOWĄ syntezę tej sekcji. Połącz wnioski z wszystkich grup, usuń redundancje, wyciągnij kluczowe wzorce i trendy. Odwołuj się do konkretnych wątków.`;
+INSTRUKCJA: Napisz KOŃCOWĄ syntezę w MAX 8-12 zdaniach. Połącz wnioski, usuń redundancje. Podaj ogólną ocenę i główne wzorce. Przykłady wątków TYLKO przy ekstremalnych przypadkach.`;
 
   const metaResponse = await callAI(
     synthConfig,
@@ -253,7 +252,7 @@ Napisz KOŃCOWĄ syntezę tej sekcji. Połącz wnioski z wszystkich grup, usuń 
   totalTokens += metaResponse.tokensUsed;
 
   return {
-    sectionKey,
+    sectionKey: input.sectionKey,
     markdown: metaResponse.content,
     tokensUsed: totalTokens,
     processingTimeMs: Date.now() - startTime,
