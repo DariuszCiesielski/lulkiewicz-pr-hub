@@ -15,11 +15,15 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 // Constants
 // ---------------------------------------------------------------------------
 
-/** Max characters sent per synthesis request (guard against token overflow). */
-const MAX_INPUT_CHARS = 100_000;
+/** Max characters sent per synthesis request.
+ *  30K chars ≈ 7500 tokens input — keeps AI calls fast (<30s). */
+const MAX_INPUT_CHARS = 30_000;
 
 /** Batch size for large thread sets — synthesize in sub-batches then merge. */
 const SUB_BATCH_SIZE = 30;
+
+/** Max completion tokens for synthesis — keeps output concise (3-5 pages per section). */
+const SYNTHESIS_MAX_TOKENS = 4096;
 
 /** Threshold: if more per-thread results than this, use two-level synthesis. */
 const TWO_LEVEL_THRESHOLD = 100;
@@ -170,11 +174,12 @@ async function singlePassSynthesis(
   aiConfig: AIConfig,
   input: SynthesisInput
 ): Promise<SynthesisOutput> {
+  const synthConfig = { ...aiConfig, maxTokens: Math.min(aiConfig.maxTokens, SYNTHESIS_MAX_TOKENS) };
   const resultsBlock = formatResultsForPrompt(input.perThreadResults);
   const truncatedBlock = truncateToLimit(resultsBlock, MAX_INPUT_CHARS);
   const userPrompt = buildUserPrompt(input, truncatedBlock);
 
-  const response = await callAI(aiConfig, SYNTHESIS_SYSTEM_PROMPT, userPrompt);
+  const response = await callAI(synthConfig, SYNTHESIS_SYSTEM_PROMPT, userPrompt);
 
   return {
     sectionKey: input.sectionKey,
@@ -194,6 +199,7 @@ async function twoLevelSynthesis(
   aiConfig: AIConfig,
   input: SynthesisInput
 ): Promise<SynthesisOutput> {
+  const synthConfig = { ...aiConfig, maxTokens: Math.min(aiConfig.maxTokens, SYNTHESIS_MAX_TOKENS) };
   const { perThreadResults, sectionKey, sectionTitle } = input;
   const startTime = Date.now();
   let totalTokens = 0;
@@ -218,7 +224,7 @@ async function twoLevelSynthesis(
     const truncatedBlock = truncateToLimit(resultsBlock, MAX_INPUT_CHARS);
     const userPrompt = buildUserPrompt(batchInput, truncatedBlock);
 
-    const response = await callAI(aiConfig, SYNTHESIS_SYSTEM_PROMPT, userPrompt);
+    const response = await callAI(synthConfig, SYNTHESIS_SYSTEM_PROMPT, userPrompt);
     batchSummaries.push(
       `## Grupa ${i + 1} (wątki ${i * SUB_BATCH_SIZE + 1}-${Math.min((i + 1) * SUB_BATCH_SIZE, perThreadResults.length)})\n\n${response.content}`
     );
@@ -239,7 +245,7 @@ ${batchSummaries.join('\n\n---\n\n')}
 Napisz KOŃCOWĄ syntezę tej sekcji. Połącz wnioski z wszystkich grup, usuń redundancje, wyciągnij kluczowe wzorce i trendy. Odwołuj się do konkretnych wątków.`;
 
   const metaResponse = await callAI(
-    aiConfig,
+    synthConfig,
     SYNTHESIS_SYSTEM_PROMPT,
     truncateToLimit(metaPrompt, MAX_INPUT_CHARS)
   );
