@@ -134,7 +134,7 @@ export default function ReportsPage() {
     setError(null);
     setGeneratingMessage(
       detailLevel === 'synthetic'
-        ? 'AI syntetyzuje wyniki analizy... To może potrwać do 60 sekund.'
+        ? 'Tworzenie raportu...'
         : 'Generowanie raportu szczegółowego...'
     );
 
@@ -155,8 +155,44 @@ export default function ReportsPage() {
       }
 
       const data = await res.json();
-      // Nawigacja bezposrednio na podglad — bez fetchReports() ani state updates po push
-      router.push(`/email-analyzer/reports/${data.reportId}`);
+
+      // Detailed reports are ready immediately
+      if (data.status === 'draft') {
+        router.push(`/email-analyzer/reports/${data.reportId}`);
+        return;
+      }
+
+      // Synthetic reports: poll /api/reports/process until all sections are done
+      const reportId = data.reportId;
+      const totalSections = data.totalSections || 0;
+      let hasMore = true;
+
+      while (hasMore) {
+        const processRes = await fetch('/api/reports/process', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reportId }),
+        });
+
+        if (!processRes.ok) {
+          const errData = await processRes.json();
+          throw new Error(errData.error || 'Błąd syntezy raportu');
+        }
+
+        const processData = await processRes.json();
+
+        if (processData.status === 'failed') {
+          throw new Error(processData.error || 'Synteza raportu nie powiodła się');
+        }
+
+        setGeneratingMessage(
+          `AI syntetyzuje sekcje... ${processData.processedSections}/${totalSections}`
+        );
+
+        hasMore = processData.hasMore;
+      }
+
+      router.push(`/email-analyzer/reports/${reportId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Błąd');
       setIsGenerating(false);

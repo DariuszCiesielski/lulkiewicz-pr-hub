@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { DEFAULT_PROMPTS, CLIENT_REPORT_SECTIONS } from '@/lib/ai/default-prompts';
 import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
-import { synthesizeReportSection } from '@/lib/ai/report-synthesizer';
-import { loadAIConfig } from '@/lib/ai/ai-provider';
-import type { PerThreadResult, SynthesisInput } from '@/lib/ai/report-synthesizer';
+import type { PerThreadResult } from '@/lib/ai/report-synthesizer';
 
 export const maxDuration = 60;
 
@@ -61,7 +59,6 @@ export async function POST(request: NextRequest) {
 
   const templateType = body.templateType === 'client' ? 'client' : 'internal';
   const detailLevel = body.detailLevel === 'detailed' ? 'detailed' : 'synthetic';
-  const includeThreadSummaries = body.includeThreadSummaries ?? false;
   const adminClient = getAdminClient();
 
   // Resolve analysisJobId — accept directly or find latest completed job for mailbox
@@ -203,7 +200,7 @@ export async function POST(request: NextRequest) {
       title,
       date_range_from: job.date_range_from,
       date_range_to: job.date_range_to,
-      status: 'draft',
+      status: detailLevel === 'synthetic' ? 'generating' : 'draft',
     })
     .select('id')
     .single();
@@ -212,19 +209,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: `Błąd tworzenia raportu: ${reportError?.message}` }, { status: 500 });
   }
 
-  // Load global context from _global_context prompt (DB override or default)
-  const globalContextOverride = dbPromptMap.get('_global_context');
-  const globalContext = (globalContextOverride?.user_prompt_template as string) ||
-    DEFAULT_PROMPTS.find((p) => p.section_key === '_global_context')?.user_prompt_template ||
-    undefined;
-
-  // Date range for synthesis context
-  const dateRange = job.date_range_from && job.date_range_to
-    ? { from: job.date_range_from, to: job.date_range_to }
-    : undefined;
-
   // ----- REDUCE PHASE -----
-  let sections: {
+  if (detailLevel === 'synthetic') {
+    // Synthetic reports use polling-driven batch processing (like analysis).
+    // Return immediately — frontend polls POST /api/reports/process.
+    return NextResponse.json({
+      reportId: report.id,
+      title,
+      totalSections: sectionsToInclude.length,
+      detailLevel,
+      threadCount,
+      status: 'generating',
+    });
+  }
+
+  // ---- DETAILED: original thread-by-thread concatenation (no AI, fast) ----
+  const sections: {
     report_id: string;
     section_key: string;
     section_order: number;
@@ -233,118 +233,31 @@ export async function POST(request: NextRequest) {
     is_edited: boolean;
   }[] = [];
 
-  if (detailLevel === 'synthetic') {
-    // ---- AI SYNTHESIS: parallel per section ----
-    let aiConfig;
-    try {
-      aiConfig = await loadAIConfig(adminClient);
-    } catch (err) {
-      // Fallback to detailed if AI not configured
-      return NextResponse.json(
-        { error: `Konfiguracja AI wymagana dla raportu syntetycznego: ${err instanceof Error ? err.message : 'Błąd'}` },
-        { status: 400 }
-      );
-    }
+  for (const sectionKey of sectionsToInclude) {
+    const promptDef = promptDefMap.get(sectionKey);
+    if (!promptDef) continue;
 
-    // Batch sections to avoid rate limiting and stay within Vercel 60s timeout.
-    // 13 sections / 4 per batch = 3-4 batches × ~10s each ≈ 35s total.
-    const SECTION_BATCH_SIZE = 4;
+    const perThreadResults = sectionResultsMap.get(sectionKey) || [];
+    const contents = perThreadResults.map((r) => r.content);
 
-    for (let batchIdx = 0; batchIdx < sectionsToInclude.length; batchIdx += SECTION_BATCH_SIZE) {
-      const batchKeys = sectionsToInclude.slice(batchIdx, batchIdx + SECTION_BATCH_SIZE);
+    const markdown = contents.length === 0
+      ? '*Brak danych dla tej sekcji.*'
+      : contents.length === 1
+        ? contents[0]
+        : contents.map((c, i) => {
+            const subject = perThreadResults[i]?.threadSubject;
+            const header = subject ? `### Wątek ${i + 1}: ${subject}` : `### Wątek ${i + 1}`;
+            return `${header}\n\n${c}`;
+          }).join('\n\n---\n\n');
 
-      const batchPromises = batchKeys.map(async (sectionKey) => {
-        const promptDef = promptDefMap.get(sectionKey);
-        if (!promptDef) return null;
-
-        const perThreadResults = sectionResultsMap.get(sectionKey) || [];
-
-        if (perThreadResults.length === 0) {
-          return {
-            report_id: report.id,
-            section_key: sectionKey,
-            section_order: promptDef.section_order,
-            title: promptDef.title,
-            content_markdown: '*Brak danych dla tej sekcji.*',
-            is_edited: false,
-          };
-        }
-
-        const input: SynthesisInput = {
-          sectionKey,
-          sectionTitle: promptDef.title,
-          perThreadResults,
-          templateType,
-          mailboxName,
-          dateRange,
-          globalContext,
-          includeThreadSummaries,
-        };
-
-        try {
-          const output = await synthesizeReportSection(aiConfig, input);
-          return {
-            report_id: report.id,
-            section_key: sectionKey,
-            section_order: promptDef.section_order,
-            title: promptDef.title,
-            content_markdown: output.markdown || '*Brak danych dla tej sekcji.*',
-            is_edited: false,
-          };
-        } catch (err) {
-          console.error(`Synthesis error for section ${sectionKey}:`, err);
-          const contents = perThreadResults.map((r) => r.content);
-          const markdown = contents.length === 1
-            ? contents[0]
-            : contents.map((c, i) => `### Wątek ${i + 1}\n\n${c}`).join('\n\n---\n\n');
-
-          return {
-            report_id: report.id,
-            section_key: sectionKey,
-            section_order: promptDef.section_order,
-            title: `${promptDef.title} (synteza nieudana — dane surowe)`,
-            content_markdown: markdown,
-            is_edited: false,
-          };
-        }
-      });
-
-      const batchResults = await Promise.allSettled(batchPromises);
-
-      for (const result of batchResults) {
-        if (result.status === 'fulfilled' && result.value) {
-          sections.push(result.value);
-        }
-      }
-    }
-  } else {
-    // ---- DETAILED: original thread-by-thread concatenation ----
-    for (const sectionKey of sectionsToInclude) {
-      const promptDef = promptDefMap.get(sectionKey);
-      if (!promptDef) continue;
-
-      const perThreadResults = sectionResultsMap.get(sectionKey) || [];
-      const contents = perThreadResults.map((r) => r.content);
-
-      const markdown = contents.length === 0
-        ? '*Brak danych dla tej sekcji.*'
-        : contents.length === 1
-          ? contents[0]
-          : contents.map((c, i) => {
-              const subject = perThreadResults[i]?.threadSubject;
-              const header = subject ? `### Wątek ${i + 1}: ${subject}` : `### Wątek ${i + 1}`;
-              return `${header}\n\n${c}`;
-            }).join('\n\n---\n\n');
-
-      sections.push({
-        report_id: report.id,
-        section_key: sectionKey,
-        section_order: promptDef.section_order,
-        title: promptDef.title,
-        content_markdown: markdown,
-        is_edited: false,
-      });
-    }
+    sections.push({
+      report_id: report.id,
+      section_key: sectionKey,
+      section_order: promptDef.section_order,
+      title: promptDef.title,
+      content_markdown: markdown,
+      is_edited: false,
+    });
   }
 
   if (sections.length > 0) {
@@ -363,5 +276,6 @@ export async function POST(request: NextRequest) {
     sectionsCount: sections.length,
     detailLevel,
     threadCount,
+    status: 'draft',
   });
 }
