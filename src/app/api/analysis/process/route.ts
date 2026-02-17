@@ -156,48 +156,54 @@ export async function POST(request: NextRequest) {
         })
         .join('\n\n');
 
-      // Analyze all sections in parallel for faster processing
-      await Promise.allSettled(
-        DEFAULT_PROMPTS.map(async (defaultPrompt) => {
-          const prompt = globalOverrides.get(defaultPrompt.section_key) || defaultPrompt;
-          const userPrompt = (prompt.user_prompt_template || defaultPrompt.user_prompt_template)
-            .replace('{{threads}}', threadText);
+      // Analyze sections in batches of 4 to avoid rate limiting and stay within 60s timeout.
+      // 14 prompts / 4 per batch = 4 batches × ~10s each ≈ 40s total.
+      const SECTION_BATCH_SIZE = 4;
+      for (let si = 0; si < DEFAULT_PROMPTS.length; si += SECTION_BATCH_SIZE) {
+        const sectionBatch = DEFAULT_PROMPTS.slice(si, si + SECTION_BATCH_SIZE);
 
-          try {
-            const response = await callAI(
-              aiConfig,
-              prompt.system_prompt || defaultPrompt.system_prompt,
-              userPrompt
-            );
+        await Promise.allSettled(
+          sectionBatch.map(async (defaultPrompt) => {
+            const prompt = globalOverrides.get(defaultPrompt.section_key) || defaultPrompt;
+            const userPrompt = (prompt.user_prompt_template || defaultPrompt.user_prompt_template)
+              .replace('{{threads}}', threadText);
 
-            await adminClient.from('analysis_results').insert({
-              analysis_job_id: job.id,
-              thread_id: thread.id,
-              section_key: defaultPrompt.section_key,
-              result_data: {
-                content: response.content,
-                thread_subject: thread.subject_normalized,
-              },
-              tokens_used: response.tokensUsed,
-              prompt_tokens: response.promptTokens,
-              completion_tokens: response.completionTokens,
-              cost_usd: calculateCost(aiConfig.model, response.promptTokens, response.completionTokens),
-              processing_time_ms: response.processingTimeMs,
-            });
-          } catch (aiError) {
-            console.error(`AI error for thread ${thread.id}, section ${defaultPrompt.section_key}:`, aiError);
-            await adminClient.from('analysis_results').insert({
-              analysis_job_id: job.id,
-              thread_id: thread.id,
-              section_key: defaultPrompt.section_key,
-              result_data: {
-                error: aiError instanceof Error ? aiError.message : 'Błąd AI',
-                thread_subject: thread.subject_normalized,
-              },
-            });
-          }
-        })
-      );
+            try {
+              const response = await callAI(
+                aiConfig,
+                prompt.system_prompt || defaultPrompt.system_prompt,
+                userPrompt
+              );
+
+              await adminClient.from('analysis_results').insert({
+                analysis_job_id: job.id,
+                thread_id: thread.id,
+                section_key: defaultPrompt.section_key,
+                result_data: {
+                  content: response.content,
+                  thread_subject: thread.subject_normalized,
+                },
+                tokens_used: response.tokensUsed,
+                prompt_tokens: response.promptTokens,
+                completion_tokens: response.completionTokens,
+                cost_usd: calculateCost(aiConfig.model, response.promptTokens, response.completionTokens),
+                processing_time_ms: response.processingTimeMs,
+              });
+            } catch (aiError) {
+              console.error(`AI error for thread ${thread.id}, section ${defaultPrompt.section_key}:`, aiError);
+              await adminClient.from('analysis_results').insert({
+                analysis_job_id: job.id,
+                thread_id: thread.id,
+                section_key: defaultPrompt.section_key,
+                result_data: {
+                  error: aiError instanceof Error ? aiError.message : 'Błąd AI',
+                  thread_subject: thread.subject_normalized,
+                },
+              });
+            }
+          })
+        );
+      }
     }
 
     // Update progress
