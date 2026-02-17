@@ -432,7 +432,7 @@ export default function AnalyzePage() {
                         {job.error_message}
                       </span>
                     )}
-                    {(job.status === 'processing' || job.status === 'pending') && (
+                    {(job.status === 'processing' || job.status === 'pending' || job.status === 'paused') && (
                       <button
                         onClick={() => handleCancel(job.id)}
                         className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors hover:opacity-80"
