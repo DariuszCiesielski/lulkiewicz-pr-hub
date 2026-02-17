@@ -62,23 +62,35 @@ export async function POST(request: NextRequest) {
     // Load AI config
     const aiConfig = await loadAIConfig(adminClient);
 
-    // Load analysis results grouped by section
+    // Load analysis results grouped by section (explicit limit to avoid PostgREST 1000-row default)
     const { data: results } = await adminClient
       .from('analysis_results')
       .select('section_key, result_data, thread_id')
       .eq('analysis_job_id', report.analysis_job_id)
-      .order('created_at', { ascending: true });
+      .order('created_at', { ascending: true })
+      .limit(10000);
 
     if (!results || results.length === 0) {
       await adminClient.from('reports').update({ status: 'draft' }).eq('id', report.id);
       return NextResponse.json({ status: 'completed', processedSections: 0, totalSections: 0, hasMore: false });
     }
 
-    // Group by section
+    // Group by section — track both successful results and error counts
     const sectionResultsMap = new Map<string, PerThreadResult[]>();
+    const sectionErrorsMap = new Map<string, number>();
+    let totalWithContent = 0;
+    let totalWithError = 0;
+
     for (const r of results) {
       const content = r.result_data?.content;
-      if (!content) continue;
+      if (!content) {
+        if (r.result_data?.error) {
+          sectionErrorsMap.set(r.section_key, (sectionErrorsMap.get(r.section_key) || 0) + 1);
+          totalWithError++;
+        }
+        continue;
+      }
+      totalWithContent++;
       const existing = sectionResultsMap.get(r.section_key) || [];
       existing.push({
         threadId: r.thread_id,
@@ -87,6 +99,8 @@ export async function POST(request: NextRequest) {
       });
       sectionResultsMap.set(r.section_key, existing);
     }
+
+    console.log(`Report ${report.id}: ${results.length} analysis results loaded, ${totalWithContent} with content, ${totalWithError} with errors. Sections with data: [${[...sectionResultsMap.keys()].join(', ')}]`);
 
     // Load prompt definitions (same merge logic as POST /api/reports)
     const { data: dbPrompts } = await adminClient
@@ -189,12 +203,16 @@ export async function POST(request: NextRequest) {
       const perThreadResults = sectionResultsMap.get(sectionKey) || [];
 
       if (perThreadResults.length === 0) {
+        const errorCount = sectionErrorsMap.get(sectionKey) || 0;
+        const message = errorCount > 0
+          ? `*Analiza AI nie powiodła się dla tej sekcji (${errorCount} błędów). Uruchom analizę ponownie, aby uzupełnić dane.*`
+          : '*Brak danych analizy dla tej sekcji. Upewnij się, że analiza AI została ukończona przed generowaniem raportu.*';
         return {
           report_id: report.id,
           section_key: sectionKey,
           section_order: promptDef.section_order,
           title: promptDef.title,
-          content_markdown: '*Brak danych dla tej sekcji.*',
+          content_markdown: message,
           is_edited: false,
         };
       }

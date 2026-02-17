@@ -108,12 +108,13 @@ export async function POST(request: NextRequest) {
 
   const mailboxName = mailbox?.display_name || mailbox?.email_address || 'Nieznana';
 
-  // Load analysis results grouped by section
+  // Load analysis results grouped by section (explicit limit to avoid PostgREST 1000-row default)
   const { data: results } = await adminClient
     .from('analysis_results')
     .select('section_key, result_data, thread_id')
     .eq('analysis_job_id', analysisJobId)
-    .order('created_at', { ascending: true });
+    .order('created_at', { ascending: true })
+    .limit(10000);
 
   if (!results || results.length === 0) {
     return NextResponse.json({ error: 'Brak wyników analizy' }, { status: 400 });

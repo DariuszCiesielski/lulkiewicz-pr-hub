@@ -17,12 +17,12 @@ interface AIConfigState {
 
 const modelsByProvider: Record<string, { value: string; label: string }[]> = {
   openai: [
-    { value: 'gpt-5.2', label: 'GPT-5.2 (najnowszy)' },
-    { value: 'gpt-4.1', label: 'GPT-4.1' },
-    { value: 'gpt-4.1-mini', label: 'GPT-4.1 Mini' },
-    { value: 'gpt-4.1-nano', label: 'GPT-4.1 Nano (najtańszy)' },
-    { value: 'gpt-4o', label: 'GPT-4o' },
-    { value: 'gpt-4o-mini', label: 'GPT-4o Mini' },
+    { value: 'gpt-5.2', label: 'GPT-5.2 (najnowszy, $1.75/$14)' },
+    { value: 'gpt-5.1', label: 'GPT-5.1 ($1.25/$10)' },
+    { value: 'gpt-5-mini', label: 'GPT-5 Mini ($0.25/$2)' },
+    { value: 'gpt-5-nano', label: 'GPT-5 Nano (najtańszy, $0.05/$0.40)' },
+    { value: 'gpt-4.1', label: 'GPT-4.1 (starszy)' },
+    { value: 'gpt-4.1-mini', label: 'GPT-4.1 Mini (starszy)' },
   ],
   anthropic: [
     { value: 'claude-opus-4-6', label: 'Claude Opus 4.6' },
@@ -31,9 +31,9 @@ const modelsByProvider: Record<string, { value: string; label: string }[]> = {
   ],
   azure: [
     { value: 'gpt-5.2', label: 'GPT-5.2 (najnowszy)' },
-    { value: 'gpt-4.1', label: 'GPT-4.1' },
-    { value: 'gpt-4.1-mini', label: 'GPT-4.1 Mini' },
-    { value: 'gpt-4o', label: 'GPT-4o' },
+    { value: 'gpt-5.1', label: 'GPT-5.1' },
+    { value: 'gpt-5-mini', label: 'GPT-5 Mini' },
+    { value: 'gpt-4.1', label: 'GPT-4.1 (starszy)' },
   ],
 };
 

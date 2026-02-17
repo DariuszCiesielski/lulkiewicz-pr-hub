@@ -13,6 +13,9 @@ const SECTIONS_PER_REQUEST = 3;
 /** All section keys that need to be analyzed per thread. */
 const ALL_SECTION_KEYS = DEFAULT_PROMPTS.map((p) => p.section_key);
 
+/** Max retry attempts per section before treating as permanent failure. */
+const MAX_RETRIES = 3;
+
 /**
  * POST /api/analysis/process — Process a small batch of sections.
  * Body: { jobId }
@@ -71,16 +74,32 @@ export async function POST(request: NextRequest) {
     // Load AI config
     const aiConfig = await loadAIConfig(adminClient);
 
-    // Get ALL existing results for this job: (thread_id, section_key) pairs
+    // Get ALL existing results for this job — include result_data to distinguish success vs error
     const { data: existingResults } = await adminClient
       .from('analysis_results')
-      .select('thread_id, section_key')
-      .eq('analysis_job_id', job.id);
+      .select('id, thread_id, section_key, result_data')
+      .eq('analysis_job_id', job.id)
+      .limit(10000);
 
     // Build set of "thread_id::section_key" for fast lookup
-    const completedPairs = new Set(
-      (existingResults || []).map((r) => `${r.thread_id}::${r.section_key}`)
-    );
+    // Only count entries WITH content as completed (errors can be retried)
+    // Permanently failed entries (retry_count >= MAX_RETRIES) also count as completed
+    const completedPairs = new Set<string>();
+    const errorEntries = new Map<string, { id: string; retryCount: number }>();
+
+    for (const r of (existingResults || [])) {
+      const key = `${r.thread_id}::${r.section_key}`;
+      if (r.result_data?.content) {
+        completedPairs.add(key);
+      } else if (r.result_data?.error) {
+        const retryCount: number = r.result_data.retry_count || 1;
+        if (retryCount >= MAX_RETRIES) {
+          completedPairs.add(key); // permanent failure — stop retrying
+        } else {
+          errorEntries.set(key, { id: r.id, retryCount });
+        }
+      }
+    }
 
     // Get all threads in scope
     let threadQuery = adminClient
@@ -109,7 +128,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Count fully completed threads (all section_keys present)
+    // Count fully completed threads (all section_keys present — success or permanent failure)
     const fullyCompletedThreads = threads.filter((thread) =>
       ALL_SECTION_KEYS.every((sk) => completedPairs.has(`${thread.id}::${sk}`))
     ).length;
@@ -184,9 +203,18 @@ export async function POST(request: NextRequest) {
         })
         .join('\n\n');
 
-      // Process section batch in parallel
+      // Process section batch in parallel (with retry support for previously failed sections)
       await Promise.allSettled(
         sectionBatch.map(async (defaultPrompt) => {
+          const pairKey = `${targetThread!.id}::${defaultPrompt.section_key}`;
+          const existingError = errorEntries.get(pairKey);
+
+          // Delete existing error entry before retry
+          if (existingError) {
+            console.log(`Retrying section ${defaultPrompt.section_key} for thread ${targetThread!.id} (attempt ${existingError.retryCount + 1}/${MAX_RETRIES})`);
+            await adminClient.from('analysis_results').delete().eq('id', existingError.id);
+          }
+
           const prompt = globalOverrides.get(defaultPrompt.section_key) || defaultPrompt;
           const userPrompt = (prompt.user_prompt_template || defaultPrompt.user_prompt_template)
             .replace('{{threads}}', threadText);
@@ -213,7 +241,8 @@ export async function POST(request: NextRequest) {
               processing_time_ms: response.processingTimeMs,
             });
           } catch (aiError) {
-            console.error(`AI error for thread ${targetThread!.id}, section ${defaultPrompt.section_key}:`, aiError);
+            const newRetryCount = (existingError?.retryCount || 0) + 1;
+            console.error(`AI error for thread ${targetThread!.id}, section ${defaultPrompt.section_key} (attempt ${newRetryCount}/${MAX_RETRIES}):`, aiError);
             await adminClient.from('analysis_results').insert({
               analysis_job_id: job.id,
               thread_id: targetThread!.id,
@@ -221,6 +250,7 @@ export async function POST(request: NextRequest) {
               result_data: {
                 error: aiError instanceof Error ? aiError.message : 'Błąd AI',
                 thread_subject: targetThread!.subject_normalized,
+                retry_count: newRetryCount,
               },
             });
           }
