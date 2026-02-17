@@ -7,8 +7,9 @@ import type { PerThreadResult, SynthesisInput } from '@/lib/ai/report-synthesize
 
 export const maxDuration = 60;
 
-/** Max sections to synthesize per request — keeps each request well under 60s. */
-const SECTIONS_PER_REQUEST = 3;
+/** Max sections to synthesize per request — 1 keeps each request well under 60s.
+ *  Report synthesis is heavier than analysis (aggregates all threads per section). */
+const SECTIONS_PER_REQUEST = 1;
 
 /**
  * POST /api/reports/process — Synthesize a batch of report sections.
