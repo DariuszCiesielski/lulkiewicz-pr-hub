@@ -304,13 +304,20 @@ export default function ReportsPage() {
                     Brak danych analizy dla {info.missing.length} z {info.total} sekcji
                   </p>
                   <p className="mt-1" style={{ color: 'var(--text-muted)' }}>
-                    Ponownie uruchom analiz\u0119 AI, aby uwzgl\u0119dni\u0107 nowe sekcje. Brakuj\u0105ce sekcje:
+                    Ponownie uruchom analiz&#x0119; AI, aby uwzgl&#x0119;dni&#x0107; nowe sekcje. Brakuj&#x0105;ce sekcje:
                   </p>
                   <ul className="mt-1 list-disc list-inside" style={{ color: 'var(--text-muted)' }}>
                     {info.missing.map((s) => (
                       <li key={s.key}>{s.title}</li>
                     ))}
                   </ul>
+                  <Link
+                    href="/email-analyzer/analyze"
+                    className="mt-2 inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium text-white hover:opacity-90"
+                    style={{ backgroundColor: 'var(--accent-primary)' }}
+                  >
+                    Przejd&#x017A; do Analizy AI
+                  </Link>
                 </div>
               </div>
             );
