@@ -94,7 +94,7 @@ Plans:
 **Depends on**: Phase 3
 **Requirements**: AI-01, AI-02, AI-03, AI-04, AI-05, AI-06, AI-07, AI-08, PROMPT-01, PROMPT-02, PROMPT-03, PROMPT-04, PROMPT-05, EVAL-01, EVAL-02, EVAL-03, EVAL-04
 **Success Criteria** (what must be TRUE):
-  1. Uzytkownik moze uruchomic analiza AI i widziec progress bar z informacja o aktualnie przetwarzanym watku — analiza obejmuje jakosc komunikacji, czas reakcji, status spraw, dane kontaktowe, RODO i sugestie naprawcze
+  1. Uzytkownik moze uruchomic analiza AI i widziec progress bar z informacja o aktualnie przetwarzanym watku — analiza obejmuje 13 sekcji: metadane, szybkosc reakcji, efektywnosc obslugi, jakosc relacji, cykl komunikacji, feedback klientow, forma wypowiedzi, jasnosc komunikacji, spojnosc organizacji, proaktywnosc, komunikacja wewnetrzna, RODO i rekomendacje
   2. Uzytkownik moze konfigurowac providera AI (OpenAI/Anthropic/Google), klucz API i model
   3. Uzytkownik moze edytowac prompty per sekcja raportu z podgladem side-by-side (domyslny vs edytowany), resetowac do domyslnego i korzystac z 3-tier resolution (kod/globalny/per-raport)
   4. Uzytkownik moze definiowac checklisty (tak/nie) i scoring rubrics (kryteria + wagi + skala) — AI ocenia kazdy punkt, wyniki widoczne z wizualnymi wskaznikami
@@ -112,7 +112,7 @@ Plans:
 **Depends on**: Phase 4
 **Requirements**: REPORT-01, REPORT-02, REPORT-03, REPORT-04, REPORT-05, REPORT-06, EXPORT-01, EXPORT-02, EXPORT-03
 **Success Criteria** (what must be TRUE):
-  1. Uzytkownik moze wygenerowac raport AI na podstawie wynikow analizy — wybierajac szablon wewnetrzny (pelny, 7 sekcji) lub kliencki (filtrowany)
+  1. Uzytkownik moze wygenerowac raport AI na podstawie wynikow analizy — wybierajac szablon wewnetrzny (pelny, 13 sekcji) lub kliencki (12 sekcji, bez komunikacji wewnetrznej)
   2. Uzytkownik widzi podglad raportu w przegladarce (markdown rendering) i moze edytowac wygenerowana tresc przed eksportem
   3. Uzytkownik moze skopiowac raport do schowka jednym klikiem, wyeksportowac do .docx (z formatowaniem) i do .pdf (z formatowaniem)
   4. Uzytkownik widzi historie wygenerowanych raportow z datami i statusami

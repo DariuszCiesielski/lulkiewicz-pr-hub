@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-10)
 Phase: Phase 2.2 (Email Analyzer Quality) — ALL COMPLETE
 Plan: 4 of 4
 Status: All plans (02.2-01 through 02.2-04) COMPLETE. Phase 2.2 done.
-Last activity: 2026-02-15 — v1.0.3 quality fixes (Polish diacritics, report filtering, delete reports, remove Demo)
+Last activity: 2026-02-17 — v1.0.4 report sections overhaul (7→13 sections per client requirements)
 
 Progress (v1.0 Email Analyzer): [####################] 100% (Phases 1-6 + Phase 2.1 + Phase 2.2 ALL COMPLETE)
 Progress (v1.1 FB Analyzer): [########............] 40% (phases 7-8 COMPLETE, ready for phase 9)
@@ -162,6 +162,11 @@ Progress (v1.1 FB Analyzer): [########............] 40% (phases 7-8 COMPLETE, re
 - [v1.0.3]: Global context loaded from _global_context in prompt_templates (not report_global)
 - [v1.0.3]: DELETE /api/reports/[id] — cascade delete sections + report
 - [v1.0.3]: Demo badges removed from Sidebar (production mode)
+- [v1.0.4]: Report sections overhaul — 7 sekcji zastąpione 13 sekcjami wg wymagań klienta (Struktura_2in1 + All_bez_struktury)
+- [v1.0.4]: Nowe sekcje: metadata_analysis, response_speed, service_effectiveness, client_relationship, communication_cycle, client_feedback, expression_form, recipient_clarity, organization_consistency, proactive_actions, internal_communication, data_security, recommendations
+- [v1.0.4]: Usunięte sekcje: summary, communication_quality, response_time, case_status, contact_info, gdpr_compliance
+- [v1.0.4]: Raport kliencki: 12 sekcji (bez internal_communication), raport wewnętrzny: 13 sekcji
+- [v1.0.4]: Istniejące analizy niekompatybilne z nowymi sekcjami — wymaga ponownego uruchomienia analizy AI
 
 ### Blockers/Concerns
 
@@ -188,8 +193,8 @@ organizations, organization_members, **mailboxes** (extended: +8 cols, sync_stat
 
 ## Session Continuity
 
-Last session: 2026-02-15T22:00Z
-Stopped at: v1.0.3 released — quality fixes, report section filtering, delete reports
+Last session: 2026-02-17T12:00Z
+Stopped at: v1.0.4 released — report sections overhaul (13 sekcji per client requirements)
 Resume file: .planning/phases/02.2-email-analyzer-quality/02.2-VERIFICATION.md
 Next step: Phase 9 (FB Scraping Engine) — /gsd:discuss-phase 9
-Version tag: v1.0.3
+Version tag: v1.0.4
