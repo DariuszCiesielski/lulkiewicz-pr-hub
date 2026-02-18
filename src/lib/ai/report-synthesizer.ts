@@ -23,9 +23,11 @@ const MAX_INPUT_CHARS = 60_000;
 /** Batch size for large thread sets — synthesize in sub-batches then merge. */
 const SUB_BATCH_SIZE = 50;
 
-/** Max completion tokens per section — ~0.4 page.
- *  13 sections × 600 tokens ≈ 7800 tokens ≈ 5-6 pages total. */
-const SYNTHESIS_MAX_TOKENS = 600;
+/** Max completion tokens per section.
+ *  GPT-5.x reasoning models count reasoning tokens toward this limit,
+ *  so a hard cap here starves the model of reasoning budget.
+ *  We no longer cap — aiConfig.maxTokens (from DB, default 16384) is used.
+ *  Brevity is enforced by the prompt itself (MAX 8-12 sentences). */
 
 /** Threshold: if more per-thread results than this, use two-level synthesis. */
 const TWO_LEVEL_THRESHOLD = 80;
@@ -203,12 +205,11 @@ async function singlePassSynthesis(
   aiConfig: AIConfig,
   input: SynthesisInput
 ): Promise<SynthesisOutput> {
-  const synthConfig = { ...aiConfig, maxTokens: Math.min(aiConfig.maxTokens, SYNTHESIS_MAX_TOKENS) };
   const resultsBlock = formatResultsForPrompt(input.perThreadResults);
   const truncatedBlock = truncateToLimit(resultsBlock, MAX_INPUT_CHARS);
   const userPrompt = buildUserPrompt(input, truncatedBlock);
 
-  const response = await callAI(synthConfig, SYNTHESIS_SYSTEM_PROMPT, userPrompt);
+  const response = await callAI(aiConfig, SYNTHESIS_SYSTEM_PROMPT, userPrompt);
 
   return {
     sectionKey: input.sectionKey,
@@ -228,7 +229,7 @@ async function twoLevelSynthesis(
   aiConfig: AIConfig,
   input: SynthesisInput
 ): Promise<SynthesisOutput> {
-  const synthConfig = { ...aiConfig, maxTokens: Math.min(aiConfig.maxTokens, SYNTHESIS_MAX_TOKENS) };
+  // Use full aiConfig.maxTokens — reasoning models need ample token budget
   const { perThreadResults, sectionTitle } = input;
   const startTime = Date.now();
   let totalTokens = 0;
@@ -253,7 +254,7 @@ async function twoLevelSynthesis(
     const truncatedBlock = truncateToLimit(resultsBlock, MAX_INPUT_CHARS);
     const userPrompt = buildUserPrompt(batchInput, truncatedBlock);
 
-    const response = await callAI(synthConfig, SYNTHESIS_SYSTEM_PROMPT, userPrompt);
+    const response = await callAI(aiConfig, SYNTHESIS_SYSTEM_PROMPT, userPrompt);
     batchSummaries.push(
       `## Grupa ${i + 1} (wątki ${i * SUB_BATCH_SIZE + 1}-${Math.min((i + 1) * SUB_BATCH_SIZE, perThreadResults.length)})\n\n${response.content}`
     );
@@ -273,7 +274,7 @@ ${batchSummaries.join('\n---\n')}
 INSTRUKCJA: Napisz KOŃCOWĄ syntezę w MAX 8-12 zdaniach. Połącz wnioski, usuń redundancje. Podaj ogólną ocenę i główne wzorce. Przykłady wątków TYLKO przy ekstremalnych przypadkach.`;
 
   const metaResponse = await callAI(
-    synthConfig,
+    aiConfig,
     SYNTHESIS_SYSTEM_PROMPT,
     truncateToLimit(metaPrompt, MAX_INPUT_CHARS)
   );
