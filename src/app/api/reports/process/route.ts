@@ -9,8 +9,9 @@ import type { PerThreadResult, SynthesisInput } from '@/lib/ai/report-synthesize
 export const maxDuration = 60;
 
 /** Max sections to synthesize per request.
- *  Each section now produces ~600 tokens output, so 3 fit well under 60s. */
-const SECTIONS_PER_REQUEST = 3;
+ *  With thread-summary format each section processes ALL summaries at once,
+ *  so keep at 1 to give full 60s budget per synthesis call. */
+const SECTIONS_PER_REQUEST = 1;
 
 /**
  * POST /api/reports/process — Synthesize a batch of report sections.
@@ -76,37 +77,41 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ status: 'completed', processedSections: 0, totalSections: 0, hasMore: false });
     }
 
-    // Detect analysis format: new (thread summaries) vs old (per-section)
-    const hasThreadSummaries = results.some((r) => r.section_key === THREAD_SUMMARY_SECTION_KEY);
-
-    // Build per-thread results based on format
+    // Build per-thread results — try new format first, fall back to old
     let threadSummaries: PerThreadResult[] | null = null;
     const sectionResultsMap = new Map<string, PerThreadResult[]>();
     const sectionErrorsMap = new Map<string, number>();
     let totalWithContent = 0;
     let totalWithError = 0;
 
-    if (hasThreadSummaries) {
-      // NEW FORMAT: all results are _thread_summary — load into single list
-      threadSummaries = [];
-      for (const r of results) {
-        if (r.section_key !== THREAD_SUMMARY_SECTION_KEY) continue;
-        const content = r.result_data?.content;
-        if (!content) {
-          if (r.result_data?.error) totalWithError++;
-          continue;
-        }
-        totalWithContent++;
-        threadSummaries.push({
-          threadId: r.thread_id,
-          threadSubject: r.result_data?.thread_subject || '',
-          content,
-        });
+    // Try NEW FORMAT: load _thread_summary entries with actual content
+    const summariesWithContent: PerThreadResult[] = [];
+    let summaryErrors = 0;
+
+    for (const r of results) {
+      if (r.section_key !== THREAD_SUMMARY_SECTION_KEY) continue;
+      const content = r.result_data?.content;
+      if (!content) {
+        if (r.result_data?.error) summaryErrors++;
+        continue;
       }
-      console.log(`Report ${report.id}: NEW format — ${threadSummaries.length} thread summaries loaded, ${totalWithError} errors`);
+      summariesWithContent.push({
+        threadId: r.thread_id,
+        threadSubject: r.result_data?.thread_subject || '',
+        content,
+      });
+    }
+
+    if (summariesWithContent.length > 0) {
+      // NEW FORMAT: use thread summaries (has actual content)
+      threadSummaries = summariesWithContent;
+      totalWithContent = summariesWithContent.length;
+      totalWithError = summaryErrors;
+      console.log(`Report ${report.id}: NEW format — ${threadSummaries.length} thread summaries, ${totalWithError} errors`);
     } else {
-      // OLD FORMAT: group by section_key
+      // OLD FORMAT (or new format with no content): group by section_key
       for (const r of results) {
+        if (r.section_key === THREAD_SUMMARY_SECTION_KEY) continue; // skip empty summaries
         const content = r.result_data?.content;
         if (!content) {
           if (r.result_data?.error) {
