@@ -171,10 +171,16 @@ export async function POST(request: NextRequest) {
 
     const templateType = report.template_type === 'client' ? 'client' : 'internal';
 
+    // When using new format (thread summaries), only include sections from DEFAULT_PROMPTS.
+    // DB-only sections (e.g. old "response_time", "rodo_compliance") don't have matching
+    // dimensions in thread summaries and would produce duplicate/overlapping content.
+    const defaultSectionKeys = new Set(DEFAULT_PROMPTS.map(p => p.section_key));
+
     // Filter sections to include
     const sectionsToInclude = allPromptDefs
       .filter((p) => {
         if (p.section_key === '_global_context') return false;
+        if (threadSummaries && !defaultSectionKeys.has(p.section_key)) return false;
         return templateType === 'client' ? p.in_client_report : p.in_internal_report;
       })
       .map((p) => p.section_key);

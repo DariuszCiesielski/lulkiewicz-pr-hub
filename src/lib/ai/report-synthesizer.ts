@@ -36,19 +36,21 @@ const TWO_LEVEL_THRESHOLD = 80;
 // System prompt
 // ---------------------------------------------------------------------------
 
-const SYNTHESIS_SYSTEM_PROMPT = `Jesteś ekspertem ds. zarządzania nieruchomościami. Tworzysz ZWIĘZŁY raport kierowniczy.
+const SYNTHESIS_SYSTEM_PROMPT = `Jesteś ekspertem ds. zarządzania nieruchomościami. Tworzysz profesjonalny raport audytowy z analizy korespondencji email.
 
-KRYTYCZNE ZASADY ZWIĘZŁOŚCI:
+ZASADY FORMATOWANIA:
 1. Pisz po polsku, językiem formalnym i rzeczowym.
-2. Każda sekcja raportu to MAKSYMALNIE 8-12 zdań (pół strony A4).
+2. STRUKTURA KAŻDEJ SEKCJI:
+   a) Krótki akapit wprowadzający (2-3 zdania z kluczowym wnioskiem i ogólną oceną)
+   b) Kluczowe obserwacje jako zwięzłe punkty (po 1-2 zdania, max 5-8 punktów)
+   c) 1-2 rekomendacje na końcu sekcji (jako osobne akapity z pogrubionym **Rekomendacja:**)
 3. NIE opisuj każdego wątku z osobna — wyciągaj OGÓLNE wnioski i wzorce.
-4. Podawaj konkretne przykłady TYLKO w przypadkach ekstremalnych (rażące naruszenia, wyjątkowe osiągnięcia).
-5. Przykłady: max 1-2 per sekcja, jako krótkie wzmianki w nawiasie (np. „wątek: Awaria windy").
-6. Używaj wypunktowań zamiast rozbudowanej prozy.
-7. NIE twórz tabel, NIE wymieniaj każdego wątku z osobna.
-8. Zamiast „w wątku X zaobserwowano Y, w wątku Z zaobserwowano W" napisz „Zaobserwowano trend Y (np. wątki X, Z)".
-9. Skup się na: (a) ogólna ocena, (b) główne wzorce/trendy, (c) kluczowe rekomendacje.
-10. Cały raport (wszystkie sekcje razem) ma zmieścić się w 5-6 stronach A4.`;
+4. Podawaj konkretne przykłady TYLKO przy ekstremalnych przypadkach (1-2 per sekcja, jako krótkie wzmianki w nawiasie).
+5. Jeśli FOKUS SEKCJI wymaga podsekcji, użyj nagłówków ## i ### — NIGDY nagłówka #.
+6. NIE powtarzaj obserwacji opisanych w innych sekcjach — odwołaj się do nich krótko jeśli trzeba.
+7. Cały raport (wszystkie sekcje razem) powinien zmieścić się w 7-10 stronach A4.
+8. Twórz tabele markdown TYLKO gdy wyraźnie wymagane w FOKUSIE SEKCJI.
+9. Zamiast „w wątku X zaobserwowano Y" pisz „Zaobserwowano trend Y (np. wątki X, Z)".`;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -115,19 +117,86 @@ function formatResultsForPrompt(results: PerThreadResult[]): string {
  */
 function getSectionFocusPrompt(sectionKey: string): string | null {
   const focusMap: Record<string, string> = {
-    'metadata_analysis': 'Wyodrębnij informacje o typach spraw, uczestnikach, zakresie dat i ograniczeniach analizy. Szukaj wzorców w wymiarze "1. METADANE".',
-    'response_speed': 'Skup się na wymiarze "2. SZYBKOŚĆ REAKCJI" — czasy odpowiedzi, potwierdzenia odbioru, benchmarki. Podaj statystyki (% poniżej 4h, % powyżej 3 dni).',
-    'service_effectiveness': 'Skup się na wymiarze "3. EFEKTYWNOŚĆ OBSŁUGI" — zamknięcie tematu, kompletność informacji, proaktywność w odpowiedziach.',
-    'client_relationship': 'Skup się na wymiarze "4. JAKOŚĆ RELACJI Z KLIENTEM" — ton komunikacji, budowanie zaufania, indywidualne podejście.',
-    'communication_cycle': 'Skup się na wymiarze "5. CYKL KOMUNIKACJI" — liczba wymian, ciągłość, spójność, status rozwiązania.',
-    'client_feedback': 'Skup się na wymiarze "6. SATYSFAKCJA KLIENTA" — sygnały pozytywne/negatywne, zmiana tonu.',
-    'expression_form': 'Skup się na wymiarze "7. FORMA WYPOWIEDZI" — styl językowy, powitania, personalizacja, konsekwencja.',
-    'recipient_clarity': 'Skup się na wymiarze "8. JASNOŚĆ KOMUNIKACJI" — przejrzystość, czytelność, profesjonalizm.',
-    'organization_consistency': 'Skup się na wymiarze "9. SPÓJNOŚĆ ORGANIZACYJNA" — standardy, podpisy, jednolitość stylu.',
-    'proactive_actions': 'Skup się na wymiarze "10. PROAKTYWNOŚĆ" — inicjatywa własna, monitorowanie, zapobieganie.',
-    'internal_communication': 'Skup się na wymiarze "11. KOMUNIKACJA WEWNĘTRZNA" — przepływ informacji, współpraca, RODO.',
-    'data_security': 'Skup się na wymiarze "12. BEZPIECZEŃSTWO DANYCH" — UDW, ochrona danych osobowych, procedury.',
-    'recommendations': 'Skup się na wymiarze "13. REKOMENDACJE" — zbierz rekomendacje ze wszystkich wątków, pogrupuj, ustal priorytety.',
+    'metadata_analysis': `Wyodrębnij metadane analizy (wymiar "1. METADANE").
+
+WYMAGANE ELEMENTY (podaj konkrety, nie ogólniki):
+- **Zakres i źródło danych**: e-maile, ograniczenia (brak danych z telefonów/spotkań)
+- **Najstarsza wiadomość**: KONKRETNA DATA (np. 15 lipca 2025)
+- **Najnowsza wiadomość**: KONKRETNA DATA
+- **Łączna liczba wiadomości** wykorzystanych w analizie (nie wątków)
+- **Liczba wątków**: N
+- **Typy spraw**: podział procentowy lub liczbowy (reklamacje, awarie, pytania, itp.)
+- **Uczestnicy**: kluczowe role po obu stronach
+
+Napisz w formie listy z pogrubionymi etykietami.`,
+
+    'response_speed': `Skup się na wymiarze "2. SZYBKOŚĆ REAKCJI I OBSŁUGA ZGŁOSZEŃ".
+
+WYMAGANA STRUKTURA Z PODSEKCJAMI:
+
+## 2.1. Czas reakcji
+Opisz: średni czas od zgłoszenia do pierwszej odpowiedzi, szybkość przekazania spraw do odpowiedniego działu. Podaj statystyki (% w <4h, % 1-3 dni, % >3 dni). Wspomnij o skrajnych przypadkach.
+
+## 2.2. Potwierdzenie odbioru wiadomości
+
+### a) Forma potwierdzenia
+Czy wiadomości zawierają jednoznaczne potwierdzenie odbioru? Styl: uprzejmy/profesjonalny vs. zdawkowy? Elementy budujące relację?
+
+### b) Konsekwencja stosowania
+Czy pracownicy stosują potwierdzenia konsekwentnie? Różnice między pracownikami/działami?`,
+
+    'service_effectiveness': 'Skup się na wymiarze "3. EFEKTYWNOŚĆ OBSŁUGI" — zamknięcie tematu, kompletność informacji w pierwszej odpowiedzi, proaktywność. Unikaj powtórzeń z sekcji o szybkości reakcji.',
+
+    'client_relationship': 'Skup się na wymiarze "4. JAKOŚĆ RELACJI Z KLIENTEM" — ton komunikacji, empatia, budowanie zaufania, indywidualne podejście. Unikaj powtórzeń z sekcji o formie wypowiedzi.',
+
+    'communication_cycle': 'Skup się na wymiarze "5. CYKL KOMUNIKACJI" — liczba wymian potrzebnych do rozwiązania, ciągłość prowadzenia sprawy (ten sam pracownik?), status rozwiązania. Unikaj powtórzeń z sekcji o efektywności.',
+
+    'client_feedback': 'Skup się na wymiarze "6. SATYSFAKCJA KLIENTA" — sygnały zadowolenia/niezadowolenia, zmiana tonu w kolejnych wiadomościach, ponaglenia. Bazuj WYŁĄCZNIE na treści emaili.',
+
+    'expression_form': `Skup się na wymiarze "7. FORMA WYPOWIEDZI".
+
+WYMAGANA STRUKTURA Z PODSEKCJAMI:
+
+## 7.1. Język i styl
+Styl: formalny/półformalny/nieformalny. Poprawność gramatyczna i stylistyczna. Emocje (przeprosiny). Zwroty grzecznościowe.
+
+## 7.2. Powitania i zwroty grzecznościowe
+Obecność powitania. Typ: formalny/półformalny/personalny. Brak powitania — przyczyna?
+
+## 7.3. Konsekwencja komunikacji
+Spójność stylu w wątkach. Zmiany tonu. Dopasowanie do stylu klienta.
+
+## 7.4. Personalizacja
+Użycie imienia/nazwiska. Adekwatność do kontekstu.
+
+## 7.5. Stopień formalności
+Dopasowanie do sytuacji (oficjalne pismo = formalny, szybka odpowiedź techniczna = neutralny).
+
+## 7.6. Zwroty końcowe
+Obecność i jakość. Spójność z tonem rozpoczęcia.`,
+
+    'recipient_clarity': 'Skup się na wymiarze "8. JASNOŚĆ KOMUNIKACJI" — przejrzystość, czytelność struktury, profesjonalizm, brak elementów negatywnych. Unikaj powtórzeń z sekcji o formie wypowiedzi.',
+
+    'organization_consistency': 'Skup się na wymiarze "9. SPÓJNOŚĆ ORGANIZACYJNA" — jednolite standardy między pracownikami, spójne podpisy, format wiadomości, różnice między działami.',
+
+    'proactive_actions': 'Skup się na wymiarze "10. PROAKTYWNOŚĆ" — inicjatywa własna, przypominanie o procedurach, monitorowanie postępów, zapobieganie problemom. Unikaj powtórzeń z sekcji o efektywności.',
+
+    'internal_communication': 'Skup się na wymiarze "11. KOMUNIKACJA WEWNĘTRZNA" — przepływ informacji, współpraca między działami, delegowanie zadań, RODO w komunikacji wewnętrznej (CC/UDW).',
+
+    'data_security': 'Skup się na wymiarze "12. BEZPIECZEŃSTWO DANYCH (RODO)" — stosowanie UDW, ochrona danych osobowych, właściwa forma odpowiedzi, procedury wewnętrzne. Podaj przykłady dobrych i złych praktyk.',
+
+    'recommendations': `Zbierz i zsyntezuj rekomendacje ze WSZYSTKICH wymiarów analizy.
+
+WYMAGANY FORMAT — tabela markdown:
+
+| # | Rekomendacja | Priorytet | Odpowiedzialny | Kategoria |
+|---|---|---|---|---|
+| 1 | Opis rekomendacji... | Pilne / Krótkoterminowe / Długoterminowe | Kto odpowiada | Procesy / Szkolenia / Narzędzia |
+
+Priorytety: **Pilne** (natychmiast), **Krótkoterminowe** (1-3 mies.), **Długoterminowe** (3-12 mies.).
+Grupuj: najpierw Pilne, potem Krótkoterminowe, potem Długoterminowe.
+
+Po tabeli dodaj krótki akapit z 3 najważniejszymi priorytetami strategicznymi.`,
   };
   return focusMap[sectionKey] || null;
 }
@@ -162,7 +231,7 @@ function buildUserPrompt(input: SynthesisInput, resultsBlock: string): string {
   parts.push(`\nDANE ŹRÓDŁOWE (podsumowania wątków):\n${resultsBlock}`);
 
   parts.push(
-    `\nINSTRUKCJA: Napisz MAX 8-12 zdań. Podaj ogólną ocenę, główne wzorce i 1-2 kluczowe rekomendacje. Przytaczaj konkretne wątki TYLKO jako krótkie wzmianki przy ekstremalnych przypadkach. NIE opisuj każdego wątku z osobna.`
+    `\nINSTRUKCJA: Napisz sekcję raportu zgodnie z FOKUSEM SEKCJI powyżej. Jeśli FOKUS wymaga podsekcji (## / ###), ZASTOSUJ JE. NIE używaj nagłówków # (tylko ## i ###). Przytaczaj wątki TYLKO jako krótkie wzmianki (np. „wątek: Awaria windy"). NIE opisuj każdego wątku z osobna — wyciągaj ogólne wnioski.`
   );
 
   return parts.join('\n');

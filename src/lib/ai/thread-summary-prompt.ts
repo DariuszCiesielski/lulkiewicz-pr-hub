@@ -19,7 +19,9 @@ Dla każdego wymiaru napisz 2-4 zdania z konkretnymi obserwacjami.
 
 **1. METADANE**: Typ sprawy (awaria/reklamacja/pytanie/informacja/procedura), uczestnicy i ich role, liczba wiadomości, zakres dat.
 
-**2. SZYBKOŚĆ REAKCJI**: Czas od zgłoszenia do pierwszej odpowiedzi, szybkość przekazania do odpowiedniego działu. Czy zastosowano potwierdzenie odbioru?
+**2. SZYBKOŚĆ REAKCJI I OBSŁUGA ZGŁOSZEŃ**:
+  - 2.1. Czas reakcji: czas od zgłoszenia do pierwszej odpowiedzi, szybkość przekazania do odpowiedniego działu (np. Robyg). Podaj konkretne czasy jeśli możliwe.
+  - 2.2. Potwierdzenie odbioru wiadomości: (a) czy zastosowano jednoznaczne potwierdzenie odbioru, jaka forma (uprzejma/profesjonalna/zdawkowa/brak), (b) czy potwierdzenia są stosowane konsekwentnie.
 
 **3. EFEKTYWNOŚĆ OBSŁUGI**: Czy odpowiedź kończy temat? Czy wszystkie dane przekazano za pierwszym razem? Czy zaproponowano kolejne kroki?
 
@@ -29,7 +31,13 @@ Dla każdego wymiaru napisz 2-4 zdania z konkretnymi obserwacjami.
 
 **6. SATYSFAKCJA KLIENTA**: Sygnały zadowolenia lub niezadowolenia, zmiana tonu w kolejnych wiadomościach, ponaglenia.
 
-**7. FORMA WYPOWIEDZI**: Styl (formalny/półformalny/nieformalny), poprawność językowa, powitania, zwroty końcowe, personalizacja, konsekwencja stylu.
+**7. FORMA WYPOWIEDZI**:
+  - 7.1. Język i styl: formalny/półformalny/nieformalny, poprawność gramatyczna i stylistyczna, emocje (przeprosiny), zwroty grzecznościowe.
+  - 7.2. Powitania i zwroty grzecznościowe: obecność, typ (formalny/półformalny/personalny).
+  - 7.3. Konsekwencja komunikacji: spójność stylu w wątku, zmiany tonu, dopasowanie do stylu klienta.
+  - 7.4. Personalizacja: użycie imienia/nazwiska, adekwatność do kontekstu.
+  - 7.5. Stopień formalności: dopasowanie do sytuacji.
+  - 7.6. Zwroty końcowe: obecność, jakość, spójność z tonem wiadomości.
 
 **8. JASNOŚĆ KOMUNIKACJI**: Przejrzystość, czytelność struktury, profesjonalizm, brak elementów negatywnych.
 

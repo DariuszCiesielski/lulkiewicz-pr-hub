@@ -1,11 +1,29 @@
 /**
  * Export a report (with sections) to a .docx file.
  * Client-side: uses the `docx` library + `file-saver`.
+ *
+ * v2: Professional formatting with document styles, page margins,
+ *     section numbering, and improved typography.
  */
 
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx';
 import { saveAs } from 'file-saver';
 import { markdownToDocxChildren } from './markdown-to-docx';
+
+// ── Typography constants ─────────────────────────────────────────────────────
+
+const FONT = 'Calibri';
+
+const COLOR = {
+  TITLE: '1F3864',
+  SUBTITLE: '555555',
+  SECTION_HEADING: '1F3864',
+  META: '777777',
+  FOOTER: '999999',
+  SEPARATOR: 'CCCCCC',
+};
+
+// ── Types ────────────────────────────────────────────────────────────────────
 
 interface ReportSection {
   title: string;
@@ -21,6 +39,8 @@ interface ReportMeta {
   date_range_to?: string | null;
   created_at: string;
 }
+
+// ── Filename helpers ─────────────────────────────────────────────────────────
 
 /**
  * Generate a unique DOCX filename: Raport_typ_skrzynka_data-zakres.docx
@@ -68,6 +88,8 @@ function sanitizeForFilename(text: string): string {
     .slice(0, 80);                    // Limit length
 }
 
+// ── Main export function ─────────────────────────────────────────────────────
+
 export async function exportReportToDocx(
   report: ReportMeta,
   sections: ReportSection[]
@@ -76,11 +98,22 @@ export async function exportReportToDocx(
 
   const children: (Paragraph | InstanceType<typeof import('docx').Table>)[] = [];
 
+  // ── Title area ──
+
+  children.push(new Paragraph({ text: '', spacing: { after: 200 } }));
+
   // Title
   children.push(
     new Paragraph({
-      text: report.title,
-      heading: HeadingLevel.TITLE,
+      children: [
+        new TextRun({
+          text: report.title,
+          bold: true,
+          font: FONT,
+          size: 48, // 24pt
+          color: COLOR.TITLE,
+        }),
+      ],
       alignment: AlignmentType.CENTER,
       spacing: { after: 200 },
     })
@@ -93,7 +126,13 @@ export async function exportReportToDocx(
     children.push(
       new Paragraph({
         children: [
-          new TextRun({ text: mailboxName, italics: true, size: 22, color: '666666' }),
+          new TextRun({
+            text: mailboxName,
+            italics: true,
+            font: FONT,
+            size: 26, // 13pt
+            color: COLOR.SUBTITLE,
+          }),
         ],
         alignment: AlignmentType.CENTER,
         spacing: { after: 100 },
@@ -115,8 +154,9 @@ export async function exportReportToDocx(
         new TextRun({
           text: `Wygenerowano: ${createdDate}`,
           italics: true,
-          size: 20,
-          color: '888888',
+          font: FONT,
+          size: 22, // 11pt
+          color: COLOR.META,
         }),
       ],
       alignment: AlignmentType.CENTER,
@@ -132,28 +172,57 @@ export async function exportReportToDocx(
       new Paragraph({
         children: [
           new TextRun({
-            text: `Okres: ${from} \u2013 ${to}`,
+            text: `Okres analizy: ${from} \u2013 ${to}`,
             italics: true,
-            size: 20,
-            color: '888888',
+            font: FONT,
+            size: 22,
+            color: COLOR.META,
           }),
         ],
         alignment: AlignmentType.CENTER,
-        spacing: { after: 400 },
+        spacing: { after: 200 },
       })
     );
-  } else {
-    children.push(new Paragraph({ text: '', spacing: { after: 300 } }));
   }
 
-  // Sections
+  // Separator after header
+  children.push(
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: '\u2500'.repeat(60),
+          color: COLOR.SEPARATOR,
+          size: 16,
+          font: FONT,
+        }),
+      ],
+      alignment: AlignmentType.CENTER,
+      spacing: { before: 200, after: 400 },
+    })
+  );
+
+  // ── Sections ──
+
   for (const section of sorted) {
-    // Section heading
+    // Section heading with number
+    const sectionNumber = section.section_order;
+    const headingText = sectionNumber > 0
+      ? `${sectionNumber}. ${section.title}`
+      : section.title;
+
     children.push(
       new Paragraph({
-        text: section.title,
+        children: [
+          new TextRun({
+            text: headingText,
+            bold: true,
+            font: FONT,
+            size: 36, // 18pt
+            color: COLOR.SECTION_HEADING,
+          }),
+        ],
         heading: HeadingLevel.HEADING_1,
-        spacing: { before: 400, after: 200 },
+        spacing: { before: 480, after: 240 },
       })
     );
 
@@ -162,12 +231,13 @@ export async function exportReportToDocx(
     children.push(...sectionChildren);
   }
 
-  // Footer
+  // ── Footer ──
+
   children.push(new Paragraph({ text: '', spacing: { before: 600 } }));
   children.push(
     new Paragraph({
       children: [
-        new TextRun({ text: '\u2500'.repeat(50), color: 'CCCCCC', size: 16 }),
+        new TextRun({ text: '\u2500'.repeat(60), color: COLOR.SEPARATOR, size: 16, font: FONT }),
       ],
       alignment: AlignmentType.CENTER,
     })
@@ -178,8 +248,9 @@ export async function exportReportToDocx(
         new TextRun({
           text: 'Raport wygenerowany przez Lulkiewicz PR Hub',
           italics: true,
-          size: 18,
-          color: '999999',
+          font: FONT,
+          size: 20, // 10pt
+          color: COLOR.FOOTER,
         }),
       ],
       alignment: AlignmentType.CENTER,
@@ -187,9 +258,29 @@ export async function exportReportToDocx(
     })
   );
 
-  // Build document
+  // ── Build document ──
+
   const doc = new Document({
-    sections: [{ properties: {}, children }],
+    styles: {
+      default: {
+        document: {
+          run: { font: FONT, size: 24 },
+        },
+      },
+    },
+    sections: [{
+      properties: {
+        page: {
+          margin: {
+            top: 1440,    // 1 inch
+            right: 1440,
+            bottom: 1440,
+            left: 1440,
+          },
+        },
+      },
+      children,
+    }],
   });
 
   const blob = await Packer.toBlob(doc);
