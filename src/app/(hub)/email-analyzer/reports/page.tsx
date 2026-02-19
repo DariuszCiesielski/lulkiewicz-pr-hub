@@ -10,6 +10,7 @@ interface Report {
   id: string;
   title: string;
   template_type: string;
+  detail_level: string;
   status: string;
   date_range_from: string | null;
   date_range_to: string | null;
@@ -50,7 +51,7 @@ export default function ReportsPage() {
   const [mailboxes, setMailboxes] = useState<MailboxOption[]>([]);
   const [selectedMailboxId, setSelectedMailboxId] = useState('');
   const [templateType, setTemplateType] = useState<'internal' | 'client'>('internal');
-  const detailLevel = 'synthetic' as const;
+  const [detailLevel, setDetailLevel] = useState<'synthetic' | 'standard'>('synthetic');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingMessage, setGeneratingMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -132,7 +133,7 @@ export default function ReportsPage() {
     if (!selectedMailboxId) return;
     setIsGenerating(true);
     setError(null);
-    setGeneratingMessage('Tworzenie raportu syntetycznego...');
+    setGeneratingMessage(`Tworzenie raportu ${detailLevel === 'synthetic' ? 'syntetycznego' : 'standardowego'}...`);
 
     try {
       const res = await fetch('/api/reports', {
@@ -251,7 +252,7 @@ export default function ReportsPage() {
             backgroundColor: 'var(--bg-secondary)',
           }}
         >
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Skrzynka</label>
               <select
@@ -285,9 +286,27 @@ export default function ReportsPage() {
                 <option value="client">Kliencki ({coverage?.client?.total ?? 12} sekcji)</option>
               </select>
             </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Poziom szczegółowości</label>
+              <select
+                value={detailLevel}
+                onChange={(e) => setDetailLevel(e.target.value as 'synthetic' | 'standard')}
+                className="rounded-md border px-2 py-1.5 text-sm outline-none"
+                style={{
+                  borderColor: 'var(--border-primary)',
+                  backgroundColor: 'var(--bg-primary)',
+                  color: 'var(--text-primary)',
+                }}
+              >
+                <option value="synthetic">Syntetyczny (~5-6 stron)</option>
+                <option value="standard">Standardowy (~15-20 stron)</option>
+              </select>
+            </div>
           </div>
           <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-            Raport syntetyczny ~5-6 stron — zwięzłe podsumowania i wnioski per sekcja.
+            {detailLevel === 'synthetic'
+              ? 'Raport syntetyczny — zwięzły brief managerski, max 3-4 zdania per sekcja, bez podsekcji.'
+              : 'Raport standardowy — szczegółowa analiza z podsekcjami, tabelami i pełnymi obserwacjami.'}
           </p>
           {/* Coverage warning */}
           {coverageLoading && (
@@ -422,6 +441,17 @@ export default function ReportsPage() {
                       }}
                     >
                       {report.template_type === 'internal' ? 'Wewnętrzny' : 'Kliencki'}
+                    </span>
+                    <span
+                      className="rounded-full px-2 py-0.5"
+                      style={{
+                        backgroundColor: report.detail_level === 'synthetic'
+                          ? 'rgba(139, 92, 246, 0.15)'
+                          : 'rgba(249, 115, 22, 0.15)',
+                        color: report.detail_level === 'synthetic' ? '#8b5cf6' : '#f97316',
+                      }}
+                    >
+                      {report.detail_level === 'synthetic' ? 'Syntetyczny' : 'Standardowy'}
                     </span>
                   </div>
                 </div>

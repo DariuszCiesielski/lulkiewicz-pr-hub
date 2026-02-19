@@ -3,9 +3,12 @@
  *
  * Aggregates per-thread analysis results into a concise executive report.
  * Each section is synthesized independently via a callAI request.
- * Target: entire report = 5-6 pages, so each section ≈ 0.3-0.5 page.
  *
- * For >100 threads: batches of 30 → synthesize each → meta-synthesis.
+ * Two detail levels:
+ *  - synthetic: 5-6 pages, max 3-4 sentences per section, no sub-headers
+ *  - standard: 15-20 pages, full structure with sub-sections
+ *
+ * For >100 threads: batches of 50 → synthesize each → meta-synthesis.
  */
 
 import { callAI, loadAIConfig } from '@/lib/ai/ai-provider';
@@ -33,24 +36,40 @@ const SUB_BATCH_SIZE = 50;
 const TWO_LEVEL_THRESHOLD = 80;
 
 // ---------------------------------------------------------------------------
-// System prompt
+// System prompts — per detail level
 // ---------------------------------------------------------------------------
 
-const SYNTHESIS_SYSTEM_PROMPT = `Jesteś ekspertem ds. zarządzania nieruchomościami. Tworzysz profesjonalny raport audytowy z analizy korespondencji email.
+const SYNTHETIC_SYSTEM_PROMPT = `Jesteś ekspertem ds. zarządzania nieruchomościami. Tworzysz ZWIĘZŁY raport syntetyczny z analizy korespondencji email.
 
-ZASADY FORMATOWANIA:
+ZASADY FORMATOWANIA — RAPORT SYNTETYCZNY (5-6 stron A4):
+1. Pisz po polsku, językiem formalnym i rzeczowym.
+2. Każda sekcja: MAX 3-4 zdania zwartej prozy. NIGDY więcej.
+3. BEZ podsekcji (## / ###), BEZ list punktowanych, BEZ tabel (poza sekcją rekomendacji).
+4. NIE opisuj wątków — podawaj WYŁĄCZNIE ogólne wnioski i wzorce.
+5. NIE powtarzaj obserwacji z innych sekcji.
+6. Styl: managerski brief — zwięzły, konkretny, z liczbami.
+7. NIE używaj nagłówków # — tekst sekcji zaczyna się od razu od treści.
+8. Zamiast „w wątku X zaobserwowano Y" pisz „Zaobserwowano trend Y".`;
+
+const STANDARD_SYSTEM_PROMPT = `Jesteś ekspertem ds. zarządzania nieruchomościami. Tworzysz profesjonalny raport audytowy z analizy korespondencji email.
+
+ZASADY FORMATOWANIA — RAPORT STANDARDOWY (15-20 stron A4):
 1. Pisz po polsku, językiem formalnym i rzeczowym.
 2. STRUKTURA KAŻDEJ SEKCJI:
    a) Krótki akapit wprowadzający (2-3 zdania z kluczowym wnioskiem i ogólną oceną)
    b) Kluczowe obserwacje jako zwięzłe punkty (po 1-2 zdania, max 5-8 punktów)
-   c) 1-2 rekomendacje na końcu sekcji (jako osobne akapity z pogrubionym **Rekomendacja:**)
-3. NIE opisuj każdego wątku z osobna — wyciągaj OGÓLNE wnioski i wzorce.
-4. Podawaj konkretne przykłady TYLKO przy ekstremalnych przypadkach (1-2 per sekcja, jako krótkie wzmianki w nawiasie).
-5. Jeśli FOKUS SEKCJI wymaga podsekcji, użyj nagłówków ## i ### — NIGDY nagłówka #.
-6. NIE powtarzaj obserwacji opisanych w innych sekcjach — odwołaj się do nich krótko jeśli trzeba.
-7. Cały raport (wszystkie sekcje razem) powinien zmieścić się w 7-10 stronach A4.
-8. Twórz tabele markdown TYLKO gdy wyraźnie wymagane w FOKUSIE SEKCJI.
-9. Zamiast „w wątku X zaobserwowano Y" pisz „Zaobserwowano trend Y (np. wątki X, Z)".`;
+3. NIE zaczynaj sekcji od nagłówka ## powtarzającego tytuł sekcji — od razu przejdź do treści.
+4. NIE opisuj każdego wątku z osobna — wyciągaj OGÓLNE wnioski i wzorce.
+5. Podawaj konkretne przykłady TYLKO przy ekstremalnych przypadkach (1-2 per sekcja, jako krótkie wzmianki w nawiasie).
+6. Jeśli FOKUS SEKCJI wymaga podsekcji, użyj nagłówków ## i ### — NIGDY nagłówka #.
+7. NIE powtarzaj obserwacji opisanych w innych sekcjach — odwołaj się do nich krótko jeśli trzeba.
+8. Rekomendacje podaj WYŁĄCZNIE w sekcji 13 (Rekomendacje) — w pozostałych sekcjach skup się na obserwacjach.
+9. Twórz tabele markdown TYLKO gdy wyraźnie wymagane w FOKUSIE SEKCJI.
+10. Zamiast „w wątku X zaobserwowano Y" pisz „Zaobserwowano trend Y (np. wątki X, Z)".`;
+
+function getSystemPrompt(detailLevel: DetailLevel): string {
+  return detailLevel === 'synthetic' ? SYNTHETIC_SYSTEM_PROMPT : STANDARD_SYSTEM_PROMPT;
+}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -62,6 +81,8 @@ export interface PerThreadResult {
   content: string;
 }
 
+export type DetailLevel = 'synthetic' | 'standard';
+
 export interface SynthesisInput {
   sectionKey: string;
   sectionTitle: string;
@@ -71,6 +92,7 @@ export interface SynthesisInput {
   dateRange?: { from: string; to: string };
   globalContext?: string;
   includeThreadSummaries?: boolean;
+  detailLevel: DetailLevel;
 }
 
 export interface SynthesisOutput {
@@ -111,11 +133,58 @@ function formatResultsForPrompt(results: PerThreadResult[]): string {
     .join('\n---\n');
 }
 
-/**
- * Maps section_key to a focus instruction for the synthesizer.
- * Tells AI which dimension to extract from comprehensive thread summaries.
- */
-function getSectionFocusPrompt(sectionKey: string): string | null {
+// ---------------------------------------------------------------------------
+// Focus prompts — SYNTHETIC (zwięzłe, 1-2 linijki per sekcja)
+// ---------------------------------------------------------------------------
+
+function getSyntheticFocusPrompt(sectionKey: string): string | null {
+  const focusMap: Record<string, string> = {
+    'metadata_analysis': 'Wymiar "1. METADANE". Podaj: zakres dat, liczbę wątków i wiadomości, główne typy spraw (% lub liczbowo), kluczowych uczestników. Max 3-4 zdania.',
+
+    'response_speed': 'Wymiar "2. SZYBKOŚĆ REAKCJI". Oceń średni czas reakcji, % odpowiedzi w <4h / 1-3 dni / >3 dni, konsekwencję potwierdzeń odbioru. Max 3-4 zdania.',
+
+    'service_effectiveness': 'Wymiar "3. EFEKTYWNOŚĆ OBSŁUGI". Oceń kompletność pierwszej odpowiedzi, zamknięcie tematów, proaktywność. Max 3-4 zdania.',
+
+    'client_relationship': 'Wymiar "4. JAKOŚĆ RELACJI Z KLIENTEM". Oceń ton, empatię, budowanie zaufania. Max 3-4 zdania.',
+
+    'communication_cycle': 'Wymiar "5. CYKL KOMUNIKACJI". Oceń liczbę wymian do rozwiązania, ciągłość prowadzenia sprawy, status zamknięcia. Max 3-4 zdania.',
+
+    'client_feedback': 'Wymiar "6. SATYSFAKCJA KLIENTA". Oceń sygnały zadowolenia/niezadowolenia, zmiany tonu, ponaglenia. Max 3-4 zdania.',
+
+    'expression_form': 'Wymiar "7. FORMA WYPOWIEDZI". Oceń styl (formalność), powitania, personalizację, zwroty końcowe, spójność. Max 3-4 zdania.',
+
+    'recipient_clarity': 'Wymiar "8. JASNOŚĆ KOMUNIKACJI". Oceń przejrzystość, czytelność struktury, profesjonalizm. Max 3-4 zdania.',
+
+    'organization_consistency': 'Wymiar "9. SPÓJNOŚĆ ORGANIZACYJNA". Oceń jednolitość standardów, podpisów, formatów między pracownikami/działami. Max 3-4 zdania.',
+
+    'proactive_actions': 'Wymiar "10. PROAKTYWNOŚĆ". Oceń inicjatywę własną, przypominanie o procedurach, monitorowanie postępów. Max 3-4 zdania.',
+
+    'internal_communication': 'Wymiar "11. KOMUNIKACJA WEWNĘTRZNA". Oceń przepływ informacji, współpracę między działami, stosowanie CC/UDW. Max 3-4 zdania.',
+
+    'data_security': 'Wymiar "12. BEZPIECZEŃSTWO DANYCH (RODO)". Oceń stosowanie UDW, ochronę danych osobowych, procedury wewnętrzne. Max 3-4 zdania.',
+
+    'recommendations': `Zbierz i skonsoliduj TOP 5-7 rekomendacji ze WSZYSTKICH wymiarów analizy.
+
+WYMAGANY FORMAT — tabela markdown:
+
+| # | Rekomendacja | Priorytet | Kategoria |
+|---|---|---|---|
+| 1 | Opis... | Pilne / Krótkoterminowe / Długoterminowe | Procesy / Szkolenia / Narzędzia |
+
+NIE powtarzaj tych samych rekomendacji (SLA/CRM/ticketing) wielokrotnie — skonsoliduj podobne.
+Po tabeli dodaj 1-2 zdania o najważniejszych priorytetach strategicznych.`,
+  };
+  return focusMap[sectionKey] || null;
+}
+
+// ---------------------------------------------------------------------------
+// Focus prompts — STANDARD (szczegółowe, z podsekcjami)
+// ---------------------------------------------------------------------------
+
+function getStandardFocusPrompt(sectionKey: string): string | null {
+  const NO_REDUNDANT_H2 = 'NIE zaczynaj od nagłówka ## powtarzającego tytuł sekcji. ';
+  const RECO_ONLY_IN_13 = 'WAŻNE: Rekomendacje podaj WYŁĄCZNIE w sekcji 13. Tutaj skup się na obserwacjach. ';
+
   const focusMap: Record<string, string> = {
     'metadata_analysis': `Wyodrębnij metadane analizy (wymiar "1. METADANE").
 
@@ -130,12 +199,21 @@ WYMAGANE ELEMENTY (podaj konkrety, nie ogólniki):
 
 Napisz w formie listy z pogrubionymi etykietami.`,
 
-    'response_speed': `Skup się na wymiarze "2. SZYBKOŚĆ REAKCJI I OBSŁUGA ZGŁOSZEŃ".
+    'response_speed': `${RECO_ONLY_IN_13}Skup się na wymiarze "2. SZYBKOŚĆ REAKCJI I OBSŁUGA ZGŁOSZEŃ".
 
 WYMAGANA STRUKTURA Z PODSEKCJAMI:
 
 ## 2.1. Czas reakcji
-Opisz: średni czas od zgłoszenia do pierwszej odpowiedzi, szybkość przekazania spraw do odpowiedniego działu. Podaj statystyki (% w <4h, % 1-3 dni, % >3 dni). Wspomnij o skrajnych przypadkach.
+Opisz: średni czas od zgłoszenia do pierwszej odpowiedzi, szybkość przekazania spraw do odpowiedniego działu. Podaj statystyki (% w <4h, % 1-3 dni, % >3 dni). Dodaj tabelę rozkładu czasów reakcji:
+
+| Przedział | Liczba wątków | % |
+|---|---|---|
+| < 4 godziny | N | X% |
+| 4-24 godziny | N | X% |
+| 1-3 dni | N | X% |
+| > 3 dni | N | X% |
+
+Wspomnij o skrajnych przypadkach.
 
 ## 2.2. Potwierdzenie odbioru wiadomości
 
@@ -145,13 +223,13 @@ Czy wiadomości zawierają jednoznaczne potwierdzenie odbioru? Styl: uprzejmy/pr
 ### b) Konsekwencja stosowania
 Czy pracownicy stosują potwierdzenia konsekwentnie? Różnice między pracownikami/działami?`,
 
-    'service_effectiveness': 'Skup się na wymiarze "3. EFEKTYWNOŚĆ OBSŁUGI" — zamknięcie tematu, kompletność informacji w pierwszej odpowiedzi, proaktywność. Unikaj powtórzeń z sekcji o szybkości reakcji.',
+    'service_effectiveness': `${NO_REDUNDANT_H2}${RECO_ONLY_IN_13}Skup się na wymiarze "3. EFEKTYWNOŚĆ OBSŁUGI" — zamknięcie tematu, kompletność informacji w pierwszej odpowiedzi, proaktywność. Unikaj powtórzeń z sekcji o szybkości reakcji.`,
 
-    'client_relationship': 'Skup się na wymiarze "4. JAKOŚĆ RELACJI Z KLIENTEM" — ton komunikacji, empatia, budowanie zaufania, indywidualne podejście. Unikaj powtórzeń z sekcji o formie wypowiedzi.',
+    'client_relationship': `${NO_REDUNDANT_H2}Skup się na wymiarze "4. JAKOŚĆ RELACJI Z KLIENTEM" — ton komunikacji, empatia, budowanie zaufania, indywidualne podejście. Unikaj powtórzeń z sekcji o formie wypowiedzi.`,
 
-    'communication_cycle': 'Skup się na wymiarze "5. CYKL KOMUNIKACJI" — liczba wymian potrzebnych do rozwiązania, ciągłość prowadzenia sprawy (ten sam pracownik?), status rozwiązania. Unikaj powtórzeń z sekcji o efektywności.',
+    'communication_cycle': `${NO_REDUNDANT_H2}${RECO_ONLY_IN_13}Skup się na wymiarze "5. CYKL KOMUNIKACJI" — liczba wymian potrzebnych do rozwiązania, ciągłość prowadzenia sprawy (ten sam pracownik?), status rozwiązania. Unikaj powtórzeń z sekcji o efektywności.`,
 
-    'client_feedback': 'Skup się na wymiarze "6. SATYSFAKCJA KLIENTA" — sygnały zadowolenia/niezadowolenia, zmiana tonu w kolejnych wiadomościach, ponaglenia. Bazuj WYŁĄCZNIE na treści emaili.',
+    'client_feedback': `${NO_REDUNDANT_H2}Skup się na wymiarze "6. SATYSFAKCJA KLIENTA" — sygnały zadowolenia/niezadowolenia, zmiana tonu w kolejnych wiadomościach, ponaglenia. Bazuj WYŁĄCZNIE na treści emaili.`,
 
     'expression_form': `Skup się na wymiarze "7. FORMA WYPOWIEDZI".
 
@@ -175,17 +253,17 @@ Dopasowanie do sytuacji (oficjalne pismo = formalny, szybka odpowiedź techniczn
 ## 7.6. Zwroty końcowe
 Obecność i jakość. Spójność z tonem rozpoczęcia.`,
 
-    'recipient_clarity': 'Skup się na wymiarze "8. JASNOŚĆ KOMUNIKACJI" — przejrzystość, czytelność struktury, profesjonalizm, brak elementów negatywnych. Unikaj powtórzeń z sekcji o formie wypowiedzi.',
+    'recipient_clarity': `${NO_REDUNDANT_H2}Skup się na wymiarze "8. JASNOŚĆ KOMUNIKACJI" — przejrzystość, czytelność struktury, profesjonalizm, brak elementów negatywnych. Unikaj powtórzeń z sekcji o formie wypowiedzi.`,
 
-    'organization_consistency': 'Skup się na wymiarze "9. SPÓJNOŚĆ ORGANIZACYJNA" — jednolite standardy między pracownikami, spójne podpisy, format wiadomości, różnice między działami.',
+    'organization_consistency': `${NO_REDUNDANT_H2}Skup się na wymiarze "9. SPÓJNOŚĆ ORGANIZACYJNA" — jednolite standardy między pracownikami, spójne podpisy, format wiadomości, różnice między działami.`,
 
-    'proactive_actions': 'Skup się na wymiarze "10. PROAKTYWNOŚĆ" — inicjatywa własna, przypominanie o procedurach, monitorowanie postępów, zapobieganie problemom. Unikaj powtórzeń z sekcji o efektywności.',
+    'proactive_actions': `${NO_REDUNDANT_H2}${RECO_ONLY_IN_13}Skup się na wymiarze "10. PROAKTYWNOŚĆ" — inicjatywa własna, przypominanie o procedurach, monitorowanie postępów, zapobieganie problemom. Unikaj powtórzeń z sekcji o efektywności.`,
 
-    'internal_communication': 'Skup się na wymiarze "11. KOMUNIKACJA WEWNĘTRZNA" — przepływ informacji, współpraca między działami, delegowanie zadań, RODO w komunikacji wewnętrznej (CC/UDW).',
+    'internal_communication': `${NO_REDUNDANT_H2}Skup się na wymiarze "11. KOMUNIKACJA WEWNĘTRZNA" — przepływ informacji, współpraca między działami, delegowanie zadań, RODO w komunikacji wewnętrznej (CC/UDW).`,
 
-    'data_security': 'Skup się na wymiarze "12. BEZPIECZEŃSTWO DANYCH (RODO)" — stosowanie UDW, ochrona danych osobowych, właściwa forma odpowiedzi, procedury wewnętrzne. Podaj przykłady dobrych i złych praktyk.',
+    'data_security': `${NO_REDUNDANT_H2}Skup się na wymiarze "12. BEZPIECZEŃSTWO DANYCH (RODO)" — stosowanie UDW, ochrona danych osobowych, właściwa forma odpowiedzi, procedury wewnętrzne. Podaj przykłady dobrych i złych praktyk.`,
 
-    'recommendations': `Zbierz i zsyntezuj rekomendacje ze WSZYSTKICH wymiarów analizy.
+    'recommendations': `Zbierz i zsyntezuj rekomendacje ze WSZYSTKICH wymiarów analizy. Skonsoliduj podobne rekomendacje — NIE powtarzaj tych samych (SLA/CRM/ticketing) wielokrotnie.
 
 WYMAGANY FORMAT — tabela markdown:
 
@@ -201,6 +279,16 @@ Po tabeli dodaj krótki akapit z 3 najważniejszymi priorytetami strategicznymi.
   return focusMap[sectionKey] || null;
 }
 
+// ---------------------------------------------------------------------------
+// Focus prompt router
+// ---------------------------------------------------------------------------
+
+function getSectionFocusPrompt(sectionKey: string, detailLevel: DetailLevel): string | null {
+  return detailLevel === 'synthetic'
+    ? getSyntheticFocusPrompt(sectionKey)
+    : getStandardFocusPrompt(sectionKey);
+}
+
 /**
  * Build the user prompt for synthesis — enforces brevity.
  */
@@ -211,7 +299,7 @@ function buildUserPrompt(input: SynthesisInput, resultsBlock: string): string {
     `Napisz ZWIĘZŁE podsumowanie sekcji "${input.sectionTitle}" na podstawie kompleksowych analiz ${input.perThreadResults.length} wątków email.`
   );
 
-  const focusPrompt = getSectionFocusPrompt(input.sectionKey);
+  const focusPrompt = getSectionFocusPrompt(input.sectionKey, input.detailLevel);
   if (focusPrompt) {
     parts.push(`\nFOKUS SEKCJI: ${focusPrompt}`);
   }
@@ -230,9 +318,15 @@ function buildUserPrompt(input: SynthesisInput, resultsBlock: string): string {
 
   parts.push(`\nDANE ŹRÓDŁOWE (podsumowania wątków):\n${resultsBlock}`);
 
-  parts.push(
-    `\nINSTRUKCJA: Napisz sekcję raportu zgodnie z FOKUSEM SEKCJI powyżej. Jeśli FOKUS wymaga podsekcji (## / ###), ZASTOSUJ JE. NIE używaj nagłówków # (tylko ## i ###). Przytaczaj wątki TYLKO jako krótkie wzmianki (np. „wątek: Awaria windy"). NIE opisuj każdego wątku z osobna — wyciągaj ogólne wnioski.`
-  );
+  if (input.detailLevel === 'synthetic') {
+    parts.push(
+      `\nINSTRUKCJA: Napisz max 3-4 zdania zwartej prozy. BEZ nagłówków (##/###), BEZ list punktowanych, BEZ tabel (chyba że FOKUS jawnie wymaga tabeli). NIE opisuj wątków z osobna — wyciągaj ogólne wnioski.`
+    );
+  } else {
+    parts.push(
+      `\nINSTRUKCJA: Napisz sekcję raportu zgodnie z FOKUSEM SEKCJI powyżej. Jeśli FOKUS wymaga podsekcji (## / ###), ZASTOSUJ JE. NIE zaczynaj od nagłówka ## powtarzającego tytuł sekcji. NIE używaj nagłówków # (tylko ## i ###). Przytaczaj wątki TYLKO jako krótkie wzmianki (np. „wątek: Awaria windy"). NIE opisuj każdego wątku z osobna — wyciągaj ogólne wnioski.`
+    );
+  }
 
   return parts.join('\n');
 }
@@ -277,8 +371,9 @@ async function singlePassSynthesis(
   const resultsBlock = formatResultsForPrompt(input.perThreadResults);
   const truncatedBlock = truncateToLimit(resultsBlock, MAX_INPUT_CHARS);
   const userPrompt = buildUserPrompt(input, truncatedBlock);
+  const systemPrompt = getSystemPrompt(input.detailLevel);
 
-  const response = await callAI(aiConfig, SYNTHESIS_SYSTEM_PROMPT, userPrompt);
+  const response = await callAI(aiConfig, systemPrompt, userPrompt);
 
   return {
     sectionKey: input.sectionKey,
@@ -309,6 +404,8 @@ async function twoLevelSynthesis(
     batches.push(perThreadResults.slice(i, i + SUB_BATCH_SIZE));
   }
 
+  const systemPrompt = getSystemPrompt(input.detailLevel);
+
   // Synthesize each sub-batch (sequential to respect rate limits)
   const batchSummaries: string[] = [];
 
@@ -323,7 +420,7 @@ async function twoLevelSynthesis(
     const truncatedBlock = truncateToLimit(resultsBlock, MAX_INPUT_CHARS);
     const userPrompt = buildUserPrompt(batchInput, truncatedBlock);
 
-    const response = await callAI(aiConfig, SYNTHESIS_SYSTEM_PROMPT, userPrompt);
+    const response = await callAI(aiConfig, systemPrompt, userPrompt);
     batchSummaries.push(
       `## Grupa ${i + 1} (wątki ${i * SUB_BATCH_SIZE + 1}-${Math.min((i + 1) * SUB_BATCH_SIZE, perThreadResults.length)})\n\n${response.content}`
     );
@@ -331,6 +428,10 @@ async function twoLevelSynthesis(
   }
 
   // Meta-synthesis: combine batch summaries into brief final output
+  const metaInstruction = input.detailLevel === 'synthetic'
+    ? 'Napisz KOŃCOWĄ syntezę w MAX 3-4 zdaniach zwartej prozy. BEZ nagłówków, BEZ list.'
+    : 'Napisz KOŃCOWĄ syntezę w MAX 8-12 zdaniach. Połącz wnioski, usuń redundancje. Podaj ogólną ocenę i główne wzorce. Przykłady wątków TYLKO przy ekstremalnych przypadkach.';
+
   const metaPrompt = `Masz ${batches.length} częściowych syntez sekcji "${sectionTitle}" z łącznie ${perThreadResults.length} wątków email.
 
 Skrzynka: ${input.mailboxName}
@@ -340,11 +441,11 @@ CZĘŚCIOWE SYNTEZY:
 
 ${batchSummaries.join('\n---\n')}
 
-INSTRUKCJA: Napisz KOŃCOWĄ syntezę w MAX 8-12 zdaniach. Połącz wnioski, usuń redundancje. Podaj ogólną ocenę i główne wzorce. Przykłady wątków TYLKO przy ekstremalnych przypadkach.`;
+INSTRUKCJA: ${metaInstruction}`;
 
   const metaResponse = await callAI(
     aiConfig,
-    SYNTHESIS_SYSTEM_PROMPT,
+    systemPrompt,
     truncateToLimit(metaPrompt, MAX_INPUT_CHARS)
   );
 

@@ -21,6 +21,7 @@ interface Report {
   id: string;
   title: string;
   template_type: string;
+  detail_level: string;
   status: string;
   date_range_from: string | null;
   date_range_to: string | null;
@@ -227,6 +228,17 @@ export default function ReportDetailPage() {
                 }}
               >
                 {report.template_type === 'internal' ? 'Wewnetrzny' : 'Kliencki'}
+              </span>
+              <span
+                className="rounded-full px-2 py-0.5"
+                style={{
+                  backgroundColor: report.detail_level === 'synthetic'
+                    ? 'rgba(139, 92, 246, 0.15)'
+                    : 'rgba(249, 115, 22, 0.15)',
+                  color: report.detail_level === 'synthetic' ? '#8b5cf6' : '#f97316',
+                }}
+              >
+                {report.detail_level === 'synthetic' ? 'Syntetyczny' : 'Standardowy'}
               </span>
             </div>
           </div>

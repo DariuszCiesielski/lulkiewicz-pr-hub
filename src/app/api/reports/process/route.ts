@@ -4,7 +4,7 @@ import { THREAD_SUMMARY_SECTION_KEY } from '@/lib/ai/thread-summary-prompt';
 import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
 import { synthesizeReportSection } from '@/lib/ai/report-synthesizer';
 import { loadAIConfig } from '@/lib/ai/ai-provider';
-import type { PerThreadResult, SynthesisInput } from '@/lib/ai/report-synthesizer';
+import type { PerThreadResult, SynthesisInput, DetailLevel } from '@/lib/ai/report-synthesizer';
 
 export const maxDuration = 60;
 
@@ -170,6 +170,7 @@ export async function POST(request: NextRequest) {
     const promptDefMap = new Map(allPromptDefs.map((p) => [p.section_key, p]));
 
     const templateType = report.template_type === 'client' ? 'client' : 'internal';
+    const detailLevel: DetailLevel = report.detail_level === 'standard' ? 'standard' : 'synthetic';
 
     // When using new format (thread summaries), only include sections from DEFAULT_PROMPTS.
     // DB-only sections (e.g. old "response_time", "rodo_compliance") don't have matching
@@ -266,6 +267,7 @@ export async function POST(request: NextRequest) {
         dateRange,
         globalContext,
         includeThreadSummaries,
+        detailLevel,
       };
 
       try {

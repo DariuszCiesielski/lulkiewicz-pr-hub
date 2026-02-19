@@ -34,6 +34,7 @@ interface ReportSection {
 interface ReportMeta {
   title: string;
   template_type?: string;
+  detail_level?: string;
   mailbox?: { display_name: string | null; email_address: string } | null;
   date_range_from?: string | null;
   date_range_to?: string | null;
@@ -47,12 +48,13 @@ interface ReportMeta {
  * Polish chars preserved, special chars sanitized.
  */
 function generateDocxFilename(report: ReportMeta): string {
+  const levelLabel = report.detail_level === 'synthetic' ? 'syntetyczny' : 'standardowy';
   const templateLabel = report.template_type === 'client' ? 'kliencki' : 'wewnetrzny';
 
   const mailboxName = report.mailbox?.display_name || report.mailbox?.email_address || 'skrzynka';
   const safeMailbox = sanitizeForFilename(mailboxName);
 
-  const parts = ['Raport', templateLabel, safeMailbox];
+  const parts = ['Raport', levelLabel, templateLabel, safeMailbox];
 
   // Add date range if available
   if (report.date_range_from && report.date_range_to) {

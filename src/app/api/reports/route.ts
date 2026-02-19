@@ -34,8 +34,8 @@ export async function GET(request: NextRequest) {
  * Body: { analysisJobId, mailboxId, templateType, detailLevel, title?, includeThreadSummaries? }
  *
  * detailLevel:
- *  - 'synthetic' (default): AI REDUCE — synthesizes per-thread results into ~5-15 page report
- *  - 'detailed': Original behavior — concatenates per-thread results (thread by thread)
+ *  - 'synthetic' (default): concise 5-6 page report, max 3-4 sentences per section
+ *  - 'standard': detailed 15-20 page report with sub-sections and tables
  */
 export async function POST(request: NextRequest) {
   if (!(await verifyAdmin())) {
@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
   }
 
   const templateType = body.templateType === 'client' ? 'client' : 'internal';
+  const detailLevel = body.detailLevel === 'standard' ? 'standard' : 'synthetic';
   const adminClient = getAdminClient();
 
   // Resolve analysisJobId — accept directly or find latest completed job for mailbox
@@ -169,16 +170,18 @@ export async function POST(request: NextRequest) {
   const threadCount = uniqueThreadIds.size;
 
   // Build title
+  const levelLabel = detailLevel === 'synthetic' ? 'syntetyczny' : 'standardowy';
   const title = body.title ||
-    `Raport syntetyczny ${templateType === 'client' ? 'kliencki' : 'wewnętrzny'} — ${mailboxName} (${threadCount} wątków)`;
+    `Raport ${levelLabel} ${templateType === 'client' ? 'kliencki' : 'wewnętrzny'} — ${mailboxName} (${threadCount} wątków)`;
 
-  // Create report record (always synthetic — polling-driven)
+  // Create report record — polling-driven synthesis
   const { data: report, error: reportError } = await adminClient
     .from('reports')
     .insert({
       mailbox_id: job.mailbox_id,
       analysis_job_id: analysisJobId,
       template_type: templateType,
+      detail_level: detailLevel,
       title,
       date_range_from: job.date_range_from,
       date_range_to: job.date_range_to,
@@ -195,6 +198,7 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     reportId: report.id,
     title,
+    detailLevel,
     totalSections: sectionsToInclude.length,
     threadCount,
     status: 'generating',

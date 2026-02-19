@@ -85,6 +85,8 @@ export async function GET(request: NextRequest) {
       const sectionKey = 'response_speed';
       const sectionTitle = 'Szybkość reakcji i obsługi zgłoszeń';
 
+      const detailLevel = (request.nextUrl.searchParams.get('detailLevel') === 'standard' ? 'standard' : 'synthetic') as 'synthetic' | 'standard';
+
       const input: SynthesisInput = {
         sectionKey,
         sectionTitle,
@@ -93,6 +95,7 @@ export async function GET(request: NextRequest) {
         mailboxName: 'Test Mailbox',
         globalContext: undefined,
         includeThreadSummaries: false,
+        detailLevel,
       };
 
       debug.synthesisInput = {
