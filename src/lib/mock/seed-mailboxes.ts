@@ -1,6 +1,6 @@
 /**
  * Mock mailbox definitions for seeding.
- * 3 mailboxes representing real client estates.
+ * 3 fictional demo mailboxes.
  */
 
 import { mockUuid } from './seed-utils';
@@ -20,7 +20,7 @@ export interface MockMailbox {
 export const MOCK_MAILBOXES: MockMailbox[] = [
   {
     id: mockUuid('royal'),
-    email_address: 'administracja@royal-residence.pl',
+    email_address: 'kontakt@demo-royal.example',
     display_name: '[MOCK] Royal Residence',
     connection_type: 'ropc',
     tenant_id: 'mock-tenant',
@@ -31,7 +31,7 @@ export const MOCK_MAILBOXES: MockMailbox[] = [
   },
   {
     id: mockUuid('sady-ursynow'),
-    email_address: 'biuro@sady-ursynow.pl',
+    email_address: 'biuro@demo-sady.example',
     display_name: '[MOCK] Sady Ursynów',
     connection_type: 'ropc',
     tenant_id: 'mock-tenant',
@@ -42,7 +42,7 @@ export const MOCK_MAILBOXES: MockMailbox[] = [
   },
   {
     id: mockUuid('rzecznik-robyg'),
-    email_address: 'rzecznik@robyg.com.pl',
+    email_address: 'rzecznik@demo-developer.example',
     display_name: '[MOCK] Rzecznik Robyg',
     connection_type: 'ropc',
     tenant_id: 'mock-tenant',

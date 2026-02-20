@@ -95,6 +95,10 @@ interface ThreadGroup {
   subjectNormalized: string;
 }
 
+export interface BuildThreadsOptions {
+  generateAiSummaries?: boolean;
+}
+
 // --- AI Summary types ---
 
 interface ThreadSummaryResult {
@@ -236,7 +240,8 @@ async function generateThreadSummaries(
 export async function buildThreadsForMailbox(
   supabase: SupabaseClient,
   mailboxId: string,
-  mailboxEmail: string
+  mailboxEmail: string,
+  options: BuildThreadsOptions = {}
 ): Promise<{ threadsCreated: number; emailsUpdated: number; summariesGenerated: number }> {
   // 1. Fetch all emails for this mailbox (paginated — Supabase returns max 1000 per query)
   const PAGE_SIZE = 1000;
@@ -471,11 +476,13 @@ export async function buildThreadsForMailbox(
   }
 
   // 5b. Generate AI summaries (graceful — skips if AI not configured)
-  const summaries = await generateThreadSummaries(
-    supabase,
-    threadGroupsForAI,
-    mailboxEmail
-  );
+  const summaries = options.generateAiSummaries === false
+    ? new Map<number, ThreadSummaryResult>()
+    : await generateThreadSummaries(
+      supabase,
+      threadGroupsForAI,
+      mailboxEmail
+    );
 
   // Apply AI summaries and status to thread rows
   let summariesGenerated = 0;

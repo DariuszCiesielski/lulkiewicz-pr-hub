@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
+import { getAdminClient } from '@/lib/api/admin';
 import { calculateCostBlended } from '@/lib/ai/pricing';
+import {
+  getScopedMailboxIds,
+  isMailboxInScope,
+  verifyScopedAdminAccess,
+} from '@/lib/api/demo-scope';
 
 /**
  * GET /api/analysis — Lista zadań analizy.
@@ -8,12 +13,21 @@ import { calculateCostBlended } from '@/lib/ai/pricing';
  * Zwraca ostatnie 10 zadań, posortowane od najnowszych.
  */
 export async function GET(request: NextRequest) {
-  if (!(await verifyAdmin())) {
+  const scope = await verifyScopedAdminAccess();
+  if (!scope) {
     return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
   const mailboxId = request.nextUrl.searchParams.get('mailboxId');
   const adminClient = getAdminClient();
+  const scopedMailboxIds = await getScopedMailboxIds(adminClient, scope.isDemoUser);
+
+  if (mailboxId) {
+    const mailboxAllowed = await isMailboxInScope(adminClient, mailboxId, scope.isDemoUser);
+    if (!mailboxAllowed) {
+      return NextResponse.json({ jobs: [] });
+    }
+  }
 
   let query = adminClient
     .from('analysis_jobs')
@@ -23,6 +37,10 @@ export async function GET(request: NextRequest) {
 
   if (mailboxId) {
     query = query.eq('mailbox_id', mailboxId);
+  } else if (scopedMailboxIds.length > 0) {
+    query = query.in('mailbox_id', scopedMailboxIds);
+  } else {
+    return NextResponse.json({ jobs: [] });
   }
 
   const { data, error } = await query;
@@ -91,7 +109,8 @@ export async function GET(request: NextRequest) {
  * Body: { mailboxId, dateRangeFrom?, dateRangeTo? }
  */
 export async function POST(request: NextRequest) {
-  if (!(await verifyAdmin())) {
+  const scope = await verifyScopedAdminAccess();
+  if (!scope) {
     return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
@@ -107,6 +126,13 @@ export async function POST(request: NextRequest) {
   }
 
   const adminClient = getAdminClient();
+  const mailboxAllowed = await isMailboxInScope(adminClient, body.mailboxId, scope.isDemoUser);
+  if (!mailboxAllowed) {
+    return NextResponse.json(
+      { error: 'Skrzynka nie została znaleziona' },
+      { status: 404 }
+    );
+  }
 
   // Check AI config exists
   const { data: aiConfig } = await adminClient

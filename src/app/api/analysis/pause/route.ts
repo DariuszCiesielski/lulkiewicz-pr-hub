@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
+import { getAdminClient } from '@/lib/api/admin';
+import {
+  isMailboxInScope,
+  verifyScopedAdminAccess,
+} from '@/lib/api/demo-scope';
 
 /**
  * POST /api/analysis/pause — Pause or resume an analysis job.
  * Body: { jobId, action: 'pause' | 'resume' }
  */
 export async function POST(request: NextRequest) {
-  if (!(await verifyAdmin())) {
+  const scope = await verifyScopedAdminAccess();
+  if (!scope) {
     return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
@@ -26,11 +31,16 @@ export async function POST(request: NextRequest) {
 
   const { data: job, error: jobError } = await adminClient
     .from('analysis_jobs')
-    .select('id, status, processed_threads, total_threads')
+    .select('id, mailbox_id, status, processed_threads, total_threads')
     .eq('id', jobId)
     .single();
 
   if (jobError || !job) {
+    return NextResponse.json({ error: 'Zadanie nie znalezione' }, { status: 404 });
+  }
+
+  const mailboxAllowed = await isMailboxInScope(adminClient, job.mailbox_id, scope.isDemoUser);
+  if (!mailboxAllowed) {
     return NextResponse.json({ error: 'Zadanie nie znalezione' }, { status: 404 });
   }
 

@@ -36,13 +36,13 @@ export interface MockEmail {
 // ============================================================
 
 // --- Watek 1: Awaria windy (8 emaili, szybkie odpowiedzi <2h) ---
-const R1_MSG1 = '<r1-001@royal-residence.pl>';
+const R1_MSG1 = '<r1-001@demo-royal.example>';
 const R1_MSG2 = '<r1-002@gmail.com>';
-const R1_MSG3 = '<r1-003@royal-residence.pl>';
+const R1_MSG3 = '<r1-003@demo-royal.example>';
 const R1_MSG4 = '<r1-004@gmail.com>';
-const R1_MSG5 = '<r1-005@royal-residence.pl>';
+const R1_MSG5 = '<r1-005@demo-royal.example>';
 const R1_MSG6 = '<r1-006@gmail.com>';
-const R1_MSG7 = '<r1-007@royal-residence.pl>';
+const R1_MSG7 = '<r1-007@demo-royal.example>';
 const R1_MSG8 = '<r1-008@gmail.com>';
 
 const royalThread1: MockEmail[] = [
@@ -50,7 +50,7 @@ const royalThread1: MockEmail[] = [
     mailbox_id: ROYAL, internet_message_id: R1_MSG1, graph_id: 'mock-graph-r1-001',
     conversation_id: 'conv-royal-1', subject: 'Awaria windy w klatce B',
     from_address: 'jan.kowalski.85@gmail.com', from_name: 'Jan Kowalski',
-    to_addresses: [{ address: 'administracja@royal-residence.pl', name: 'Administracja Royal' }],
+    to_addresses: [{ address: 'kontakt@demo-royal.example', name: 'Administracja Royal' }],
     cc_addresses: [],
     sent_at: daysAgo(14, 9), received_at: daysAgo(14, 9),
     body_text: `Dzien dobry,
@@ -71,7 +71,7 @@ PESEL: 85120512345`,
   {
     mailbox_id: ROYAL, internet_message_id: R1_MSG2, graph_id: 'mock-graph-r1-002',
     conversation_id: 'conv-royal-1', subject: 'Re: Awaria windy w klatce B',
-    from_address: 'administracja@royal-residence.pl', from_name: 'Administracja Royal Residence',
+    from_address: 'kontakt@demo-royal.example', from_name: 'Administracja Royal Residence',
     to_addresses: [{ address: 'jan.kowalski.85@gmail.com', name: 'Jan Kowalski' }],
     cc_addresses: [],
     sent_at: daysAgo(14, 8), received_at: daysAgo(14, 8),
@@ -94,7 +94,7 @@ tel. +48 22 100 2000`,
     mailbox_id: ROYAL, internet_message_id: R1_MSG3, graph_id: 'mock-graph-r1-003',
     conversation_id: 'conv-royal-1', subject: 'Re: Awaria windy w klatce B',
     from_address: 'jan.kowalski.85@gmail.com', from_name: 'Jan Kowalski',
-    to_addresses: [{ address: 'administracja@royal-residence.pl', name: 'Administracja Royal' }],
+    to_addresses: [{ address: 'kontakt@demo-royal.example', name: 'Administracja Royal' }],
     cc_addresses: [],
     sent_at: daysAgo(14, 6), received_at: daysAgo(14, 6),
     body_text: `Dziękuję za szybką reakcję. Technik jest już na miejscu. Czy wiadomo ile potrwa naprawa?
@@ -108,7 +108,7 @@ Jan Kowalski`,
   {
     mailbox_id: ROYAL, internet_message_id: R1_MSG4, graph_id: 'mock-graph-r1-004',
     conversation_id: 'conv-royal-1', subject: 'Re: Awaria windy w klatce B',
-    from_address: 'administracja@royal-residence.pl', from_name: 'Marta Wiśniewska',
+    from_address: 'kontakt@demo-royal.example', from_name: 'Marta Wiśniewska',
     to_addresses: [{ address: 'jan.kowalski.85@gmail.com', name: 'Jan Kowalski' }],
     cc_addresses: [],
     sent_at: daysAgo(14, 5), received_at: daysAgo(14, 5),
@@ -126,7 +126,7 @@ Marta Wiśniewska`,
     mailbox_id: ROYAL, internet_message_id: R1_MSG5, graph_id: 'mock-graph-r1-005',
     conversation_id: 'conv-royal-1', subject: 'Re: Awaria windy w klatce B',
     from_address: 'jan.kowalski.85@gmail.com', from_name: 'Jan Kowalski',
-    to_addresses: [{ address: 'administracja@royal-residence.pl', name: 'Administracja Royal' }],
+    to_addresses: [{ address: 'kontakt@demo-royal.example', name: 'Administracja Royal' }],
     cc_addresses: [],
     sent_at: daysAgo(13, 14), received_at: daysAgo(13, 14),
     body_text: `Dzień dobry, jest już po 12:00 a winda nadal nie działa. Kiedy można spodziewać się naprawy?
@@ -139,7 +139,7 @@ Jan Kowalski`,
   {
     mailbox_id: ROYAL, internet_message_id: R1_MSG6, graph_id: 'mock-graph-r1-006',
     conversation_id: 'conv-royal-1', subject: 'Re: Awaria windy w klatce B',
-    from_address: 'administracja@royal-residence.pl', from_name: 'Marta Wiśniewska',
+    from_address: 'kontakt@demo-royal.example', from_name: 'Marta Wiśniewska',
     to_addresses: [{ address: 'jan.kowalski.85@gmail.com', name: 'Jan Kowalski' }],
     cc_addresses: [],
     sent_at: daysAgo(13, 13), received_at: daysAgo(13, 13),
@@ -158,7 +158,7 @@ tel. +48 22 100 2000`,
     mailbox_id: ROYAL, internet_message_id: R1_MSG7, graph_id: 'mock-graph-r1-007',
     conversation_id: 'conv-royal-1', subject: 'Re: Awaria windy w klatce B',
     from_address: 'jan.kowalski.85@gmail.com', from_name: 'Jan Kowalski',
-    to_addresses: [{ address: 'administracja@royal-residence.pl', name: 'Administracja Royal' }],
+    to_addresses: [{ address: 'kontakt@demo-royal.example', name: 'Administracja Royal' }],
     cc_addresses: [],
     sent_at: daysAgo(13, 8), received_at: daysAgo(13, 8),
     body_text: `Winda działa. Dziękuję za załatwienie sprawy. Proszę jednak o rozważenie regularnych przeglądów — to już trzecia awaria w tym roku.
@@ -172,7 +172,7 @@ Jan Kowalski`,
   {
     mailbox_id: ROYAL, internet_message_id: R1_MSG8, graph_id: 'mock-graph-r1-008',
     conversation_id: 'conv-royal-1', subject: 'Re: Awaria windy w klatce B',
-    from_address: 'administracja@royal-residence.pl', from_name: 'Marta Wiśniewska',
+    from_address: 'kontakt@demo-royal.example', from_name: 'Marta Wiśniewska',
     to_addresses: [{ address: 'jan.kowalski.85@gmail.com', name: 'Jan Kowalski' }],
     cc_addresses: [],
     sent_at: daysAgo(13, 7), received_at: daysAgo(13, 7),
@@ -191,18 +191,18 @@ Administracja Royal Residence`,
 
 // --- Watek 2: Hałas z budowy (6 emaili, wolne odpowiedzi 3-5 dni) ---
 const R2_MSG1 = '<r2-001@gmail.com>';
-const R2_MSG2 = '<r2-002@royal-residence.pl>';
+const R2_MSG2 = '<r2-002@demo-royal.example>';
 const R2_MSG3 = '<r2-003@gmail.com>';
-const R2_MSG4 = '<r2-004@royal-residence.pl>';
+const R2_MSG4 = '<r2-004@demo-royal.example>';
 const R2_MSG5 = '<r2-005@gmail.com>';
-const R2_MSG6 = '<r2-006@royal-residence.pl>';
+const R2_MSG6 = '<r2-006@demo-royal.example>';
 
 const royalThread2: MockEmail[] = [
   {
     mailbox_id: ROYAL, internet_message_id: R2_MSG1, graph_id: 'mock-graph-r2-001',
     conversation_id: 'conv-royal-2', subject: 'Reklamacja - hałas z budowy parkingu',
     from_address: 'anna.nowak.79@wp.pl', from_name: 'Anna Nowak',
-    to_addresses: [{ address: 'administracja@royal-residence.pl', name: 'Administracja Royal' }],
+    to_addresses: [{ address: 'kontakt@demo-royal.example', name: 'Administracja Royal' }],
     cc_addresses: [],
     sent_at: daysAgo(21), received_at: daysAgo(21),
     body_text: `Szanowni Państwo,
@@ -223,7 +223,7 @@ email: anna.nowak.79@wp.pl`,
   {
     mailbox_id: ROYAL, internet_message_id: R2_MSG2, graph_id: 'mock-graph-r2-002',
     conversation_id: 'conv-royal-2', subject: 'Odp: Reklamacja - hałas z budowy parkingu',
-    from_address: 'administracja@royal-residence.pl', from_name: 'Administracja Royal Residence',
+    from_address: 'kontakt@demo-royal.example', from_name: 'Administracja Royal Residence',
     to_addresses: [{ address: 'anna.nowak.79@wp.pl', name: 'Anna Nowak' }],
     cc_addresses: [],
     sent_at: daysAgo(17), received_at: daysAgo(17),
@@ -243,7 +243,7 @@ Administracja Royal Residence`,
     mailbox_id: ROYAL, internet_message_id: R2_MSG3, graph_id: 'mock-graph-r2-003',
     conversation_id: 'conv-royal-2', subject: 'Re: Reklamacja - hałas z budowy parkingu',
     from_address: 'anna.nowak.79@wp.pl', from_name: 'Anna Nowak',
-    to_addresses: [{ address: 'administracja@royal-residence.pl', name: 'Administracja Royal' }],
+    to_addresses: [{ address: 'kontakt@demo-royal.example', name: 'Administracja Royal' }],
     cc_addresses: [],
     sent_at: daysAgo(14), received_at: daysAgo(14),
     body_text: `Dzień dobry,
@@ -258,7 +258,7 @@ Anna Nowak`,
   {
     mailbox_id: ROYAL, internet_message_id: R2_MSG4, graph_id: 'mock-graph-r2-004',
     conversation_id: 'conv-royal-2', subject: 'Re: Reklamacja - hałas z budowy parkingu',
-    from_address: 'administracja@royal-residence.pl', from_name: 'Marta Wiśniewska',
+    from_address: 'kontakt@demo-royal.example', from_name: 'Marta Wiśniewska',
     to_addresses: [{ address: 'anna.nowak.79@wp.pl', name: 'Anna Nowak' }],
     cc_addresses: [],
     sent_at: daysAgo(11), received_at: daysAgo(11),
@@ -276,7 +276,7 @@ Marta Wiśniewska`,
     mailbox_id: ROYAL, internet_message_id: R2_MSG5, graph_id: 'mock-graph-r2-005',
     conversation_id: 'conv-royal-2', subject: 'Re: Reklamacja - hałas z budowy parkingu',
     from_address: 'anna.nowak.79@wp.pl', from_name: 'Anna Nowak',
-    to_addresses: [{ address: 'administracja@royal-residence.pl', name: 'Administracja Royal' }],
+    to_addresses: [{ address: 'kontakt@demo-royal.example', name: 'Administracja Royal' }],
     cc_addresses: [],
     sent_at: daysAgo(10), received_at: daysAgo(10),
     body_text: `To jest nieakceptowalne. 7:30 to nadal za wcześnie. Regulamin mówi o 8:00. Jeśli nie dostosujecie się do regulaminu, będę zmuszona zgłosić sprawę do Straży Miejskiej.
@@ -289,9 +289,9 @@ Anna Nowak`,
   {
     mailbox_id: ROYAL, internet_message_id: R2_MSG6, graph_id: 'mock-graph-r2-006',
     conversation_id: 'conv-royal-2', subject: 'Re: Reklamacja - hałas z budowy parkingu',
-    from_address: 'administracja@royal-residence.pl', from_name: 'Marta Wiśniewska',
+    from_address: 'kontakt@demo-royal.example', from_name: 'Marta Wiśniewska',
     to_addresses: [{ address: 'anna.nowak.79@wp.pl', name: 'Anna Nowak' }],
-    cc_addresses: [{ address: 'zarzad@royal-residence.pl', name: 'Zarząd Royal Residence' }],
+    cc_addresses: [{ address: 'zarzad@demo-royal.example', name: 'Zarząd Royal Residence' }],
     sent_at: daysAgo(7), received_at: daysAgo(7),
     body_text: `Szanowna Pani Anno,
 
@@ -310,9 +310,9 @@ Administracja Royal Residence`,
 
 // --- Watek 3: Rozliczenie ogrzewania (5 emaili, standardowy czas) ---
 const R3_MSG1 = '<r3-001@onet.pl>';
-const R3_MSG2 = '<r3-002@royal-residence.pl>';
+const R3_MSG2 = '<r3-002@demo-royal.example>';
 const R3_MSG3 = '<r3-003@onet.pl>';
-const R3_MSG4 = '<r3-004@royal-residence.pl>';
+const R3_MSG4 = '<r3-004@demo-royal.example>';
 const R3_MSG5 = '<r3-005@onet.pl>';
 
 const royalThread3: MockEmail[] = [
@@ -320,7 +320,7 @@ const royalThread3: MockEmail[] = [
     mailbox_id: ROYAL, internet_message_id: R3_MSG1, graph_id: 'mock-graph-r3-001',
     conversation_id: 'conv-royal-3', subject: 'Rozliczenie kosztów ogrzewania 2025',
     from_address: 'piotr.wisniewski@onet.pl', from_name: 'Piotr Wiśniewski',
-    to_addresses: [{ address: 'administracja@royal-residence.pl', name: 'Administracja Royal' }],
+    to_addresses: [{ address: 'kontakt@demo-royal.example', name: 'Administracja Royal' }],
     cc_addresses: [],
     sent_at: daysAgo(10), received_at: daysAgo(10),
     body_text: `Dzień dobry,
@@ -341,7 +341,7 @@ tel. 603-456-789`,
   {
     mailbox_id: ROYAL, internet_message_id: R3_MSG2, graph_id: 'mock-graph-r3-002',
     conversation_id: 'conv-royal-3', subject: 'Re: Rozliczenie kosztów ogrzewania 2025',
-    from_address: 'administracja@royal-residence.pl', from_name: 'Katarzyna Dąbrowska',
+    from_address: 'kontakt@demo-royal.example', from_name: 'Katarzyna Dąbrowska',
     to_addresses: [{ address: 'piotr.wisniewski@onet.pl', name: 'Piotr Wiśniewski' }],
     cc_addresses: [],
     sent_at: daysAgo(9), received_at: daysAgo(9),
@@ -362,7 +362,7 @@ Dział Rozliczeń`,
     mailbox_id: ROYAL, internet_message_id: R3_MSG3, graph_id: 'mock-graph-r3-003',
     conversation_id: 'conv-royal-3', subject: 'Re: Rozliczenie kosztów ogrzewania 2025',
     from_address: 'piotr.wisniewski@onet.pl', from_name: 'Piotr Wiśniewski',
-    to_addresses: [{ address: 'administracja@royal-residence.pl', name: 'Administracja Royal' }],
+    to_addresses: [{ address: 'kontakt@demo-royal.example', name: 'Administracja Royal' }],
     cc_addresses: [],
     sent_at: daysAgo(9, 2), received_at: daysAgo(9, 2),
     body_text: `Proszę o zwrot na podane konto bankowe. Dziękuję za informację.
@@ -375,7 +375,7 @@ Piotr Wiśniewski`,
   {
     mailbox_id: ROYAL, internet_message_id: R3_MSG4, graph_id: 'mock-graph-r3-004',
     conversation_id: 'conv-royal-3', subject: 'Re: Rozliczenie kosztów ogrzewania 2025',
-    from_address: 'administracja@royal-residence.pl', from_name: 'Katarzyna Dąbrowska',
+    from_address: 'kontakt@demo-royal.example', from_name: 'Katarzyna Dąbrowska',
     to_addresses: [{ address: 'piotr.wisniewski@onet.pl', name: 'Piotr Wiśniewski' }],
     cc_addresses: [],
     sent_at: daysAgo(8), received_at: daysAgo(8),
@@ -391,7 +391,7 @@ Katarzyna Dąbrowska`,
     mailbox_id: ROYAL, internet_message_id: R3_MSG5, graph_id: 'mock-graph-r3-005',
     conversation_id: 'conv-royal-3', subject: 'Re: Rozliczenie kosztów ogrzewania 2025',
     from_address: 'piotr.wisniewski@onet.pl', from_name: 'Piotr Wiśniewski',
-    to_addresses: [{ address: 'administracja@royal-residence.pl', name: 'Administracja Royal' }],
+    to_addresses: [{ address: 'kontakt@demo-royal.example', name: 'Administracja Royal' }],
     cc_addresses: [],
     sent_at: daysAgo(1), received_at: daysAgo(1),
     body_text: `Potwierdzam otrzymanie zwrotu. Dziękuję za sprawną obsługę.
@@ -405,17 +405,17 @@ Piotr Wiśniewski`,
 ];
 
 // --- Watek 4: Remont klatki (4 emaile) ---
-const R4_MSG1 = '<r4-001@royal-residence.pl>';
+const R4_MSG1 = '<r4-001@demo-royal.example>';
 const R4_MSG2 = '<r4-002@gmail.com>';
-const R4_MSG3 = '<r4-003@royal-residence.pl>';
+const R4_MSG3 = '<r4-003@demo-royal.example>';
 const R4_MSG4 = '<r4-004@gmail.com>';
 
 const royalThread4: MockEmail[] = [
   {
     mailbox_id: ROYAL, internet_message_id: R4_MSG1, graph_id: 'mock-graph-r4-001',
     conversation_id: 'conv-royal-4', subject: 'Remont klatki schodowej A - harmonogram',
-    from_address: 'administracja@royal-residence.pl', from_name: 'Administracja Royal Residence',
-    to_addresses: [{ address: 'mieszkancy.klatka.a@royal-residence.pl', name: 'Mieszkańcy klatki A' }],
+    from_address: 'kontakt@demo-royal.example', from_name: 'Administracja Royal Residence',
+    to_addresses: [{ address: 'mieszkancy.klatka.a@demo-royal.example', name: 'Mieszkańcy klatki A' }],
     cc_addresses: [],
     sent_at: daysAgo(20), received_at: daysAgo(20),
     body_text: `Szanowni Mieszkańcy klatki A,
@@ -439,7 +439,7 @@ Administracja Royal Residence`,
     mailbox_id: ROYAL, internet_message_id: R4_MSG2, graph_id: 'mock-graph-r4-002',
     conversation_id: 'conv-royal-4', subject: 'Re: Remont klatki schodowej A - harmonogram',
     from_address: 'barbara.lewandowska@gmail.com', from_name: 'Barbara Lewandowska',
-    to_addresses: [{ address: 'administracja@royal-residence.pl', name: 'Administracja Royal' }],
+    to_addresses: [{ address: 'kontakt@demo-royal.example', name: 'Administracja Royal' }],
     cc_addresses: [],
     sent_at: daysAgo(19), received_at: daysAgo(19),
     body_text: `Dzień dobry,
@@ -455,7 +455,7 @@ os. Royal Residence, ul. Królewska 15A/3`,
   {
     mailbox_id: ROYAL, internet_message_id: R4_MSG3, graph_id: 'mock-graph-r4-003',
     conversation_id: 'conv-royal-4', subject: 'Re: Remont klatki schodowej A - harmonogram',
-    from_address: 'administracja@royal-residence.pl', from_name: 'Marta Wiśniewska',
+    from_address: 'kontakt@demo-royal.example', from_name: 'Marta Wiśniewska',
     to_addresses: [{ address: 'barbara.lewandowska@gmail.com', name: 'Barbara Lewandowska' }],
     cc_addresses: [],
     sent_at: daysAgo(18), received_at: daysAgo(18),
@@ -473,7 +473,7 @@ Marta Wiśniewska`,
     mailbox_id: ROYAL, internet_message_id: R4_MSG4, graph_id: 'mock-graph-r4-004',
     conversation_id: 'conv-royal-4', subject: 'Re: Remont klatki schodowej A - harmonogram',
     from_address: 'barbara.lewandowska@gmail.com', from_name: 'Barbara Lewandowska',
-    to_addresses: [{ address: 'administracja@royal-residence.pl', name: 'Administracja Royal' }],
+    to_addresses: [{ address: 'kontakt@demo-royal.example', name: 'Administracja Royal' }],
     cc_addresses: [],
     sent_at: daysAgo(18, 2), received_at: daysAgo(18, 2),
     body_text: `Dziękuję za informację. Dostosujemy się.
@@ -487,19 +487,19 @@ Barbara Lewandowska`,
 
 // --- Watek 5: Zalewanie garazu (7 emaili, eskalacja) ---
 const R5_MSG1 = '<r5-001@gmail.com>';
-const R5_MSG2 = '<r5-002@royal-residence.pl>';
+const R5_MSG2 = '<r5-002@demo-royal.example>';
 const R5_MSG3 = '<r5-003@gmail.com>';
 const R5_MSG4 = '<r5-004@gmail.com>';
-const R5_MSG5 = '<r5-005@royal-residence.pl>';
+const R5_MSG5 = '<r5-005@demo-royal.example>';
 const R5_MSG6 = '<r5-006@gmail.com>';
-const R5_MSG7 = '<r5-007@royal-residence.pl>';
+const R5_MSG7 = '<r5-007@demo-royal.example>';
 
 const royalThread5: MockEmail[] = [
   {
     mailbox_id: ROYAL, internet_message_id: R5_MSG1, graph_id: 'mock-graph-r5-001',
     conversation_id: 'conv-royal-5', subject: 'PILNE: Zalewanie garażu podziemnego',
     from_address: 'marek.kaczmarek@gmail.com', from_name: 'Marek Kaczmarek',
-    to_addresses: [{ address: 'administracja@royal-residence.pl', name: 'Administracja Royal' }],
+    to_addresses: [{ address: 'kontakt@demo-royal.example', name: 'Administracja Royal' }],
     cc_addresses: [],
     sent_at: daysAgo(30), received_at: daysAgo(30),
     body_text: `PILNE!
@@ -518,7 +518,7 @@ tel. 505-678-901`,
   {
     mailbox_id: ROYAL, internet_message_id: R5_MSG2, graph_id: 'mock-graph-r5-002',
     conversation_id: 'conv-royal-5', subject: 'Re: PILNE: Zalewanie garażu podziemnego',
-    from_address: 'administracja@royal-residence.pl', from_name: 'Administracja Royal Residence',
+    from_address: 'kontakt@demo-royal.example', from_name: 'Administracja Royal Residence',
     to_addresses: [{ address: 'marek.kaczmarek@gmail.com', name: 'Marek Kaczmarek' }],
     cc_addresses: [],
     sent_at: daysAgo(27), received_at: daysAgo(27),
@@ -536,7 +536,7 @@ Administracja Royal Residence`,
     mailbox_id: ROYAL, internet_message_id: R5_MSG3, graph_id: 'mock-graph-r5-003',
     conversation_id: 'conv-royal-5', subject: 'Re: PILNE: Zalewanie garażu podziemnego',
     from_address: 'marek.kaczmarek@gmail.com', from_name: 'Marek Kaczmarek',
-    to_addresses: [{ address: 'administracja@royal-residence.pl', name: 'Administracja Royal' }],
+    to_addresses: [{ address: 'kontakt@demo-royal.example', name: 'Administracja Royal' }],
     cc_addresses: [],
     sent_at: daysAgo(25), received_at: daysAgo(25),
     body_text: `Piszę już piąty dzień i nadal nie ma żadnych konkretnych działań. Woda stoi w garażu. To jest sprawa pilna, napisałem "PILNE"! Kiedy ktoś wreszcie coś z tym zrobi?
@@ -550,8 +550,8 @@ Marek Kaczmarek`,
     mailbox_id: ROYAL, internet_message_id: R5_MSG4, graph_id: 'mock-graph-r5-004',
     conversation_id: 'conv-royal-5', subject: 'Fwd: PILNE: Zalewanie garażu podziemnego',
     from_address: 'marek.kaczmarek@gmail.com', from_name: 'Marek Kaczmarek',
-    to_addresses: [{ address: 'zarzad@royal-residence.pl', name: 'Zarząd Royal Residence' }],
-    cc_addresses: [{ address: 'administracja@royal-residence.pl', name: 'Administracja Royal' }],
+    to_addresses: [{ address: 'zarzad@demo-royal.example', name: 'Zarząd Royal Residence' }],
+    cc_addresses: [{ address: 'kontakt@demo-royal.example', name: 'Administracja Royal' }],
     sent_at: daysAgo(22), received_at: daysAgo(22),
     body_text: `Szanowny Zarządzie,
 
@@ -566,9 +566,9 @@ ul. Królewska 15B/25, Warszawa`,
   {
     mailbox_id: ROYAL, internet_message_id: R5_MSG5, graph_id: 'mock-graph-r5-005',
     conversation_id: 'conv-royal-5', subject: 'Re: PILNE: Zalewanie garażu podziemnego',
-    from_address: 'administracja@royal-residence.pl', from_name: 'Robert Mazur',
+    from_address: 'kontakt@demo-royal.example', from_name: 'Robert Mazur',
     to_addresses: [{ address: 'marek.kaczmarek@gmail.com', name: 'Marek Kaczmarek' }],
-    cc_addresses: [{ address: 'zarzad@royal-residence.pl', name: 'Zarząd Royal Residence' }],
+    cc_addresses: [{ address: 'zarzad@demo-royal.example', name: 'Zarząd Royal Residence' }],
     sent_at: daysAgo(21), received_at: daysAgo(21),
     body_text: `Szanowny Panie Marku,
 
@@ -587,7 +587,7 @@ tel. +48 22 100 2001`,
     mailbox_id: ROYAL, internet_message_id: R5_MSG6, graph_id: 'mock-graph-r5-006',
     conversation_id: 'conv-royal-5', subject: 'Re: PILNE: Zalewanie garażu podziemnego',
     from_address: 'marek.kaczmarek@gmail.com', from_name: 'Marek Kaczmarek',
-    to_addresses: [{ address: 'administracja@royal-residence.pl', name: 'Administracja Royal' }],
+    to_addresses: [{ address: 'kontakt@demo-royal.example', name: 'Administracja Royal' }],
     cc_addresses: [],
     sent_at: daysAgo(19), received_at: daysAgo(19),
     body_text: `Woda została usunięta. Niestety na felgach mojego samochodu pojawiła się rdza. Będę kontaktował się z PZU w sprawie odszkodowania.
@@ -602,7 +602,7 @@ Marek Kaczmarek`,
   {
     mailbox_id: ROYAL, internet_message_id: R5_MSG7, graph_id: 'mock-graph-r5-007',
     conversation_id: 'conv-royal-5', subject: 'Re: PILNE: Zalewanie garażu podziemnego',
-    from_address: 'administracja@royal-residence.pl', from_name: 'Robert Mazur',
+    from_address: 'kontakt@demo-royal.example', from_name: 'Robert Mazur',
     to_addresses: [{ address: 'marek.kaczmarek@gmail.com', name: 'Marek Kaczmarek' }],
     cc_addresses: [],
     sent_at: daysAgo(18), received_at: daysAgo(18),
@@ -622,9 +622,9 @@ Robert Mazur`,
 
 // --- Watek 6: Zmiana zarządcy (5 emaili) ---
 const R6_MSG1 = '<r6-001@wp.pl>';
-const R6_MSG2 = '<r6-002@royal-residence.pl>';
+const R6_MSG2 = '<r6-002@demo-royal.example>';
 const R6_MSG3 = '<r6-003@wp.pl>';
-const R6_MSG4 = '<r6-004@royal-residence.pl>';
+const R6_MSG4 = '<r6-004@demo-royal.example>';
 const R6_MSG5 = '<r6-005@wp.pl>';
 
 const royalThread6: MockEmail[] = [
@@ -632,7 +632,7 @@ const royalThread6: MockEmail[] = [
     mailbox_id: ROYAL, internet_message_id: R6_MSG1, graph_id: 'mock-graph-r6-001',
     conversation_id: 'conv-royal-6', subject: 'Zmiana zarządcy - pytania',
     from_address: 'ewa.szymanska@wp.pl', from_name: 'Ewa Szymańska',
-    to_addresses: [{ address: 'administracja@royal-residence.pl', name: 'Administracja Royal' }],
+    to_addresses: [{ address: 'kontakt@demo-royal.example', name: 'Administracja Royal' }],
     cc_addresses: [],
     sent_at: daysAgo(7), received_at: daysAgo(7),
     body_text: `Dzień dobry,
@@ -650,7 +650,7 @@ Ewa Szymańska, lokal 15D/18`,
   {
     mailbox_id: ROYAL, internet_message_id: R6_MSG2, graph_id: 'mock-graph-r6-002',
     conversation_id: 'conv-royal-6', subject: 'Re: Zmiana zarządcy - pytania',
-    from_address: 'administracja@royal-residence.pl', from_name: 'Robert Mazur',
+    from_address: 'kontakt@demo-royal.example', from_name: 'Robert Mazur',
     to_addresses: [{ address: 'ewa.szymanska@wp.pl', name: 'Ewa Szymańska' }],
     cc_addresses: [],
     sent_at: daysAgo(6), received_at: daysAgo(6),
@@ -670,7 +670,7 @@ Robert Mazur`,
     mailbox_id: ROYAL, internet_message_id: R6_MSG3, graph_id: 'mock-graph-r6-003',
     conversation_id: 'conv-royal-6', subject: 'Re: Zmiana zarządcy - pytania',
     from_address: 'ewa.szymanska@wp.pl', from_name: 'Ewa Szymańska',
-    to_addresses: [{ address: 'administracja@royal-residence.pl', name: 'Administracja Royal' }],
+    to_addresses: [{ address: 'kontakt@demo-royal.example', name: 'Administracja Royal' }],
     cc_addresses: [],
     sent_at: daysAgo(5), received_at: daysAgo(5),
     body_text: `Dziękuję za odpowiedź. Czy nowy zarządca przejmie też dokumentację dot. remontu dachu z 2023 roku? Mam otwartą reklamację (nr RK-2023-089).
@@ -683,7 +683,7 @@ Ewa Szymańska`,
   {
     mailbox_id: ROYAL, internet_message_id: R6_MSG4, graph_id: 'mock-graph-r6-004',
     conversation_id: 'conv-royal-6', subject: 'Re: Zmiana zarządcy - pytania',
-    from_address: 'administracja@royal-residence.pl', from_name: 'Robert Mazur',
+    from_address: 'kontakt@demo-royal.example', from_name: 'Robert Mazur',
     to_addresses: [{ address: 'ewa.szymanska@wp.pl', name: 'Ewa Szymańska' }],
     cc_addresses: [],
     sent_at: daysAgo(4), received_at: daysAgo(4),
@@ -701,7 +701,7 @@ Robert Mazur`,
     mailbox_id: ROYAL, internet_message_id: R6_MSG5, graph_id: 'mock-graph-r6-005',
     conversation_id: 'conv-royal-6', subject: 'Re: Zmiana zarządcy - pytania',
     from_address: 'ewa.szymanska@wp.pl', from_name: 'Ewa Szymańska',
-    to_addresses: [{ address: 'administracja@royal-residence.pl', name: 'Administracja Royal' }],
+    to_addresses: [{ address: 'kontakt@demo-royal.example', name: 'Administracja Royal' }],
     cc_addresses: [],
     sent_at: daysAgo(4, 2), received_at: daysAgo(4, 2),
     body_text: `Świetnie, dziękuję za wyczerpującą informację.
@@ -719,18 +719,18 @@ Ewa Szymańska`,
 // ============================================================
 
 // --- Watek 7: Wymiana domofonu (5 emaili) ---
-const S1_MSG1 = '<s1-001@sady-ursynow.pl>';
+const S1_MSG1 = '<s1-001@demo-sady.example>';
 const S1_MSG2 = '<s1-002@gmail.com>';
-const S1_MSG3 = '<s1-003@sady-ursynow.pl>';
+const S1_MSG3 = '<s1-003@demo-sady.example>';
 const S1_MSG4 = '<s1-004@gmail.com>';
-const S1_MSG5 = '<s1-005@sady-ursynow.pl>';
+const S1_MSG5 = '<s1-005@demo-sady.example>';
 
 const sadyThread1: MockEmail[] = [
   {
     mailbox_id: SADY, internet_message_id: S1_MSG1, graph_id: 'mock-graph-s1-001',
     conversation_id: 'conv-sady-1', subject: 'Wymiana domofonu - oferty do zatwierdzenia',
-    from_address: 'biuro@sady-ursynow.pl', from_name: 'Administracja Sady Ursynów',
-    to_addresses: [{ address: 'rada.nadzorcza@sady-ursynow.pl', name: 'Rada Nadzorcza' }],
+    from_address: 'biuro@demo-sady.example', from_name: 'Administracja Sady Ursynów',
+    to_addresses: [{ address: 'rada.nadzorcza@demo-sady.example', name: 'Rada Nadzorcza' }],
     cc_addresses: [],
     sent_at: daysAgo(12), received_at: daysAgo(12),
     body_text: `Szanowna Rado,
@@ -755,8 +755,8 @@ tel. 22-300-4000`,
     mailbox_id: SADY, internet_message_id: S1_MSG2, graph_id: 'mock-graph-s1-002',
     conversation_id: 'conv-sady-1', subject: 'Re: Wymiana domofonu - oferty do zatwierdzenia',
     from_address: 'maria.wojciechowska@gmail.com', from_name: 'Maria Wojciechowska',
-    to_addresses: [{ address: 'biuro@sady-ursynow.pl', name: 'Administracja Sady Ursynów' }],
-    cc_addresses: [{ address: 'rada.nadzorcza@sady-ursynow.pl', name: 'Rada Nadzorcza' }],
+    to_addresses: [{ address: 'biuro@demo-sady.example', name: 'Administracja Sady Ursynów' }],
+    cc_addresses: [{ address: 'rada.nadzorcza@demo-sady.example', name: 'Rada Nadzorcza' }],
     sent_at: daysAgo(11), received_at: daysAgo(11),
     body_text: `Jako przewodnicząca rady nadzorczej zgadzam się z rekomendacją. Proszę o sprawdzenie referencji firmy DomoTech.
 
@@ -770,9 +770,9 @@ tel. 604-567-890`,
   {
     mailbox_id: SADY, internet_message_id: S1_MSG3, graph_id: 'mock-graph-s1-003',
     conversation_id: 'conv-sady-1', subject: 'Re: Wymiana domofonu - oferty do zatwierdzenia',
-    from_address: 'biuro@sady-ursynow.pl', from_name: 'Tomasz Grabowski',
+    from_address: 'biuro@demo-sady.example', from_name: 'Tomasz Grabowski',
     to_addresses: [{ address: 'maria.wojciechowska@gmail.com', name: 'Maria Wojciechowska' }],
-    cc_addresses: [{ address: 'rada.nadzorcza@sady-ursynow.pl', name: 'Rada Nadzorcza' }],
+    cc_addresses: [{ address: 'rada.nadzorcza@demo-sady.example', name: 'Rada Nadzorcza' }],
     sent_at: daysAgo(10), received_at: daysAgo(10),
     body_text: `Pani Mario,
 
@@ -792,7 +792,7 @@ Tomasz Grabowski`,
     mailbox_id: SADY, internet_message_id: S1_MSG4, graph_id: 'mock-graph-s1-004',
     conversation_id: 'conv-sady-1', subject: 'Re: Wymiana domofonu - oferty do zatwierdzenia',
     from_address: 'maria.wojciechowska@gmail.com', from_name: 'Maria Wojciechowska',
-    to_addresses: [{ address: 'biuro@sady-ursynow.pl', name: 'Administracja Sady Ursynów' }],
+    to_addresses: [{ address: 'biuro@demo-sady.example', name: 'Administracja Sady Ursynów' }],
     cc_addresses: [],
     sent_at: daysAgo(9), received_at: daysAgo(9),
     body_text: `Referencje wyglądają dobrze. Zatwierdzam. Proszę przygotować umowę do podpisu.
@@ -805,7 +805,7 @@ Maria Wojciechowska`,
   {
     mailbox_id: SADY, internet_message_id: S1_MSG5, graph_id: 'mock-graph-s1-005',
     conversation_id: 'conv-sady-1', subject: 'Re: Wymiana domofonu - oferty do zatwierdzenia',
-    from_address: 'biuro@sady-ursynow.pl', from_name: 'Tomasz Grabowski',
+    from_address: 'biuro@demo-sady.example', from_name: 'Tomasz Grabowski',
     to_addresses: [{ address: 'maria.wojciechowska@gmail.com', name: 'Maria Wojciechowska' }],
     cc_addresses: [],
     sent_at: daysAgo(8), received_at: daysAgo(8),
@@ -821,16 +821,16 @@ Tomasz Grabowski`,
 
 // --- Watek 8: Opłaty parkingowe (4 emaile) ---
 const S2_MSG1 = '<s2-001@onet.pl>';
-const S2_MSG2 = '<s2-002@sady-ursynow.pl>';
+const S2_MSG2 = '<s2-002@demo-sady.example>';
 const S2_MSG3 = '<s2-003@onet.pl>';
-const S2_MSG4 = '<s2-004@sady-ursynow.pl>';
+const S2_MSG4 = '<s2-004@demo-sady.example>';
 
 const sadyThread2: MockEmail[] = [
   {
     mailbox_id: SADY, internet_message_id: S2_MSG1, graph_id: 'mock-graph-s2-001',
     conversation_id: 'conv-sady-2', subject: 'Pytanie o opłaty za miejsce parkingowe',
     from_address: 'adam.zielinski@onet.pl', from_name: 'Adam Zieliński',
-    to_addresses: [{ address: 'biuro@sady-ursynow.pl', name: 'Administracja Sady Ursynów' }],
+    to_addresses: [{ address: 'biuro@demo-sady.example', name: 'Administracja Sady Ursynów' }],
     cc_addresses: [],
     sent_at: daysAgo(8), received_at: daysAgo(8),
     body_text: `Dzień dobry,
@@ -848,7 +848,7 @@ tel. 507-890-123`,
   {
     mailbox_id: SADY, internet_message_id: S2_MSG2, graph_id: 'mock-graph-s2-002',
     conversation_id: 'conv-sady-2', subject: 'Re: Pytanie o opłaty za miejsce parkingowe',
-    from_address: 'biuro@sady-ursynow.pl', from_name: 'Administracja Sady Ursynów',
+    from_address: 'biuro@demo-sady.example', from_name: 'Administracja Sady Ursynów',
     to_addresses: [{ address: 'adam.zielinski@onet.pl', name: 'Adam Zieliński' }],
     cc_addresses: [],
     sent_at: daysAgo(7), received_at: daysAgo(7),
@@ -871,7 +871,7 @@ Tomasz Grabowski`,
     mailbox_id: SADY, internet_message_id: S2_MSG3, graph_id: 'mock-graph-s2-003',
     conversation_id: 'conv-sady-2', subject: 'Re: Pytanie o opłaty za miejsce parkingowe',
     from_address: 'adam.zielinski@onet.pl', from_name: 'Adam Zieliński',
-    to_addresses: [{ address: 'biuro@sady-ursynow.pl', name: 'Administracja Sady Ursynów' }],
+    to_addresses: [{ address: 'biuro@demo-sady.example', name: 'Administracja Sady Ursynów' }],
     cc_addresses: [],
     sent_at: daysAgo(6), received_at: daysAgo(6),
     body_text: `Dziękuję. Przyjdę jutro z dokumentami. Czy można wybrać konkretne miejsce?
@@ -884,7 +884,7 @@ Adam Zieliński`,
   {
     mailbox_id: SADY, internet_message_id: S2_MSG4, graph_id: 'mock-graph-s2-004',
     conversation_id: 'conv-sady-2', subject: 'Re: Pytanie o opłaty za miejsce parkingowe',
-    from_address: 'biuro@sady-ursynow.pl', from_name: 'Tomasz Grabowski',
+    from_address: 'biuro@demo-sady.example', from_name: 'Tomasz Grabowski',
     to_addresses: [{ address: 'adam.zielinski@onet.pl', name: 'Adam Zieliński' }],
     cc_addresses: [],
     sent_at: daysAgo(6, 2), received_at: daysAgo(6, 2),
@@ -899,16 +899,16 @@ Tomasz Grabowski`,
 ];
 
 // --- Watek 9: Przegląd gazowy (3 emaile, szybka odpowiedz) ---
-const S3_MSG1 = '<s3-001@sady-ursynow.pl>';
+const S3_MSG1 = '<s3-001@demo-sady.example>';
 const S3_MSG2 = '<s3-002@gmail.com>';
-const S3_MSG3 = '<s3-003@sady-ursynow.pl>';
+const S3_MSG3 = '<s3-003@demo-sady.example>';
 
 const sadyThread3: MockEmail[] = [
   {
     mailbox_id: SADY, internet_message_id: S3_MSG1, graph_id: 'mock-graph-s3-001',
     conversation_id: 'conv-sady-3', subject: 'Przegląd instalacji gazowej - termin',
-    from_address: 'biuro@sady-ursynow.pl', from_name: 'Administracja Sady Ursynów',
-    to_addresses: [{ address: 'mieszkancy@sady-ursynow.pl', name: 'Wszyscy mieszkańcy' }],
+    from_address: 'biuro@demo-sady.example', from_name: 'Administracja Sady Ursynów',
+    to_addresses: [{ address: 'mieszkancy@demo-sady.example', name: 'Wszyscy mieszkańcy' }],
     cc_addresses: [],
     sent_at: daysAgo(5), received_at: daysAgo(5),
     body_text: `Szanowni Mieszkańcy,
@@ -928,7 +928,7 @@ Administracja Sady Ursynów`,
     mailbox_id: SADY, internet_message_id: S3_MSG2, graph_id: 'mock-graph-s3-002',
     conversation_id: 'conv-sady-3', subject: 'Re: Przegląd instalacji gazowej - termin',
     from_address: 'dorota.kaminska@gmail.com', from_name: 'Dorota Kamińska',
-    to_addresses: [{ address: 'biuro@sady-ursynow.pl', name: 'Administracja Sady Ursynów' }],
+    to_addresses: [{ address: 'biuro@demo-sady.example', name: 'Administracja Sady Ursynów' }],
     cc_addresses: [],
     sent_at: daysAgo(5, 3), received_at: daysAgo(5, 3),
     body_text: `Dzień dobry,
@@ -944,7 +944,7 @@ tel. 609-234-567`,
   {
     mailbox_id: SADY, internet_message_id: S3_MSG3, graph_id: 'mock-graph-s3-003',
     conversation_id: 'conv-sady-3', subject: 'Re: Przegląd instalacji gazowej - termin',
-    from_address: 'biuro@sady-ursynow.pl', from_name: 'Tomasz Grabowski',
+    from_address: 'biuro@demo-sady.example', from_name: 'Tomasz Grabowski',
     to_addresses: [{ address: 'dorota.kaminska@gmail.com', name: 'Dorota Kamińska' }],
     cc_addresses: [],
     sent_at: daysAgo(4, 20), received_at: daysAgo(4, 20),
@@ -962,16 +962,16 @@ Tomasz Grabowski`,
 
 // --- Watek 10: Oświetlenie parkingu (4 emaile) ---
 const S4_MSG1 = '<s4-001@wp.pl>';
-const S4_MSG2 = '<s4-002@sady-ursynow.pl>';
+const S4_MSG2 = '<s4-002@demo-sady.example>';
 const S4_MSG3 = '<s4-003@wp.pl>';
-const S4_MSG4 = '<s4-004@sady-ursynow.pl>';
+const S4_MSG4 = '<s4-004@demo-sady.example>';
 
 const sadyThread4: MockEmail[] = [
   {
     mailbox_id: SADY, internet_message_id: S4_MSG1, graph_id: 'mock-graph-s4-001',
     conversation_id: 'conv-sady-4', subject: 'Usterka oświetlenia na parkingu naziemnym',
     from_address: 'jan.michalski@wp.pl', from_name: 'Jan Michalski',
-    to_addresses: [{ address: 'biuro@sady-ursynow.pl', name: 'Administracja Sady Ursynów' }],
+    to_addresses: [{ address: 'biuro@demo-sady.example', name: 'Administracja Sady Ursynów' }],
     cc_addresses: [],
     sent_at: daysAgo(4), received_at: daysAgo(4),
     body_text: `Dzień dobry,
@@ -990,7 +990,7 @@ tel. 510-111-222`,
   {
     mailbox_id: SADY, internet_message_id: S4_MSG2, graph_id: 'mock-graph-s4-002',
     conversation_id: 'conv-sady-4', subject: 'Re: Usterka oświetlenia na parkingu naziemnym',
-    from_address: 'biuro@sady-ursynow.pl', from_name: 'Tomasz Grabowski',
+    from_address: 'biuro@demo-sady.example', from_name: 'Tomasz Grabowski',
     to_addresses: [{ address: 'jan.michalski@wp.pl', name: 'Jan Michalski' }],
     cc_addresses: [],
     sent_at: daysAgo(3, 18), received_at: daysAgo(3, 18),
@@ -1008,7 +1008,7 @@ Tomasz Grabowski`,
     mailbox_id: SADY, internet_message_id: S4_MSG3, graph_id: 'mock-graph-s4-003',
     conversation_id: 'conv-sady-4', subject: 'Re: Usterka oświetlenia na parkingu naziemnym',
     from_address: 'jan.michalski@wp.pl', from_name: 'Jan Michalski',
-    to_addresses: [{ address: 'biuro@sady-ursynow.pl', name: 'Administracja Sady Ursynów' }],
+    to_addresses: [{ address: 'biuro@demo-sady.example', name: 'Administracja Sady Ursynów' }],
     cc_addresses: [],
     sent_at: daysAgo(1), received_at: daysAgo(1),
     body_text: `Oświetlenie naprawione, wszystkie latarnie działają. Dziękuję za szybką reakcję.
@@ -1021,7 +1021,7 @@ Jan Michalski`,
   {
     mailbox_id: SADY, internet_message_id: S4_MSG4, graph_id: 'mock-graph-s4-004',
     conversation_id: 'conv-sady-4', subject: 'Re: Usterka oświetlenia na parkingu naziemnym',
-    from_address: 'biuro@sady-ursynow.pl', from_name: 'Tomasz Grabowski',
+    from_address: 'biuro@demo-sady.example', from_name: 'Tomasz Grabowski',
     to_addresses: [{ address: 'jan.michalski@wp.pl', name: 'Jan Michalski' }],
     cc_addresses: [],
     sent_at: daysAgo(1, 2), received_at: daysAgo(1, 2),
@@ -1042,9 +1042,9 @@ Tomasz Grabowski`,
 // --- Watek 11: Brak odpowiedzi na reklamację wilgoci (6 emaili) ---
 const B1_MSG1 = '<b1-001@gmail.com>';
 const B1_MSG2 = '<b1-002@gmail.com>';
-const B1_MSG3 = '<b1-003@robyg.com.pl>';
+const B1_MSG3 = '<b1-003@demo-developer.example>';
 const B1_MSG4 = '<b1-004@gmail.com>';
-const B1_MSG5 = '<b1-005@robyg.com.pl>';
+const B1_MSG5 = '<b1-005@demo-developer.example>';
 const B1_MSG6 = '<b1-006@gmail.com>';
 
 const robygThread1: MockEmail[] = [
@@ -1052,7 +1052,7 @@ const robygThread1: MockEmail[] = [
     mailbox_id: ROBYG, internet_message_id: B1_MSG1, graph_id: 'mock-graph-b1-001',
     conversation_id: 'conv-robyg-1', subject: 'Reklamacja - wilgoć i pleśń w łazience',
     from_address: 'karolina.mazur@gmail.com', from_name: 'Karolina Mazur',
-    to_addresses: [{ address: 'rzecznik@robyg.com.pl', name: 'Rzecznik Robyg' }],
+    to_addresses: [{ address: 'rzecznik@demo-developer.example', name: 'Rzecznik Robyg' }],
     cc_addresses: [],
     sent_at: daysAgo(28), received_at: daysAgo(28),
     body_text: `Szanowni Państwo,
@@ -1077,7 +1077,7 @@ tel. 606-789-012`,
     mailbox_id: ROBYG, internet_message_id: B1_MSG2, graph_id: 'mock-graph-b1-002',
     conversation_id: 'conv-robyg-1', subject: 'Re: Reklamacja - wilgoć i pleśń w łazience',
     from_address: 'karolina.mazur@gmail.com', from_name: 'Karolina Mazur',
-    to_addresses: [{ address: 'rzecznik@robyg.com.pl', name: 'Rzecznik Robyg' }],
+    to_addresses: [{ address: 'rzecznik@demo-developer.example', name: 'Rzecznik Robyg' }],
     cc_addresses: [],
     sent_at: daysAgo(21), received_at: daysAgo(21),
     body_text: `Dzień dobry,
@@ -1092,7 +1092,7 @@ Karolina Mazur`,
   {
     mailbox_id: ROBYG, internet_message_id: B1_MSG3, graph_id: 'mock-graph-b1-003',
     conversation_id: 'conv-robyg-1', subject: 'RE: Reklamacja - wilgoć i pleśń w łazience',
-    from_address: 'rzecznik@robyg.com.pl', from_name: 'Biuro Rzecznika Robyg',
+    from_address: 'rzecznik@demo-developer.example', from_name: 'Biuro Rzecznika Robyg',
     to_addresses: [{ address: 'karolina.mazur@gmail.com', name: 'Karolina Mazur' }],
     cc_addresses: [],
     sent_at: daysAgo(14), received_at: daysAgo(14),
@@ -1110,7 +1110,7 @@ Biuro Rzecznika Robyg`,
     mailbox_id: ROBYG, internet_message_id: B1_MSG4, graph_id: 'mock-graph-b1-004',
     conversation_id: 'conv-robyg-1', subject: 'Re: Reklamacja - wilgoć i pleśń w łazience',
     from_address: 'karolina.mazur@gmail.com', from_name: 'Karolina Mazur',
-    to_addresses: [{ address: 'rzecznik@robyg.com.pl', name: 'Rzecznik Robyg' }],
+    to_addresses: [{ address: 'rzecznik@demo-developer.example', name: 'Rzecznik Robyg' }],
     cc_addresses: [],
     sent_at: daysAgo(7), received_at: daysAgo(7),
     body_text: `Minęły 3 tygodnie od zgłoszenia. Odpowiedź, którą otrzymałam, to szablon potwierdzający przyjęcie — zero konkretu. Nikt się ze mną nie kontaktował w sprawie oględzin.
@@ -1125,7 +1125,7 @@ Karolina Mazur`,
   {
     mailbox_id: ROBYG, internet_message_id: B1_MSG5, graph_id: 'mock-graph-b1-005',
     conversation_id: 'conv-robyg-1', subject: 'RE: Reklamacja - wilgoć i pleśń w łazience',
-    from_address: 'rzecznik@robyg.com.pl', from_name: 'Biuro Rzecznika Robyg',
+    from_address: 'rzecznik@demo-developer.example', from_name: 'Biuro Rzecznika Robyg',
     to_addresses: [{ address: 'karolina.mazur@gmail.com', name: 'Karolina Mazur' }],
     cc_addresses: [],
     sent_at: daysAgo(5), received_at: daysAgo(5),
@@ -1143,7 +1143,7 @@ Biuro Rzecznika Robyg`,
     mailbox_id: ROBYG, internet_message_id: B1_MSG6, graph_id: 'mock-graph-b1-006',
     conversation_id: 'conv-robyg-1', subject: 'Re: Reklamacja - wilgoć i pleśń w łazience',
     from_address: 'karolina.mazur@gmail.com', from_name: 'Karolina Mazur',
-    to_addresses: [{ address: 'rzecznik@robyg.com.pl', name: 'Rzecznik Robyg' }],
+    to_addresses: [{ address: 'rzecznik@demo-developer.example', name: 'Rzecznik Robyg' }],
     cc_addresses: [],
     sent_at: daysAgo(3), received_at: daysAgo(3),
     body_text: `"Prosimy o cierpliwość" — to jedyne co słyszę od miesiąca. Nadal nikt nie zadzwonił. Składam oficjalną skargę i wysyłam pismo do PINB.
@@ -1157,16 +1157,16 @@ Karolina Mazur`,
 
 // --- Watek 12: Niesprawna brama (4 emaile, powtarzający się problem) ---
 const B2_MSG1 = '<b2-001@wp.pl>';
-const B2_MSG2 = '<b2-002@robyg.com.pl>';
+const B2_MSG2 = '<b2-002@demo-developer.example>';
 const B2_MSG3 = '<b2-003@wp.pl>';
-const B2_MSG4 = '<b2-004@robyg.com.pl>';
+const B2_MSG4 = '<b2-004@demo-developer.example>';
 
 const robygThread2: MockEmail[] = [
   {
     mailbox_id: ROBYG, internet_message_id: B2_MSG1, graph_id: 'mock-graph-b2-001',
     conversation_id: 'conv-robyg-2', subject: 'Ponowna awaria bramy wjazdowej',
     from_address: 'robert.jankowski@wp.pl', from_name: 'Robert Jankowski',
-    to_addresses: [{ address: 'rzecznik@robyg.com.pl', name: 'Rzecznik Robyg' }],
+    to_addresses: [{ address: 'rzecznik@demo-developer.example', name: 'Rzecznik Robyg' }],
     cc_addresses: [],
     sent_at: daysAgo(10), received_at: daysAgo(10),
     body_text: `Dzień dobry,
@@ -1187,7 +1187,7 @@ tel. 502-345-678`,
   {
     mailbox_id: ROBYG, internet_message_id: B2_MSG2, graph_id: 'mock-graph-b2-002',
     conversation_id: 'conv-robyg-2', subject: 'RE: Ponowna awaria bramy wjazdowej',
-    from_address: 'rzecznik@robyg.com.pl', from_name: 'Biuro Rzecznika Robyg',
+    from_address: 'rzecznik@demo-developer.example', from_name: 'Biuro Rzecznika Robyg',
     to_addresses: [{ address: 'robert.jankowski@wp.pl', name: 'Robert Jankowski' }],
     cc_addresses: [],
     sent_at: daysAgo(7), received_at: daysAgo(7),
@@ -1205,7 +1205,7 @@ Biuro Rzecznika Robyg`,
     mailbox_id: ROBYG, internet_message_id: B2_MSG3, graph_id: 'mock-graph-b2-003',
     conversation_id: 'conv-robyg-2', subject: 'Re: Ponowna awaria bramy wjazdowej',
     from_address: 'robert.jankowski@wp.pl', from_name: 'Robert Jankowski',
-    to_addresses: [{ address: 'rzecznik@robyg.com.pl', name: 'Rzecznik Robyg' }],
+    to_addresses: [{ address: 'rzecznik@demo-developer.example', name: 'Rzecznik Robyg' }],
     cc_addresses: [],
     sent_at: daysAgo(5), received_at: daysAgo(5),
     body_text: `"Serwis został wezwany" — to samo słyszę za każdym razem. Brama dalej nie działa. Może zamiast ciągle naprawiać, czas wymienić ją na nową?
@@ -1220,7 +1220,7 @@ Robert Jankowski`,
   {
     mailbox_id: ROBYG, internet_message_id: B2_MSG4, graph_id: 'mock-graph-b2-004',
     conversation_id: 'conv-robyg-2', subject: 'RE: Ponowna awaria bramy wjazdowej',
-    from_address: 'rzecznik@robyg.com.pl', from_name: 'Biuro Rzecznika Robyg',
+    from_address: 'rzecznik@demo-developer.example', from_name: 'Biuro Rzecznika Robyg',
     to_addresses: [{ address: 'robert.jankowski@wp.pl', name: 'Robert Jankowski' }],
     cc_addresses: [],
     sent_at: daysAgo(2), received_at: daysAgo(2),
@@ -1239,14 +1239,14 @@ Biuro Rzecznika Robyg`,
 // --- Watek 13: Protokół zebrania (3 emaile, brak odpowiedzi) ---
 const B3_MSG1 = '<b3-001@onet.pl>';
 const B3_MSG2 = '<b3-002@onet.pl>';
-const B3_MSG3 = '<b3-003@robyg.com.pl>';
+const B3_MSG3 = '<b3-003@demo-developer.example>';
 
 const robygThread3: MockEmail[] = [
   {
     mailbox_id: ROBYG, internet_message_id: B3_MSG1, graph_id: 'mock-graph-b3-001',
     conversation_id: 'conv-robyg-3', subject: 'Prośba o protokół z zebrania wspólnoty',
     from_address: 'teresa.olszewska@onet.pl', from_name: 'Teresa Olszewska',
-    to_addresses: [{ address: 'rzecznik@robyg.com.pl', name: 'Rzecznik Robyg' }],
+    to_addresses: [{ address: 'rzecznik@demo-developer.example', name: 'Rzecznik Robyg' }],
     cc_addresses: [],
     sent_at: daysAgo(15), received_at: daysAgo(15),
     body_text: `Dzień dobry,
@@ -1264,7 +1264,7 @@ tel. 601-456-789`,
     mailbox_id: ROBYG, internet_message_id: B3_MSG2, graph_id: 'mock-graph-b3-002',
     conversation_id: 'conv-robyg-3', subject: 'Re: Prośba o protokół z zebrania wspólnoty',
     from_address: 'teresa.olszewska@onet.pl', from_name: 'Teresa Olszewska',
-    to_addresses: [{ address: 'rzecznik@robyg.com.pl', name: 'Rzecznik Robyg' }],
+    to_addresses: [{ address: 'rzecznik@demo-developer.example', name: 'Rzecznik Robyg' }],
     cc_addresses: [],
     sent_at: daysAgo(8), received_at: daysAgo(8),
     body_text: `Ponownie proszę o protokół z zebrania wspólnoty z 25 stycznia. Minął tydzień od mojej prośby i nie otrzymałam żadnej odpowiedzi.
@@ -1277,7 +1277,7 @@ Teresa Olszewska`,
   {
     mailbox_id: ROBYG, internet_message_id: B3_MSG3, graph_id: 'mock-graph-b3-003',
     conversation_id: 'conv-robyg-3', subject: 'RE: Prośba o protokół z zebrania wspólnoty',
-    from_address: 'rzecznik@robyg.com.pl', from_name: 'Biuro Rzecznika Robyg',
+    from_address: 'rzecznik@demo-developer.example', from_name: 'Biuro Rzecznika Robyg',
     to_addresses: [{ address: 'teresa.olszewska@onet.pl', name: 'Teresa Olszewska' }],
     cc_addresses: [],
     sent_at: daysAgo(3), received_at: daysAgo(3),

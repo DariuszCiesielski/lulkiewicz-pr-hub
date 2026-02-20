@@ -1,24 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { DEFAULT_PROMPTS, CLIENT_REPORT_SECTIONS } from '@/lib/ai/default-prompts';
-import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
+import { getAdminClient } from '@/lib/api/admin';
+import {
+  getScopedMailboxIds,
+  isMailboxInScope,
+  verifyScopedAdminAccess,
+} from '@/lib/api/demo-scope';
 
 export const maxDuration = 60;
 
 /** GET /api/reports — list reports */
 export async function GET(request: NextRequest) {
-  if (!(await verifyAdmin())) {
+  const scope = await verifyScopedAdminAccess();
+  if (!scope) {
     return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
   const { searchParams } = request.nextUrl;
   const mailboxId = searchParams.get('mailboxId');
 
-  let query = getAdminClient()
+  const adminClient = getAdminClient();
+  const scopedMailboxIds = await getScopedMailboxIds(adminClient, scope.isDemoUser);
+
+  let query = adminClient
     .from('reports')
     .select('*')
     .order('created_at', { ascending: false });
 
-  if (mailboxId) query = query.eq('mailbox_id', mailboxId);
+  if (mailboxId) {
+    const mailboxAllowed = await isMailboxInScope(adminClient, mailboxId, scope.isDemoUser);
+    if (!mailboxAllowed) {
+      return NextResponse.json({ reports: [] });
+    }
+    query = query.eq('mailbox_id', mailboxId);
+  } else if (scopedMailboxIds.length > 0) {
+    query = query.in('mailbox_id', scopedMailboxIds);
+  } else {
+    return NextResponse.json({ reports: [] });
+  }
 
   const { data, error } = await query;
 
@@ -38,7 +57,8 @@ export async function GET(request: NextRequest) {
  *  - 'standard': detailed 15-20 page report with sub-sections and tables
  */
 export async function POST(request: NextRequest) {
-  if (!(await verifyAdmin())) {
+  const scope = await verifyScopedAdminAccess();
+  if (!scope) {
     return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
@@ -59,6 +79,16 @@ export async function POST(request: NextRequest) {
   const templateType = body.templateType === 'client' ? 'client' : 'internal';
   const detailLevel = body.detailLevel === 'standard' ? 'standard' : 'synthetic';
   const adminClient = getAdminClient();
+
+  if (body.mailboxId) {
+    const mailboxAllowed = await isMailboxInScope(adminClient, body.mailboxId, scope.isDemoUser);
+    if (!mailboxAllowed) {
+      return NextResponse.json(
+        { error: 'Skrzynka nie została znaleziona' },
+        { status: 404 }
+      );
+    }
+  }
 
   // Resolve analysisJobId — accept directly or find latest completed job for mailbox
   let analysisJobId = body.analysisJobId;
@@ -93,6 +123,11 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (jobError || !job) {
+    return NextResponse.json({ error: 'Zadanie analizy nie znalezione' }, { status: 404 });
+  }
+
+  const jobMailboxAllowed = await isMailboxInScope(adminClient, job.mailbox_id, scope.isDemoUser);
+  if (!jobMailboxAllowed) {
     return NextResponse.json({ error: 'Zadanie analizy nie znalezione' }, { status: 404 });
   }
 

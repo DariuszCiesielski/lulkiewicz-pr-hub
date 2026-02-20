@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { buildThreadsForMailbox } from '@/lib/threading/thread-builder';
-import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
+import { getAdminClient } from '@/lib/api/admin';
+import {
+  applyMailboxDemoScope,
+  verifyScopedAdminAccess,
+} from '@/lib/api/demo-scope';
 
 export const maxDuration = 60;
 
@@ -10,7 +14,8 @@ export const maxDuration = 60;
  * Body: { mailboxId: string }
  */
 export async function POST(request: NextRequest) {
-  if (!(await verifyAdmin())) {
+  const scope = await verifyScopedAdminAccess();
+  if (!scope) {
     return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
@@ -29,11 +34,12 @@ export async function POST(request: NextRequest) {
   const adminClient = getAdminClient();
 
   // Get mailbox email address
-  const { data: mailbox, error: mailboxError } = await adminClient
+  let mailboxQuery = adminClient
     .from('mailboxes')
     .select('email_address')
-    .eq('id', mailboxId)
-    .single();
+    .eq('id', mailboxId);
+  mailboxQuery = applyMailboxDemoScope(mailboxQuery, scope.isDemoUser);
+  const { data: mailbox, error: mailboxError } = await mailboxQuery.single();
 
   if (mailboxError || !mailbox) {
     return NextResponse.json({ error: 'Skrzynka nie została znaleziona' }, { status: 404 });

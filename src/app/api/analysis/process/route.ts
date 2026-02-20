@@ -7,7 +7,11 @@ import {
   THREAD_SUMMARY_SYSTEM_PROMPT,
   THREAD_SUMMARY_USER_PROMPT_TEMPLATE,
 } from '@/lib/ai/thread-summary-prompt';
-import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
+import { getAdminClient } from '@/lib/api/admin';
+import {
+  isMailboxInScope,
+  verifyScopedAdminAccess,
+} from '@/lib/api/demo-scope';
 
 export const maxDuration = 60;
 
@@ -27,7 +31,8 @@ const MAX_RETRIES = 3;
  * Returns: { status, processedThreads, totalThreads, hasMore }
  */
 export async function POST(request: NextRequest) {
-  if (!(await verifyAdmin())) {
+  const scope = await verifyScopedAdminAccess();
+  if (!scope) {
     return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
@@ -52,6 +57,11 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (jobError || !job) {
+    return NextResponse.json({ error: 'Zadanie nie znalezione' }, { status: 404 });
+  }
+
+  const mailboxAllowed = await isMailboxInScope(adminClient, job.mailbox_id, scope.isDemoUser);
+  if (!mailboxAllowed) {
     return NextResponse.json({ error: 'Zadanie nie znalezione' }, { status: 404 });
   }
 

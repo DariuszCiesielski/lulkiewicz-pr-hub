@@ -8,7 +8,9 @@ import { MOCK_MAILBOXES } from './seed-mailboxes';
 import { ALL_MOCK_EMAILS } from './seed-emails';
 import { resetCounter } from './seed-utils';
 
-export async function seedMockData(adminClient: SupabaseClient) {
+export async function seedMockData(
+  adminClient: SupabaseClient
+) {
   resetCounter();
 
   // 1. Upsert mailboxes

@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { DEFAULT_PROMPTS, CLIENT_REPORT_SECTIONS } from '@/lib/ai/default-prompts';
 import { THREAD_SUMMARY_SECTION_KEY } from '@/lib/ai/thread-summary-prompt';
-import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
+import { getAdminClient } from '@/lib/api/admin';
+import {
+  isMailboxInScope,
+  verifyScopedAdminAccess,
+} from '@/lib/api/demo-scope';
 import { synthesizeReportSection } from '@/lib/ai/report-synthesizer';
 import { loadAIConfig } from '@/lib/ai/ai-provider';
 import type { PerThreadResult, SynthesisInput, DetailLevel } from '@/lib/ai/report-synthesizer';
@@ -23,7 +27,8 @@ const SECTIONS_PER_REQUEST = 1;
  * Returns: { status, processedSections, totalSections, hasMore }
  */
 export async function POST(request: NextRequest) {
-  if (!(await verifyAdmin())) {
+  const scope = await verifyScopedAdminAccess();
+  if (!scope) {
     return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
@@ -49,6 +54,11 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (reportError || !report) {
+    return NextResponse.json({ error: 'Raport nie znaleziony' }, { status: 404 });
+  }
+
+  const mailboxAllowed = await isMailboxInScope(adminClient, report.mailbox_id, scope.isDemoUser);
+  if (!mailboxAllowed) {
     return NextResponse.json({ error: 'Raport nie znaleziony' }, { status: 404 });
   }
 

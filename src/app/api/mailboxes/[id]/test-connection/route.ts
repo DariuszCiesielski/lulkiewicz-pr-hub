@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { decrypt } from '@/lib/crypto/encrypt';
 import { getAccessToken, parseGraphAuthError } from '@/lib/email/graph-auth';
 import { createGraphClient } from '@/lib/email/graph-client';
-import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
+import { getAdminClient } from '@/lib/api/admin';
+import {
+  applyMailboxDemoScope,
+  verifyScopedAdminAccess,
+} from '@/lib/api/demo-scope';
 import type { MailboxCredentials } from '@/types/email';
 
 // Allow up to 30s for connection test (auth + Graph API call)
@@ -12,7 +16,8 @@ export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await verifyAdmin())) {
+  const scope = await verifyScopedAdminAccess();
+  if (!scope) {
     return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
@@ -20,11 +25,12 @@ export async function POST(
   const adminClient = getAdminClient();
 
   // Fetch mailbox with encrypted credentials
-  const { data: mailbox, error: findError } = await adminClient
+  let mailboxQuery = adminClient
     .from('mailboxes')
     .select('id, email_address, connection_type, credentials_encrypted, tenant_id, client_id')
-    .eq('id', id)
-    .single();
+    .eq('id', id);
+  mailboxQuery = applyMailboxDemoScope(mailboxQuery, scope.isDemoUser);
+  const { data: mailbox, error: findError } = await mailboxQuery.single();
 
   if (findError || !mailbox) {
     return NextResponse.json(

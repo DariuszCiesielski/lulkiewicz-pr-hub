@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
+import { getAdminClient } from '@/lib/api/admin';
+import {
+  isMailboxInScope,
+  verifyScopedAdminAccess,
+} from '@/lib/api/demo-scope';
 
 /**
  * GET /api/threads/[id] — thread detail with all emails.
@@ -8,7 +12,8 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await verifyAdmin())) {
+  const scope = await verifyScopedAdminAccess();
+  if (!scope) {
     return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
@@ -23,6 +28,11 @@ export async function GET(
     .single();
 
   if (threadError || !thread) {
+    return NextResponse.json({ error: 'Wątek nie został znaleziony' }, { status: 404 });
+  }
+
+  const mailboxAllowed = await isMailboxInScope(adminClient, thread.mailbox_id, scope.isDemoUser);
+  if (!mailboxAllowed) {
     return NextResponse.json({ error: 'Wątek nie został znaleziony' }, { status: 404 });
   }
 

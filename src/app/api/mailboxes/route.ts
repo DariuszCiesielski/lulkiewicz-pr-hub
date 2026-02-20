@@ -1,23 +1,32 @@
 import { NextResponse } from 'next/server';
 import { encrypt } from '@/lib/crypto/encrypt';
-import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
+import { getAdminClient } from '@/lib/api/admin';
+import {
+  applyMailboxDemoScope,
+  ensureDemoMailboxDisplayName,
+  isDemoMailboxDisplayName,
+  verifyScopedAdminAccess,
+} from '@/lib/api/demo-scope';
 import type { ConnectionType } from '@/types/email';
 
 // Columns to return in GET responses (never credentials_encrypted)
 const MAILBOX_SELECT_COLUMNS = 'id, email_address, display_name, connection_type, tenant_id, client_id, sync_status, last_sync_at, total_emails, delta_link, created_at, updated_at, connection_tested_at, connection_test_ok';
 
 export async function GET() {
-  if (!(await verifyAdmin())) {
+  const scope = await verifyScopedAdminAccess();
+  if (!scope) {
     return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
   const adminClient = getAdminClient();
 
   // Fetch mailboxes
-  const { data: mailboxes, error } = await adminClient
+  let mailboxesQuery = adminClient
     .from('mailboxes')
     .select(MAILBOX_SELECT_COLUMNS)
     .order('created_at', { ascending: true });
+  mailboxesQuery = applyMailboxDemoScope(mailboxesQuery, scope.isDemoUser);
+  const { data: mailboxes, error } = await mailboxesQuery;
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -42,7 +51,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  if (!(await verifyAdmin())) {
+  const scope = await verifyScopedAdminAccess();
+  if (!scope) {
     return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
@@ -76,10 +86,19 @@ export async function POST(request: Request) {
     client_secret,
   } = body;
 
+  const normalizedDisplayName = display_name?.trim() || null;
+
   // Validation: email_address required
   if (!email_address || !email_address.includes('@')) {
     return NextResponse.json(
       { error: 'Adres email skrzynki jest wymagany' },
+      { status: 400 }
+    );
+  }
+
+  if (!scope.isDemoUser && isDemoMailboxDisplayName(normalizedDisplayName)) {
+    return NextResponse.json(
+      { error: 'Prefiks [MOCK] jest zarezerwowany dla konta demo' },
       { status: 400 }
     );
   }
@@ -146,7 +165,9 @@ export async function POST(request: Request) {
     .from('mailboxes')
     .insert({
       email_address,
-      display_name: display_name || null,
+      display_name: scope.isDemoUser
+        ? ensureDemoMailboxDisplayName(normalizedDisplayName, email_address)
+        : normalizedDisplayName,
       connection_type,
       credentials_encrypted: credentialsEncrypted,
       tenant_id: resolvedTenantId,

@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
-import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
+import { getAdminClient } from '@/lib/api/admin';
+import {
+  applyMailboxDemoScope,
+  verifyScopedAdminAccess,
+} from '@/lib/api/demo-scope';
 import type { SyncJobType } from '@/types/email';
 
 // Vercel function timeout
@@ -12,7 +16,8 @@ export const maxDuration = 30;
  * Returns: { jobId: string, status: 'pending' }
  */
 export async function POST(request: Request) {
-  if (!(await verifyAdmin())) {
+  const scope = await verifyScopedAdminAccess();
+  if (!scope) {
     return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
@@ -45,11 +50,12 @@ export async function POST(request: Request) {
   }
 
   // Check mailbox exists
-  const { data: mailbox, error: mailboxError } = await adminClient
+  let mailboxQuery = adminClient
     .from('mailboxes')
     .select('id, sync_status, last_sync_at')
-    .eq('id', mailboxId)
-    .single();
+    .eq('id', mailboxId);
+  mailboxQuery = applyMailboxDemoScope(mailboxQuery, scope.isDemoUser);
+  const { data: mailbox, error: mailboxError } = await mailboxQuery.single();
 
   if (mailboxError || !mailbox) {
     return NextResponse.json(

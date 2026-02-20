@@ -55,6 +55,35 @@ npm run dev
 | `AZURE_CLIENT_ID` | ID zarejestrowanej aplikacji Azure |
 | `AZURE_CLIENT_SECRET` | Client Secret aplikacji Azure |
 | `OPENAI_API_KEY` | Klucz API OpenAI |
+| `ALLOW_SEED` | Ustaw `true`, aby wlaczyc endpointy demo/seed w produkcji |
+| `DEMO_USER_EMAIL` | Email konta demo (domyslnie `demo@demo.pl`) |
+| `DEMO_USER_PASSWORD` | Haslo konta demo (wymagane do setupu demo) |
+
+## Wersja demo (mock data)
+
+Wersje demo mozna przygotowac jednym kliknieciem z panelu admina.
+
+1. Ustaw zmienne w `.env.local` / Vercel:
+   - `DEMO_USER_PASSWORD=<haslo>`
+   - opcjonalnie `DEMO_USER_EMAIL=demo@demo.pl`
+   - w produkcji dodatkowo `ALLOW_SEED=true`
+2. Zaloguj sie jako administrator i przejdz do `/admin`.
+3. Kliknij przycisk **Przygotuj demo**.
+
+Efekt:
+- konto demo zostanie utworzone lub odswiezone
+- uprawnienia konta demo beda ustawione na `admin`
+- mockowe skrzynki i emaile zostana zseedowane
+- watki email zostana automatycznie zbudowane
+- konto `demo@demo.pl` widzi tylko skrzynki i dane z prefiksem `[MOCK]`
+- standardowe konta admin nie widza danych `[MOCK]`
+- adresy skrzynek i domeny w demo sa anonimizowane (`*.example`)
+
+Mozesz tez wywolac endpoint recznie z konsoli przegladarki (bedac zalogowanym jako admin):
+
+```js
+await fetch('/api/dev/setup-demo', { method: 'POST' });
+```
 
 ## Konfiguracja Azure AD
 

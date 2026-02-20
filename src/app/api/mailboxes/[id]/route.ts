@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { encrypt } from '@/lib/crypto/encrypt';
-import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
+import { getAdminClient } from '@/lib/api/admin';
+import {
+  applyMailboxDemoScope,
+  ensureDemoMailboxDisplayName,
+  isDemoMailboxDisplayName,
+  verifyScopedAdminAccess,
+} from '@/lib/api/demo-scope';
 import type { ConnectionType } from '@/types/email';
 
 const MAILBOX_SELECT_COLUMNS = 'id, email_address, display_name, connection_type, tenant_id, client_id, sync_status, last_sync_at, total_emails, delta_link, created_at, updated_at, connection_tested_at, connection_test_ok';
@@ -9,18 +15,20 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await verifyAdmin())) {
+  const scope = await verifyScopedAdminAccess();
+  if (!scope) {
     return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
   const { id } = await params;
   const adminClient = getAdminClient();
 
-  const { data, error } = await adminClient
+  let mailboxQuery = adminClient
     .from('mailboxes')
     .select(MAILBOX_SELECT_COLUMNS)
-    .eq('id', id)
-    .single();
+    .eq('id', id);
+  mailboxQuery = applyMailboxDemoScope(mailboxQuery, scope.isDemoUser);
+  const { data, error } = await mailboxQuery.single();
 
   if (error) {
     if (error.code === 'PGRST116') {
@@ -36,7 +44,8 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await verifyAdmin())) {
+  const scope = await verifyScopedAdminAccess();
+  if (!scope) {
     return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
@@ -61,11 +70,12 @@ export async function PATCH(
   }
 
   // Verify mailbox exists
-  const { data: existing, error: findError } = await adminClient
+  let existingQuery = adminClient
     .from('mailboxes')
-    .select('id, connection_type')
-    .eq('id', id)
-    .single();
+    .select('id, connection_type, email_address, display_name')
+    .eq('id', id);
+  existingQuery = applyMailboxDemoScope(existingQuery, scope.isDemoUser);
+  const { data: existing, error: findError } = await existingQuery.single();
 
   if (findError || !existing) {
     return NextResponse.json({ error: 'Skrzynka nie została znaleziona' }, { status: 404 });
@@ -83,7 +93,23 @@ export async function PATCH(
     update.email_address = body.email_address;
   }
 
-  if (body.display_name !== undefined) update.display_name = body.display_name || null;
+  if (body.display_name !== undefined) {
+    const normalizedDisplayName = body.display_name?.trim() || null;
+
+    if (!scope.isDemoUser && isDemoMailboxDisplayName(normalizedDisplayName)) {
+      return NextResponse.json(
+        { error: 'Prefiks [MOCK] jest zarezerwowany dla konta demo' },
+        { status: 400 }
+      );
+    }
+
+    update.display_name = scope.isDemoUser
+      ? ensureDemoMailboxDisplayName(
+          normalizedDisplayName,
+          body.email_address || existing.email_address
+        )
+      : normalizedDisplayName;
+  }
   if (body.connection_type !== undefined) update.connection_type = body.connection_type;
   // Only update tenant_id / client_id if non-empty value provided (empty = keep existing)
   if (body.tenant_id) update.tenant_id = body.tenant_id;
@@ -138,7 +164,8 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await verifyAdmin())) {
+  const scope = await verifyScopedAdminAccess();
+  if (!scope) {
     return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
@@ -146,11 +173,12 @@ export async function DELETE(
   const adminClient = getAdminClient();
 
   // Verify mailbox exists
-  const { data: mailbox, error: findError } = await adminClient
+  let mailboxQuery = adminClient
     .from('mailboxes')
     .select('id, email_address')
-    .eq('id', id)
-    .single();
+    .eq('id', id);
+  mailboxQuery = applyMailboxDemoScope(mailboxQuery, scope.isDemoUser);
+  const { data: mailbox, error: findError } = await mailboxQuery.single();
 
   if (findError || !mailbox) {
     return NextResponse.json({ error: 'Skrzynka nie została znaleziona' }, { status: 404 });

@@ -11,7 +11,12 @@ import {
   getMailboxMessageCount,
   filterExcludedFolders,
 } from '@/lib/email/email-fetcher';
-import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
+import { getAdminClient } from '@/lib/api/admin';
+import {
+  applyMailboxDemoScope,
+  isMailboxInScope,
+  verifyScopedAdminAccess,
+} from '@/lib/api/demo-scope';
 import type { MailboxCredentials, SyncJobStatus } from '@/types/email';
 
 // Vercel function timeout — max 60s for processing a batch
@@ -32,7 +37,8 @@ const SAFETY_TIMEOUT_MS = 50_000;
 export async function POST(request: Request) {
   const batchStartTime = Date.now();
 
-  if (!(await verifyAdmin())) {
+  const scope = await verifyScopedAdminAccess();
+  if (!scope) {
     return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
@@ -71,6 +77,14 @@ export async function POST(request: Request) {
     );
   }
 
+  const mailboxAllowed = await isMailboxInScope(adminClient, job.mailbox_id, scope.isDemoUser);
+  if (!mailboxAllowed) {
+    return NextResponse.json(
+      { error: 'Zadanie synchronizacji nie zostało znalezione' },
+      { status: 404 }
+    );
+  }
+
   // Validate job status
   const allowedStatuses: SyncJobStatus[] = ['pending', 'processing', 'has_more'];
   if (!allowedStatuses.includes(job.status)) {
@@ -81,11 +95,12 @@ export async function POST(request: Request) {
   }
 
   // Fetch mailbox
-  const { data: mailbox, error: mailboxError } = await adminClient
+  let mailboxQuery = adminClient
     .from('mailboxes')
     .select('id, email_address, connection_type, credentials_encrypted, tenant_id, client_id, last_sync_at')
-    .eq('id', job.mailbox_id)
-    .single();
+    .eq('id', job.mailbox_id);
+  mailboxQuery = applyMailboxDemoScope(mailboxQuery, scope.isDemoUser);
+  const { data: mailbox, error: mailboxError } = await mailboxQuery.single();
 
   if (mailboxError || !mailbox) {
     await failJob(adminClient, jobId, job.mailbox_id, 'Skrzynka nie została znaleziona');

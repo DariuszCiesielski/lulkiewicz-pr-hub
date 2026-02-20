@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { DEFAULT_PROMPTS, CLIENT_REPORT_SECTIONS } from '@/lib/ai/default-prompts';
 import { THREAD_SUMMARY_SECTION_KEY } from '@/lib/ai/thread-summary-prompt';
-import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
+import { getAdminClient } from '@/lib/api/admin';
+import {
+  isMailboxInScope,
+  verifyScopedAdminAccess,
+} from '@/lib/api/demo-scope';
 
 /**
  * GET /api/analysis/coverage?mailboxId=X
@@ -10,7 +14,8 @@ import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
  * Used by the report generation form to warn the user before generating.
  */
 export async function GET(request: NextRequest) {
-  if (!(await verifyAdmin())) {
+  const scope = await verifyScopedAdminAccess();
+  if (!scope) {
     return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
@@ -20,6 +25,10 @@ export async function GET(request: NextRequest) {
   }
 
   const adminClient = getAdminClient();
+  const mailboxAllowed = await isMailboxInScope(adminClient, mailboxId, scope.isDemoUser);
+  if (!mailboxAllowed) {
+    return NextResponse.json({ error: 'Skrzynka nie została znaleziona' }, { status: 404 });
+  }
 
   // Find latest completed analysis job for this mailbox
   const { data: latestJob } = await adminClient
