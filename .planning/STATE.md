@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-10)
 
 **Core value:** Hub narzędziowy — AI analizuje maile (email-analyzer) i posty z grup FB (fb-analyzer) dla audytu komunikacji administracji osiedli
-**Current focus:** Phase 2.2 (Email Analyzer Quality) — ALL COMPLETE. Milestone v1.1 — FB Analyzer (phase 8 COMPLETE, ready for phase 9).
+**Current focus:** Milestone v1.1 — FB Analyzer. Phase 9 (Scraping Engine) IN PROGRESS. Plan 01/03 COMPLETE.
 
 ## Current Position
 
-Phase: Phase 2.2 (Email Analyzer Quality) — ALL COMPLETE
-Plan: 4 of 4
-Status: All plans (02.2-01 through 02.2-04) COMPLETE. Phase 2.2 done.
-Last activity: 2026-02-17 — v1.0.4 report sections overhaul (7→13 sections per client requirements)
+Phase: Phase 9 (Scraping Engine) — IN PROGRESS
+Plan: 1 of 3
+Status: Plan 09-01 COMPLETE. Plans 09-02, 09-03 pending.
+Last activity: 2026-02-23 — Completed 09-01-PLAN.md (Apify client + post mapper + scraping types)
 
 Progress (v1.0 Email Analyzer): [####################] 100% (Phases 1-6 + Phase 2.1 + Phase 2.2 ALL COMPLETE)
-Progress (v1.1 FB Analyzer): [########............] 40% (phases 7-8 COMPLETE, ready for phase 9)
+Progress (v1.1 FB Analyzer): [##########..........] 50% (phases 7-8 COMPLETE, phase 9 plan 1/3 done)
 
 ## Planning Status
 
@@ -70,6 +70,11 @@ Progress (v1.1 FB Analyzer): [########............] 40% (phases 7-8 COMPLETE, re
 - [x] 08-03-PLAN.md (Wave 3, autonomous) — Groups UI: tabela, modal CRUD, bulk upload, bulk toolbar (a9c787d, 049c10d)
 - [x] 08-04-PLAN.md (Wave 3, autonomous) — Settings UI: Apify token, cookies, actor ID, AI instructions (b1211a3)
 
+**Phase 9 plans (3 plans, 2 waves) — IN PROGRESS:**
+- [x] 09-01-PLAN.md (Wave 1, autonomous) — Apify client + post mapper + scraping types (b1c3606, 30780e8)
+- [ ] 09-02-PLAN.md (Wave 1, autonomous) — Scrape API routes (/api/fb/scrape, /process, /status)
+- [ ] 09-03-PLAN.md (Wave 2, autonomous) — Scrape UI (useScrapeJob hook, ScrapeProgress, ScrapeButton)
+
 ## Accumulated Context
 
 ### Decisions
@@ -115,6 +120,12 @@ Progress (v1.1 FB Analyzer): [########............] 40% (phases 7-8 COMPLETE, re
 - [08-02]: Record<string, unknown> cast dla Supabase string-based selects (brak generated types)
 - [08-02]: Bulk ops filtruja .is('deleted_at', null) — zapobiega operacjom na soft-deleted grupach
 - [08-02]: POST fb-settings waliduje prefiks klucza — tylko dozwolone klucze akceptowane
+- [09-01]: Native fetch() zamiast apify-client npm — 3 endpointy nie uzasadniaja 12 deps / 2.8 MB
+- [09-01]: ApifyActorInput z dot-notation key scrapeGroupPosts.groupUrl (zweryfikowane z N8N)
+- [09-01]: formatApifyDate bez leading zero (yyyy-M-dd) — format wymagany przez aktora
+- [09-01]: MappedFbPost/MappedFbComment osobne od FbPost/FbComment — mapper tworzy rows do upsert
+- [09-01]: extractFacebookPostId: 3 patterny URL + fallback na caly URL (nigdy pusty string)
+- [09-01]: logRawPostSample debug helper — weryfikacja schematu aktora przy pierwszym scrapowaniu
 
 - [Phase 2.1 INSERTED]: Multi-folder sync — /messages zamiast /mailFolders/inbox/messages
 - [Phase 2.1]: Delta sync zmieniony na smart resync z $filter=receivedDateTime ge (delta per-folder only w Graph API)
@@ -193,8 +204,8 @@ organizations, organization_members, **mailboxes** (extended: +8 cols, sync_stat
 
 ## Session Continuity
 
-Last session: 2026-02-17T12:00Z
-Stopped at: v1.0.4 released — report sections overhaul (13 sekcji per client requirements)
-Resume file: .planning/phases/02.2-email-analyzer-quality/02.2-VERIFICATION.md
-Next step: Phase 9 (FB Scraping Engine) — /gsd:discuss-phase 9
-Version tag: v1.0.4
+Last session: 2026-02-23T09:05Z
+Stopped at: Completed 09-01-PLAN.md (Apify client + post mapper + scraping types)
+Resume file: .planning/phases/09-scraping-engine/09-01-SUMMARY.md
+Next step: Execute 09-02-PLAN.md (Scrape API routes)
+Version tag: v1.0.8
