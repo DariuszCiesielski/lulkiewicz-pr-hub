@@ -127,3 +127,102 @@ export type FbSettingsKey =
   | 'fb_cookies'
   | 'apify_actor_id'
   | `developer_instruction:${string}`;
+
+// --- Phase 9: Scraping Types ---
+
+export interface ApifyCookieObject {
+  domain: string;
+  expirationDate?: number;
+  hostOnly: boolean;
+  httpOnly: boolean;
+  name: string;
+  path: string;
+  sameSite: string | null;
+  secure: boolean;
+  session: boolean;
+  storeId: string | null;
+  value: string;
+}
+
+export interface ApifyActorInput {
+  cookie: ApifyCookieObject[];
+  'scrapeGroupPosts.groupUrl': string;
+  scrapeUntil: string;  // yyyy-M-dd (BEZ leading zero!)
+  sortType: 'new_posts';
+  minDelay: number;
+  maxDelay: number;
+  proxy: { useApifyProxy: boolean };
+}
+
+export interface ApifyRunStatusResponse {
+  id: string;
+  status: ApifyRunState;
+  statusMessage: string | null;
+  defaultDatasetId: string;
+  startedAt: string | null;
+  finishedAt: string | null;
+}
+
+export type ApifyRunState =
+  | 'READY' | 'RUNNING' | 'SUCCEEDED' | 'FAILED'
+  | 'TIMING-OUT' | 'TIMED-OUT' | 'ABORTING' | 'ABORTED';
+
+export type ApifyStatusAction = 'keep_polling' | 'fetch_results' | 'mark_failed';
+
+export interface ScrapeConfig {
+  token: string;
+  cookies: ApifyCookieObject[];
+  actorId: string;
+  groupUrl: string;
+}
+
+export type ScrapeUIStatus =
+  'idle' | 'starting' | 'cookie_check' | 'running' | 'downloading' | 'completed' | 'error';
+
+export interface ScrapeProgress {
+  currentGroup: string | null;
+  groupsTotal: number;
+  groupsCompleted: number;
+  postsFound: number;
+  postsNew: number;
+  postsUpdated: number;
+  apifyStatus: string | null;
+  estimatedWaitSeconds: number | null;
+}
+
+export interface ScrapeErrorInfo {
+  message: string;
+  suggestion: string;
+}
+
+// Mapowanie bledow Apify na komunikaty PL
+export const SCRAPE_ERROR_MESSAGES: Record<string, ScrapeErrorInfo> = {
+  'TIMED-OUT': {
+    message: 'Scrapowanie przekroczylo limit czasu Apify',
+    suggestion: 'Sprobuj ponownie. Jesli blad sie powtarza, zmniejsz zakres dat.',
+  },
+  'FAILED': {
+    message: 'Apify Actor zakonczyl sie bledem',
+    suggestion: 'Sprawdz logi w konsoli Apify. Moze byc problem z cookies lub proxy.',
+  },
+  'ABORTED': {
+    message: 'Scrapowanie zostalo przerwane',
+    suggestion: 'Run zostal recznie zatrzymany lub przekroczyl limit pamieci.',
+  },
+  'NO_TOKEN': {
+    message: 'Brak skonfigurowanego tokenu Apify',
+    suggestion: 'Przejdz do Ustawienia > Apify API Token i wklej swoj token.',
+  },
+  'NO_COOKIES': {
+    message: 'Brak skonfigurowanych cookies Facebook',
+    suggestion: 'Przejdz do Ustawienia > Facebook Cookies i wklej cookies z Cookie-Editor.',
+  },
+  'COOKIES_EXPIRED': {
+    message: 'Cookies Facebook prawdopodobnie wygasly',
+    suggestion: 'Zaloguj sie na dedykowane konto FB, wyeksportuj nowe cookies z Cookie-Editor i wklej w Ustawienia.',
+  },
+  'RATE_LIMITED': {
+    message: 'Zbyt czeste scrapowanie — odczekaj przed kolejna proba',
+    suggestion: 'Poczekaj minimum 3 minuty miedzy scrapowaniami roznych grup.',
+  },
+};
