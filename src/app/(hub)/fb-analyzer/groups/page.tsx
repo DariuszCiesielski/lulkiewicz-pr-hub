@@ -35,6 +35,8 @@ export default function FbGroupsPage() {
     progress: scrapeProgress,
     error: scrapeError,
     reset: scrapeReset,
+    cookieCheckWarning,
+    proceedAfterWarning,
   } = useScrapeJob(() => refreshGroups());
 
   const isScraping = scrapeStatus !== 'idle' && scrapeStatus !== 'completed' && scrapeStatus !== 'error';
@@ -369,13 +371,15 @@ export default function FbGroupsPage() {
       )}
 
       {/* Scrape Progress */}
-      {(scrapeStatus !== 'idle' || scrapeProgress.isWaitingBetweenGroups) && (
+      {(scrapeStatus !== 'idle' || scrapeProgress.isWaitingBetweenGroups || cookieCheckWarning) && (
         <ScrapeProgress
           status={scrapeStatus}
           progress={scrapeProgress}
           error={scrapeError}
           onRetry={undefined}
           onReset={scrapeReset}
+          cookieCheckWarning={cookieCheckWarning}
+          onProceedAnyway={proceedAfterWarning}
         />
       )}
 

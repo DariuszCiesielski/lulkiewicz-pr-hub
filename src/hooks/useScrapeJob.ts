@@ -21,6 +21,8 @@ export interface UseScrapeJobReturn {
   error: ScrapeErrorInfo | null;
   jobId: string | null;
   reset: () => void;
+  cookieCheckWarning: string | null;
+  proceedAfterWarning: () => void;
 }
 
 // --- Initial state ---
@@ -45,6 +47,11 @@ export function useScrapeJob(onComplete?: () => void): UseScrapeJobReturn {
   const [status, setStatus] = useState<ScrapeUIStatus>('idle');
   const [progress, setProgress] = useState<ScrapeProgress>(INITIAL_PROGRESS);
   const [error, setError] = useState<ScrapeErrorInfo | null>(null);
+
+  // Cookie check state
+  const [cookieCheckWarning, setCookieCheckWarning] = useState<string | null>(null);
+  const skipCookieCheckRef = useRef(false);
+  const cookieCheckGroupRef = useRef<{ id: string; name?: string } | null>(null);
 
   // Refs
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -176,7 +183,6 @@ export function useScrapeJob(onComplete?: () => void): UseScrapeJobReturn {
   const startScrape = useCallback(async (groupId: string, groupName?: string): Promise<void> => {
     clearPollTimeout();
     setJobId(null);
-    setStatus('starting');
     setProgress(prev => ({
       ...INITIAL_PROGRESS,
       currentGroup: groupName || null,
@@ -185,6 +191,65 @@ export function useScrapeJob(onComplete?: () => void): UseScrapeJobReturn {
     }));
     setError(null);
     mountedRef.current = true;
+
+    // --- Pre-scrape cookie health check ---
+    if (!skipCookieCheckRef.current) {
+      setStatus('cookie_check');
+      setCookieCheckWarning(null);
+
+      try {
+        const checkRes = await fetch('/api/fb/scrape/check-cookies', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ groupId }),
+        });
+
+        if (!mountedRef.current) return;
+
+        if (!checkRes.ok) {
+          // Config error (400) — propagate as normal error
+          if (checkRes.status === 400) {
+            const checkData = await checkRes.json().catch(() => ({ error: 'Blad konfiguracji' }));
+            setStatus('error');
+            setError({
+              message: checkData.error || 'Blad konfiguracji scrapowania',
+              suggestion: checkData.suggestion || 'Sprawdz konfiguracje Apify i cookies.',
+            });
+            return;
+          }
+          // Other HTTP errors — treat as cookie warning
+          setCookieCheckWarning(SCRAPE_ERROR_MESSAGES['COOKIES_EXPIRED'].suggestion);
+          cookieCheckGroupRef.current = { id: groupId, name: groupName };
+          setStatus('idle');
+          return;
+        }
+
+        const checkData = await checkRes.json();
+
+        if (!mountedRef.current) return;
+
+        if (!checkData.success || checkData.postsFound === 0) {
+          setCookieCheckWarning(SCRAPE_ERROR_MESSAGES['COOKIES_EXPIRED'].suggestion);
+          cookieCheckGroupRef.current = { id: groupId, name: groupName };
+          setStatus('idle');
+          return;
+        }
+
+        // Cookie check passed — continue to actual scrape
+      } catch {
+        if (!mountedRef.current) return;
+        // Network error during check — show warning but allow proceeding
+        setCookieCheckWarning('Nie udalo sie sprawdzic cookies. Mozesz kontynuowac na wlasne ryzyko.');
+        cookieCheckGroupRef.current = { id: groupId, name: groupName };
+        setStatus('idle');
+        return;
+      }
+    }
+
+    // Reset skip flag after use
+    skipCookieCheckRef.current = false;
+
+    setStatus('starting');
 
     try {
       const res = await fetch('/api/fb/scrape', {
@@ -379,6 +444,20 @@ export function useScrapeJob(onComplete?: () => void): UseScrapeJobReturn {
     }
   }, [clearPollTimeout, pollScrapeProcess]);
 
+  // --- Proceed after cookie warning ---
+
+  const proceedAfterWarning = useCallback(() => {
+    const group = cookieCheckGroupRef.current;
+    if (!group) return;
+
+    skipCookieCheckRef.current = true;
+    setCookieCheckWarning(null);
+    cookieCheckGroupRef.current = null;
+
+    // Restart scrape with skip flag set
+    startScrape(group.id, group.name);
+  }, [startScrape]);
+
   // --- Reset ---
 
   const reset = useCallback(() => {
@@ -388,6 +467,9 @@ export function useScrapeJob(onComplete?: () => void): UseScrapeJobReturn {
     setStatus('idle');
     setProgress(INITIAL_PROGRESS);
     setError(null);
+    setCookieCheckWarning(null);
+    skipCookieCheckRef.current = false;
+    cookieCheckGroupRef.current = null;
   }, [clearPollTimeout]);
 
   return {
@@ -398,5 +480,7 @@ export function useScrapeJob(onComplete?: () => void): UseScrapeJobReturn {
     error,
     jobId,
     reset,
+    cookieCheckWarning,
+    proceedAfterWarning,
   };
 }

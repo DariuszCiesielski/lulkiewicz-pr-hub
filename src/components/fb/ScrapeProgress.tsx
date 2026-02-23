@@ -9,6 +9,8 @@ interface ScrapeProgressProps {
   error: ScrapeErrorInfo | null;
   onRetry?: () => void;
   onReset: () => void;
+  cookieCheckWarning?: string | null;
+  onProceedAnyway?: () => void;
 }
 
 function formatSeconds(seconds: number): string {
@@ -24,7 +26,75 @@ export default function ScrapeProgress({
   error,
   onRetry,
   onReset,
+  cookieCheckWarning,
+  onProceedAnyway,
 }: ScrapeProgressProps) {
+  // Cookie health check in progress
+  if (status === 'cookie_check') {
+    return (
+      <div
+        className="sticky top-0 z-10 rounded-lg border p-4 mb-4"
+        style={{
+          borderColor: 'var(--border-primary)',
+          backgroundColor: 'var(--bg-secondary)',
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <Loader2 className="h-5 w-5 animate-spin flex-shrink-0" style={{ color: '#eab308' }} />
+          <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+            Sprawdzanie cookies Facebook...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Cookie check warning — shown when check failed and user can proceed or cancel
+  if (cookieCheckWarning && status === 'idle') {
+    return (
+      <div
+        className="sticky top-0 z-10 rounded-lg border p-4 mb-4"
+        style={{
+          borderColor: 'rgba(234, 179, 8, 0.3)',
+          backgroundColor: 'rgba(234, 179, 8, 0.05)',
+        }}
+      >
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="h-5 w-5 flex-shrink-0 mt-0.5" style={{ color: '#eab308' }} />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium" style={{ color: '#eab308' }}>
+              Sprawdzanie cookies nie powiodlo sie
+            </p>
+            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+              {cookieCheckWarning}
+            </p>
+            <div className="flex items-center gap-2 mt-2">
+              {onProceedAnyway && (
+                <button
+                  onClick={onProceedAnyway}
+                  className="rounded-md px-3 py-1 text-xs font-medium text-white transition-colors hover:opacity-90"
+                  style={{ backgroundColor: '#eab308' }}
+                >
+                  Kontynuuj mimo to
+                </button>
+              )}
+              <button
+                onClick={onReset}
+                className="rounded-md border px-3 py-1 text-xs font-medium transition-colors hover:opacity-80"
+                style={{
+                  borderColor: 'var(--border-primary)',
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                Anuluj
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (status === 'idle' && !progress.isWaitingBetweenGroups) {
     return null;
   }
