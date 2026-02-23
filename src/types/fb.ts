@@ -188,6 +188,8 @@ export interface ScrapeProgress {
   postsUpdated: number;
   apifyStatus: string | null;
   estimatedWaitSeconds: number | null;
+  isWaitingBetweenGroups: boolean;
+  waitSecondsRemaining: number;
 }
 
 export interface ScrapeErrorInfo {
