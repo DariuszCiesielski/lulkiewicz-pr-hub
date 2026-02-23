@@ -65,12 +65,12 @@ Requirements for milestone v1.1. Each maps to roadmap phases 7+.
 
 ### Analiza AI
 
-- [ ] **FBAI-01**: Kwalifikacja per post: istotny/nieistotny + sentyment (positive/negative/neutral) + kategoria + AI snippet — 1 wywołanie AI, structured JSON
-- [ ] **FBAI-02**: Domyślny prompt AI: "szukaj opinii mieszkańców dotyczących administracji osiedla i dewelopera"
-- [ ] **FBAI-03**: Edytowalny prompt przez admina (reuse prompt_templates z email-analyzer)
-- [ ] **FBAI-04**: Konfigurowalne słowa kluczowe / tematy do monitorowania (per grupa lub globalnie)
-- [ ] **FBAI-05**: Batch processing z useFbAnalysisJob hook + progress bar
-- [ ] **FBAI-06**: Predefiniowane kategorie: opłaty, naprawy, czystość, bezpieczeństwo, zieleń, komunikacja, finanse, prawo, sąsiedzi, pochwały, inne
+- [x] **FBAI-01**: Kwalifikacja per post: istotny/nieistotny + sentyment (positive/negative/neutral) + kategoria + AI snippet — 1 wywołanie AI, structured JSON
+- [x] **FBAI-02**: Domyślny prompt AI: "szukaj opinii mieszkańców dotyczących administracji osiedla i dewelopera"
+- [x] **FBAI-03**: Edytowalny prompt przez admina (reuse prompt_templates z email-analyzer)
+- [x] **FBAI-04**: Konfigurowalne słowa kluczowe / tematy do monitorowania (per grupa lub globalnie)
+- [x] **FBAI-05**: Batch processing z useFbAnalysisJob hook + progress bar
+- [x] **FBAI-06**: Predefiniowane kategorie: opłaty, naprawy, czystość, bezpieczeństwo, zieleń, komunikacja, finanse, prawo, sąsiedzi, pochwały, inne
 
 ### Widok Istotnych Postów
 
@@ -150,7 +150,7 @@ Requirements for milestone v1.1. Each maps to roadmap phases 7+.
 | FBNAV-01..06 | Phase 7 (FB Foundation) | **Complete** |
 | FBGRP-01..04 | Phase 8 (Group Management) | Pending |
 | FBSCR-01..07 | Phase 9 (Scraping Engine) | Complete |
-| FBAI-01..06 | Phase 10 (AI Sentiment Analysis) | Pending |
+| FBAI-01..06 | Phase 10 (AI Sentiment Analysis) | Complete |
 | FBVIEW-01..04 | Phase 11 (Post Browsing & Dashboard) | Pending |
 | FBREP-01..06 | Phase 12 (Reports & Export) | Pending |
 
