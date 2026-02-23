@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-10)
 
 **Core value:** Hub narzędziowy — AI analizuje maile (email-analyzer) i posty z grup FB (fb-analyzer) dla audytu komunikacji administracji osiedli
-**Current focus:** Milestone v1.1 — FB Analyzer. Phase 9 (Scraping Engine) COMPLETE. Ready for Phase 10 (AI Analysis).
+**Current focus:** Milestone v1.1 — FB Analyzer. Phase 9 (Scraping Engine) COMPLETE (all gaps closed). Ready for Phase 10 (AI Analysis).
 
 ## Current Position
 
-Phase: Phase 9 (Scraping Engine) — COMPLETE
-Plan: 3 of 3
-Status: ALL PLANS COMPLETE. Phase 9 done.
-Last activity: 2026-02-23 — Completed 09-03-PLAN.md (Scrape UI: useScrapeJob hook, ScrapeProgress, ScrapeButton)
+Phase: Phase 9 (Scraping Engine) — COMPLETE (all gaps closed)
+Plan: 4 of 4 (3 original + 1 gap closure)
+Status: ALL PLANS COMPLETE. Phase 9 done. 5/5 must-haves verified.
+Last activity: 2026-02-23 — Completed 09-04-PLAN.md (Cookie Health Check — gap closure)
 
 Progress (v1.0 Email Analyzer): [####################] 100% (Phases 1-6 + Phase 2.1 + Phase 2.2 ALL COMPLETE)
 Progress (v1.1 FB Analyzer): [##############......] 70% (phases 7-9 COMPLETE, phases 10-12 pending)
@@ -70,10 +70,11 @@ Progress (v1.1 FB Analyzer): [##############......] 70% (phases 7-9 COMPLETE, ph
 - [x] 08-03-PLAN.md (Wave 3, autonomous) — Groups UI: tabela, modal CRUD, bulk upload, bulk toolbar (a9c787d, 049c10d)
 - [x] 08-04-PLAN.md (Wave 3, autonomous) — Settings UI: Apify token, cookies, actor ID, AI instructions (b1211a3)
 
-**Phase 9 plans (3 plans, 2 waves) — ALL COMPLETE:**
+**Phase 9 plans (4 plans, 2 waves) — ALL COMPLETE (incl. gap closure):**
 - [x] 09-01-PLAN.md (Wave 1, autonomous) — Apify client + post mapper + scraping types (b1c3606, 30780e8)
 - [x] 09-02-PLAN.md (Wave 1, autonomous) — Scrape API routes: start, process(3-mode), status (7d568d4, 2c1efac)
 - [x] 09-03-PLAN.md (Wave 2, autonomous) — Scrape UI: useScrapeJob hook, ScrapeProgress, ScrapeButton (5ef5572, 2ebc558)
+- [x] 09-04-PLAN.md (Wave 1, autonomous, gap closure) — Cookie health check: pre-scrape validation (aa9aaf3, fe9f981)
 
 ## Accumulated Context
 
@@ -135,6 +136,10 @@ Progress (v1.1 FB Analyzer): [##############......] 70% (phases 7-9 COMPLETE, ph
 - [09-03]: Bulk scrape with 180-360s random delay between groups — client-side rate limiting
 - [09-03]: ScrapeProgress extended with isWaitingBetweenGroups + waitSecondsRemaining (not new status value)
 - [09-03]: scrapingGroupId tracked in page state for reliable GroupTable prop (not derived from progress.currentGroup)
+- [09-04]: Cookie health check only on single scrape (not bulk) — bulk pausing per-group would be disruptive
+- [09-04]: scrapeUntil=today for minimal Apify run (no maxPosts param in ApifyActorInput)
+- [09-04]: 45s poll timeout with 15s Vercel buffer for health check endpoint
+- [09-04]: Proceed-after-warning override — user can skip failed check (false positives possible)
 
 - [Phase 2.1 INSERTED]: Multi-folder sync — /messages zamiast /mailFolders/inbox/messages
 - [Phase 2.1]: Delta sync zmieniony na smart resync z $filter=receivedDateTime ge (delta per-folder only w Graph API)
@@ -213,8 +218,8 @@ organizations, organization_members, **mailboxes** (extended: +8 cols, sync_stat
 
 ## Session Continuity
 
-Last session: 2026-02-23T09:25Z
-Stopped at: Completed 09-03-PLAN.md (Scrape UI: useScrapeJob hook, ScrapeProgress, ScrapeButton) — Phase 9 COMPLETE
-Resume file: .planning/phases/09-scraping-engine/09-03-SUMMARY.md
+Last session: 2026-02-23T12:20Z
+Stopped at: Completed 09-04-PLAN.md (Cookie Health Check gap closure) — Phase 9 fully COMPLETE with all gaps closed
+Resume file: .planning/phases/09-scraping-engine/09-04-SUMMARY.md
 Next step: /gsd:discuss-phase 10 (AI Analysis of FB posts)
 Version tag: v1.0.8
