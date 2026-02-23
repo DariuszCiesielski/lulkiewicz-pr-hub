@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-10)
 
 **Core value:** Hub narzędziowy — AI analizuje maile (email-analyzer) i posty z grup FB (fb-analyzer) dla audytu komunikacji administracji osiedli
-**Current focus:** Milestone v1.1 — FB Analyzer. Phase 9 (Scraping Engine) COMPLETE (all gaps closed). Ready for Phase 10 (AI Analysis).
+**Current focus:** Milestone v1.1 — FB Analyzer. Phase 10 (AI Sentiment Analysis) IN PROGRESS. Plan 01 COMPLETE.
 
 ## Current Position
 
-Phase: Phase 9 (Scraping Engine) — COMPLETE (all gaps closed)
-Plan: 4 of 4 (3 original + 1 gap closure)
-Status: ALL PLANS COMPLETE. Phase 9 done. 5/5 must-haves verified.
-Last activity: 2026-02-23 — Completed 09-04-PLAN.md (Cookie Health Check — gap closure)
+Phase: Phase 10 (AI Sentiment Analysis) — IN PROGRESS
+Plan: 1 of 3
+Status: Plan 10-01 COMPLETE. Plans 10-02 and 10-03 pending.
+Last activity: 2026-02-23 — Completed 10-01-PLAN.md (AI Foundation — Prompt, Keywords, Schema)
 
 Progress (v1.0 Email Analyzer): [####################] 100% (Phases 1-6 + Phase 2.1 + Phase 2.2 ALL COMPLETE)
-Progress (v1.1 FB Analyzer): [##############......] 70% (phases 7-9 COMPLETE, phases 10-12 pending)
+Progress (v1.1 FB Analyzer): [###############.....] 75% (phases 7-9 COMPLETE, phase 10 plan 1/3 done, phases 11-12 pending)
 
 ## Planning Status
 
@@ -75,6 +75,11 @@ Progress (v1.1 FB Analyzer): [##############......] 70% (phases 7-9 COMPLETE, ph
 - [x] 09-02-PLAN.md (Wave 1, autonomous) — Scrape API routes: start, process(3-mode), status (7d568d4, 2c1efac)
 - [x] 09-03-PLAN.md (Wave 2, autonomous) — Scrape UI: useScrapeJob hook, ScrapeProgress, ScrapeButton (5ef5572, 2ebc558)
 - [x] 09-04-PLAN.md (Wave 1, autonomous, gap closure) — Cookie health check: pre-scrape validation (aa9aaf3, fe9f981)
+
+**Phase 10 plans (3 plans, 2 waves) — IN PROGRESS:**
+- [x] 10-01-PLAN.md (Wave 1, autonomous) — AI Foundation: SQL migration, callAI responseFormat, fb-analysis-prompt, fb-keywords, default-prompts (f9ded10, 748ecbb)
+- [ ] 10-02-PLAN.md (Wave 1, autonomous) — API routes: start, process, pause/resume
+- [ ] 10-03-PLAN.md (Wave 2, autonomous) — UI: useFbAnalysisJob hook, FbAnalysisPanel
 
 ## Accumulated Context
 
@@ -140,6 +145,12 @@ Progress (v1.1 FB Analyzer): [##############......] 70% (phases 7-9 COMPLETE, ph
 - [09-04]: scrapeUntil=today for minimal Apify run (no maxPosts param in ApifyActorInput)
 - [09-04]: 45s poll timeout with 15s Vercel buffer for health check endpoint
 - [09-04]: Proceed-after-warning override — user can skip failed check (false positives possible)
+- [10-01]: callAI() rozszerzony o opcjonalny 4. parametr responseFormat (backward compatible)
+- [10-01]: JSON schema strict:true — gwarantowany structured output z OpenAI API
+- [10-01]: System prompt eksplicytnie obsluguje PL sarkazm, kolokwializmy, pasywno-agresywny ton (8+ przykladow)
+- [10-01]: fb_keywords w fb_settings jako value_plain (JSON array) — nie szyfrowane
+- [10-01]: FB prompt zarejestrowany w DEFAULT_PROMPTS z section_order: 100 (po emailowych 0-13)
+- [10-01]: FbAnalysisStatus rozszerzony o paused + metadata JSONB — wzorzec z sync_jobs
 
 - [Phase 2.1 INSERTED]: Multi-folder sync — /messages zamiast /mailFolders/inbox/messages
 - [Phase 2.1]: Delta sync zmieniony na smart resync z $filter=receivedDateTime ge (delta per-folder only w Graph API)
@@ -214,12 +225,13 @@ Progress (v1.1 FB Analyzer): [##############......] 70% (phases 7-9 COMPLETE, ph
 
 ## Supabase Tables (Phase 8 updated)
 
-organizations, organization_members, **mailboxes** (extended: +8 cols, sync_status TEXT), mailbox_credentials, **emails** (extended: +13 cols + folder_id TEXT, UNIQUE mailbox+internet_message_id), threads, reports, report_sections, section_templates, schedules, messages, app_allowed_users, **sync_jobs** (new: status, job_type, page_token, emails_fetched, metadata JSONB), **email_threads** (Phase 3: Union-Find threading, +summary TEXT Phase 2.2), **analysis_jobs** (Phase 4: AI analysis jobs), **analysis_results** (Phase 4: per-thread results), **prompt_templates** (Phase 4: customizable prompts, +in_internal_report BOOLEAN, +in_client_report BOOLEAN Phase 2.2), **evaluation_criteria** (Phase 4: scoring rubrics, no UI yet), **fb_groups** (Phase 7+8: grupy FB, +ai_instruction, +deleted_at, +cookies_encrypted), **fb_posts** (Phase 7: posty z grup, UNIQUE group+facebook_post_id), **fb_comments** (Phase 7: komentarze do postow), **fb_scrape_jobs** (Phase 7: zadania scrapowania Apify), **fb_analysis_jobs** (Phase 7: zadania analizy AI postow), **fb_reports** (Phase 7: raporty z analizy grup FB), **fb_settings** (Phase 8: key-value config store, RLS admin-only)
+organizations, organization_members, **mailboxes** (extended: +8 cols, sync_status TEXT), mailbox_credentials, **emails** (extended: +13 cols + folder_id TEXT, UNIQUE mailbox+internet_message_id), threads, reports, report_sections, section_templates, schedules, messages, app_allowed_users, **sync_jobs** (new: status, job_type, page_token, emails_fetched, metadata JSONB), **email_threads** (Phase 3: Union-Find threading, +summary TEXT Phase 2.2), **analysis_jobs** (Phase 4: AI analysis jobs), **analysis_results** (Phase 4: per-thread results), **prompt_templates** (Phase 4: customizable prompts, +in_internal_report BOOLEAN, +in_client_report BOOLEAN Phase 2.2), **evaluation_criteria** (Phase 4: scoring rubrics, no UI yet), **fb_groups** (Phase 7+8: grupy FB, +ai_instruction, +deleted_at, +cookies_encrypted), **fb_posts** (Phase 7: posty z grup, UNIQUE group+facebook_post_id), **fb_comments** (Phase 7: komentarze do postow), **fb_scrape_jobs** (Phase 7: zadania scrapowania Apify), **fb_analysis_jobs** (Phase 7: zadania analizy AI postow, +metadata JSONB +paused status Phase 10), **fb_reports** (Phase 7: raporty z analizy grup FB), **fb_settings** (Phase 8: key-value config store, RLS admin-only)
 
 ## Session Continuity
 
-Last session: 2026-02-23T12:20Z
-Stopped at: Completed 09-04-PLAN.md (Cookie Health Check gap closure) — Phase 9 fully COMPLETE with all gaps closed
-Resume file: .planning/phases/09-scraping-engine/09-04-SUMMARY.md
-Next step: /gsd:discuss-phase 10 (AI Analysis of FB posts)
+Last session: 2026-02-23T13:37Z
+Stopped at: Completed 10-01-PLAN.md (AI Foundation — Prompt, Keywords, Schema) — Phase 10 plan 1/3 done
+Resume file: .planning/phases/10-ai-sentiment-analysis/10-01-SUMMARY.md
+Next step: Execute 10-02-PLAN.md (API Routes: start, process, pause/resume)
 Version tag: v1.0.8
+SQL migration pending: 20260223_10_01_fb_analysis_paused_metadata.sql (user musi wkleic w SQL Editor)
