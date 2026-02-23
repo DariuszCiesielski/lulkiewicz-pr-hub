@@ -5,6 +5,7 @@ import {
   Play, Pause,
 } from 'lucide-react';
 import type { FbGroupEnriched } from '@/types/fb';
+import ScrapeButton from '@/components/fb/ScrapeButton';
 
 function timeAgo(iso: string | null): string {
   if (!iso) return 'Nigdy';
@@ -25,6 +26,9 @@ interface GroupTableProps {
   onEdit: (group: FbGroupEnriched) => void;
   onDelete: (group: FbGroupEnriched) => void;
   onToggleStatus: (group: FbGroupEnriched) => void;
+  onScrape?: (group: FbGroupEnriched) => void;
+  isScrapingAny?: boolean;
+  currentScrapingGroupId?: string | null;
 }
 
 interface GroupsByDeveloper {
@@ -69,6 +73,9 @@ export default function GroupTable({
   onEdit,
   onDelete,
   onToggleStatus,
+  onScrape,
+  isScrapingAny = false,
+  currentScrapingGroupId = null,
 }: GroupTableProps) {
   const sections = groupByDeveloper(groups);
   const allSelected = groups.length > 0 && selectedIds.size === groups.length;
@@ -265,6 +272,14 @@ export default function GroupTable({
                       {/* Akcje */}
                       <td className="px-3 py-2">
                         <div className="flex items-center justify-end gap-1">
+                          {onScrape && (
+                            <ScrapeButton
+                              group={group}
+                              isScrapingAny={isScrapingAny}
+                              currentScrapingGroupId={currentScrapingGroupId}
+                              onScrape={() => onScrape(group)}
+                            />
+                          )}
                           <button
                             onClick={() => onToggleStatus(group)}
                             title={isPaused ? 'Aktywuj' : 'Wstrzymaj'}

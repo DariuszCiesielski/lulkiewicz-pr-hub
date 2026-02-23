@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import {
-  Users, Plus, Upload, Loader2,
+  Users, Plus, Upload, Loader2, Download,
 } from 'lucide-react';
 import type { FbGroupEnriched } from '@/types/fb';
 import GroupTable from '@/components/fb/GroupTable';
@@ -10,6 +10,8 @@ import GroupFormModal from '@/components/fb/GroupFormModal';
 import type { GroupFormData } from '@/components/fb/GroupFormModal';
 import GroupBulkUpload from '@/components/fb/GroupBulkUpload';
 import BulkActionToolbar from '@/components/fb/BulkActionToolbar';
+import { useScrapeJob } from '@/hooks/useScrapeJob';
+import ScrapeProgress from '@/components/fb/ScrapeProgress';
 
 export default function FbGroupsPage() {
   const [groups, setGroups] = useState<FbGroupEnriched[]>([]);
@@ -22,6 +24,25 @@ export default function FbGroupsPage() {
   const [showBulkUpload, setShowBulkUpload] = useState(false);
   const [filterDeveloper, setFilterDeveloper] = useState<string>('');
   const [filterStatus, setFilterStatus] = useState<string>('');
+  const [scrapingGroupId, setScrapingGroupId] = useState<string | null>(null);
+
+  // --- Scrape Hook ---
+
+  const {
+    startScrape,
+    startBulkScrape,
+    status: scrapeStatus,
+    progress: scrapeProgress,
+    error: scrapeError,
+    reset: scrapeReset,
+  } = useScrapeJob(() => refreshGroups());
+
+  const isScraping = scrapeStatus !== 'idle' && scrapeStatus !== 'completed' && scrapeStatus !== 'error';
+
+  const handleScrapeGroup = useCallback(async (group: FbGroupEnriched) => {
+    setScrapingGroupId(group.id);
+    await startScrape(group.id, group.name);
+  }, [startScrape]);
 
   // --- Fetch ---
 
@@ -72,6 +93,21 @@ export default function FbGroupsPage() {
     if (filterStatus && g.status !== filterStatus) return false;
     return true;
   });
+
+  // --- Bulk Scrape (needs filteredGroups) ---
+
+  const handleBulkScrape = useCallback(async () => {
+    const activeGroups = filteredGroups
+      .filter(g => selectedIds.has(g.id) && g.status === 'active')
+      .map(g => ({ id: g.id, name: g.name }));
+    if (activeGroups.length === 0) {
+      setError('Brak aktywnych grup do scrapowania');
+      return;
+    }
+    setSelectedIds(new Set());
+    setScrapingGroupId(activeGroups[0].id);
+    await startBulkScrape(activeGroups);
+  }, [filteredGroups, selectedIds, startBulkScrape]);
 
   // --- Selection ---
 
@@ -274,6 +310,19 @@ export default function FbGroupsPage() {
             <option value="paused">Wstrzymane</option>
           </select>
 
+          {/* Przycisk Scrapuj wybrane */}
+          {selectedIds.size > 0 && (
+            <button
+              onClick={handleBulkScrape}
+              disabled={isScraping}
+              className="flex items-center gap-1 rounded-md px-3 py-1.5 text-sm text-white transition-colors hover:opacity-90 disabled:opacity-50"
+              style={{ backgroundColor: '#3b82f6' }}
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Scrapuj wybrane ({selectedIds.size})</span>
+            </button>
+          )}
+
           {/* Przycisk Upload */}
           <button
             onClick={() => setShowBulkUpload(true)}
@@ -319,6 +368,17 @@ export default function FbGroupsPage() {
         </div>
       )}
 
+      {/* Scrape Progress */}
+      {(scrapeStatus !== 'idle' || scrapeProgress.isWaitingBetweenGroups) && (
+        <ScrapeProgress
+          status={scrapeStatus}
+          progress={scrapeProgress}
+          error={scrapeError}
+          onRetry={undefined}
+          onReset={scrapeReset}
+        />
+      )}
+
       {/* Bulk Action Toolbar */}
       {selectedIds.size > 0 && (
         <BulkActionToolbar
@@ -338,6 +398,9 @@ export default function FbGroupsPage() {
         onEdit={(group) => setEditingGroup(group)}
         onDelete={handleDeleteGroup}
         onToggleStatus={handleToggleStatus}
+        onScrape={handleScrapeGroup}
+        isScrapingAny={isScraping}
+        currentScrapingGroupId={scrapingGroupId}
       />
 
       {/* Add Modal */}
