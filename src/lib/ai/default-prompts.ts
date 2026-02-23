@@ -1,8 +1,14 @@
 /**
- * Default prompt templates for the 13 report sections.
+ * Default prompt templates for the 13 report sections + FB post analysis.
  * Based on client requirements (Struktura_2in1 + All_bez_struktury).
  * These serve as the "default" tier — can be overridden by global or per-report.
  */
+
+import {
+  FB_POST_ANALYSIS_SECTION_KEY,
+  FB_POST_ANALYSIS_SYSTEM_PROMPT,
+  FB_POST_ANALYSIS_USER_PROMPT_TEMPLATE,
+} from '@/lib/fb/fb-analysis-prompt';
 
 export interface DefaultPrompt {
   section_key: string;
@@ -315,6 +321,15 @@ WĄTEK:
 {{threads}}
 
 Sformułuj 3-5 rekomendacji z uzasadnieniem i priorytetem. Bądź konkretny — unikaj ogólników.`,
+  },
+
+  // ── 100. Analiza postu FB (FB Analyzer) ──
+  {
+    section_key: FB_POST_ANALYSIS_SECTION_KEY,
+    title: 'Analiza postu FB',
+    section_order: 100,
+    system_prompt: FB_POST_ANALYSIS_SYSTEM_PROMPT,
+    user_prompt_template: FB_POST_ANALYSIS_USER_PROMPT_TEMPLATE,
   },
 ];
 

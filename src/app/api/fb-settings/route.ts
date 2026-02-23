@@ -89,10 +89,11 @@ export async function POST(request: NextRequest) {
   const isEncryptedKey = ENCRYPTED_KEYS.includes(key);
   const isSuperAdminKey = SUPER_ADMIN_KEYS.includes(key);
   const isDeveloperInstruction = key.startsWith('developer_instruction:');
+  const isFbKeywords = key === 'fb_keywords' || key.startsWith('fb_keywords:');
 
-  if (!isEncryptedKey && !isSuperAdminKey && !isDeveloperInstruction) {
+  if (!isEncryptedKey && !isSuperAdminKey && !isDeveloperInstruction && !isFbKeywords) {
     return NextResponse.json(
-      { error: `Niedozwolony klucz: ${key}. Dozwolone: apify_token, fb_cookies, apify_actor_id, developer_instruction:*` },
+      { error: `Niedozwolony klucz: ${key}. Dozwolone: apify_token, fb_cookies, apify_actor_id, developer_instruction:*, fb_keywords, fb_keywords:*` },
       { status: 400 }
     );
   }
