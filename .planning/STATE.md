@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-10)
 
 **Core value:** Hub narzędziowy — AI analizuje maile (email-analyzer) i posty z grup FB (fb-analyzer) dla audytu komunikacji administracji osiedli
-**Current focus:** Milestone v1.1 — FB Analyzer. Phase 9 (Scraping Engine) IN PROGRESS. Plans 01-02/03 COMPLETE.
+**Current focus:** Milestone v1.1 — FB Analyzer. Phase 9 (Scraping Engine) COMPLETE. Ready for Phase 10 (AI Analysis).
 
 ## Current Position
 
-Phase: Phase 9 (Scraping Engine) — IN PROGRESS
-Plan: 2 of 3
-Status: Plans 09-01, 09-02 COMPLETE. Plan 09-03 pending.
-Last activity: 2026-02-23 — Completed 09-02-PLAN.md (Scrape API routes: start, process, status)
+Phase: Phase 9 (Scraping Engine) — COMPLETE
+Plan: 3 of 3
+Status: ALL PLANS COMPLETE. Phase 9 done.
+Last activity: 2026-02-23 — Completed 09-03-PLAN.md (Scrape UI: useScrapeJob hook, ScrapeProgress, ScrapeButton)
 
 Progress (v1.0 Email Analyzer): [####################] 100% (Phases 1-6 + Phase 2.1 + Phase 2.2 ALL COMPLETE)
-Progress (v1.1 FB Analyzer): [############........] 60% (phases 7-8 COMPLETE, phase 9 plans 1-2/3 done)
+Progress (v1.1 FB Analyzer): [##############......] 70% (phases 7-9 COMPLETE, phases 10-12 pending)
 
 ## Planning Status
 
@@ -70,10 +70,10 @@ Progress (v1.1 FB Analyzer): [############........] 60% (phases 7-8 COMPLETE, ph
 - [x] 08-03-PLAN.md (Wave 3, autonomous) — Groups UI: tabela, modal CRUD, bulk upload, bulk toolbar (a9c787d, 049c10d)
 - [x] 08-04-PLAN.md (Wave 3, autonomous) — Settings UI: Apify token, cookies, actor ID, AI instructions (b1211a3)
 
-**Phase 9 plans (3 plans, 2 waves) — IN PROGRESS:**
+**Phase 9 plans (3 plans, 2 waves) — ALL COMPLETE:**
 - [x] 09-01-PLAN.md (Wave 1, autonomous) — Apify client + post mapper + scraping types (b1c3606, 30780e8)
 - [x] 09-02-PLAN.md (Wave 1, autonomous) — Scrape API routes: start, process(3-mode), status (7d568d4, 2c1efac)
-- [ ] 09-03-PLAN.md (Wave 2, autonomous) — Scrape UI (useScrapeJob hook, ScrapeProgress, ScrapeButton)
+- [x] 09-03-PLAN.md (Wave 2, autonomous) — Scrape UI: useScrapeJob hook, ScrapeProgress, ScrapeButton (5ef5572, 2ebc558)
 
 ## Accumulated Context
 
@@ -131,6 +131,10 @@ Progress (v1.1 FB Analyzer): [############........] 60% (phases 7-8 COMPLETE, ph
 - [09-02]: Pre-flight config check w start route — walidacja token+cookies przed tworzeniem joba
 - [09-02]: Upsert errors logowane ale nie failuja joba — partial progress zachowany
 - [09-02]: Per-group cookie override: group.cookies_encrypted > fb_settings.fb_cookies
+- [09-03]: useScrapeJob polling: 5s for running (Apify), 2s for downloading (upsert) — differentiated intervals
+- [09-03]: Bulk scrape with 180-360s random delay between groups — client-side rate limiting
+- [09-03]: ScrapeProgress extended with isWaitingBetweenGroups + waitSecondsRemaining (not new status value)
+- [09-03]: scrapingGroupId tracked in page state for reliable GroupTable prop (not derived from progress.currentGroup)
 
 - [Phase 2.1 INSERTED]: Multi-folder sync — /messages zamiast /mailFolders/inbox/messages
 - [Phase 2.1]: Delta sync zmieniony na smart resync z $filter=receivedDateTime ge (delta per-folder only w Graph API)
@@ -209,8 +213,8 @@ organizations, organization_members, **mailboxes** (extended: +8 cols, sync_stat
 
 ## Session Continuity
 
-Last session: 2026-02-23T09:15Z
-Stopped at: Completed 09-02-PLAN.md (Scrape API routes: start, process, status)
-Resume file: .planning/phases/09-scraping-engine/09-02-SUMMARY.md
-Next step: Execute 09-03-PLAN.md (Scrape UI: useScrapeJob hook, ScrapeProgress, ScrapeButton)
+Last session: 2026-02-23T09:25Z
+Stopped at: Completed 09-03-PLAN.md (Scrape UI: useScrapeJob hook, ScrapeProgress, ScrapeButton) — Phase 9 COMPLETE
+Resume file: .planning/phases/09-scraping-engine/09-03-SUMMARY.md
+Next step: /gsd:discuss-phase 10 (AI Analysis of FB posts)
 Version tag: v1.0.8
