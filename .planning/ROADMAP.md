@@ -33,7 +33,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 7: FB Foundation** - Migracja DB (6 tabel + RLS), typy TS, nawigacja sidebar, layout + shell pages, admin utilities extraction — **3 plans, 2 waves**
 - [ ] **Phase 8: Group Management** - CRUD grup FB, status active/paused, bulk ops, konfiguracja Apify (token szyfrowany + FB cookies) — **4 plans, 3 waves**
 - [x] **Phase 9: Scraping Engine** - Integracja Apify Actor API, dwufazowa architektura polling, ochrona konta FB, rate limiting, error handling — **4 plans, 2 waves**
-- [ ] **Phase 10: AI Sentiment Analysis** - Kwalifikacja postow (sentyment + relevance + kategorie), domain-specific prompty PL, batch processing, edytowalne prompty
+- [ ] **Phase 10: AI Sentiment Analysis** - Kwalifikacja postow (sentyment + relevance + kategorie), domain-specific prompty PL, batch processing, edytowalne prompty — **3 plans, 3 waves**
 - [ ] **Phase 11: Post Browsing & Dashboard** - Widok TYLKO istotnych postow z filtrami i linkami do FB, dashboard KPI, alerty negatywne, quick actions
 - [ ] **Phase 12: Reports & Export** - Raporty na zadanie z sekcjami per grupa, tabela postow z linkami FB, edytowalne prompty, eksport DOCX, historia
 
@@ -223,7 +223,12 @@ Plans:
   4. Admin moze konfigurowac slowa kluczowe i tematy do monitorowania (per grupa lub globalnie) — posty pasujace do slow kluczowych maja podwyzszone relevance score
   5. Posty sa klasyfikowane do predefiniowanych kategorii: oplaty, naprawy, czystosc, bezpieczenstwo, zielen, komunikacja, finanse, prawo, sasiedzi, pochwaly, inne
 
-Plans: TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 10-01-PLAN.md — Backend AI core: rozszerzenie callAI() o structured JSON output, prompt PL z obsluga sarkazmu, keyword matching, rejestracja promptu
+- [ ] 10-02-PLAN.md — API routes: POST/GET /api/fb/analysis (create/list jobs), POST /process (batch 5 postow), POST /pause (pause/resume/cancel)
+- [ ] 10-03-PLAN.md — Frontend: useFbAnalysisJob hook, FbAnalysisPanel z progress bar, strona analyze (replace mock), keywords w settings
 
 ### Phase 11: Post Browsing & Dashboard
 **Goal**: Admin widzi TYLKO istotne (AI-flagowane) posty z filtrami i linkami do FB oraz dashboard z KPI i alertami o negatywnych postach
@@ -275,7 +280,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 7. FB Foundation | 3/3 | **COMPLETE** | 2026-02-12 |
 | 8. Group Management | 4/4 | **COMPLETE** | 2026-02-12 |
 | 9. Scraping Engine | 4/4 | **COMPLETE** | 2026-02-23 |
-| 10. AI Sentiment Analysis | 0/? | Pending | — |
+| 10. AI Sentiment Analysis | 0/3 | **Planned** | — |
 | 11. Post Browsing & Dashboard | 0/? | Pending | — |
 | 12. Reports & Export | 0/? | Pending | — |
 
@@ -293,4 +298,4 @@ Fazy 3-6 zostaly zaimplementowane w trybie fast-track (jeden commit 1f853d6 + po
 Fazy wymagajace glebszego researchu przed implementacja:
 
 1. **Phase 9 (Scraping Engine) — RESOLVED**: Research DONE (2026-02-23). Apify API v2, actor input/output, cookie format, polling architecture — wszystko zweryfikowane. Research: `.planning/phases/09-scraping-engine/09-RESEARCH.md`
-2. **Phase 10 (AI Analysis) — MEDIUM**: Prompty AI dla polskiego real estate wymagaja iteracji. Few-shot examples, sarkazm, kolokwializmy. **Akcja:** Manual review pierwszych 20-30 analyzed posts, tune prompts jesli accuracy < 80%.
+2. **Phase 10 (AI Analysis) — RESOLVED**: Research DONE (2026-02-23). GPT-5.2 structured outputs, Polish sarcasm prompt, keyword boosting, 100% reuse of existing patterns. Research: `.planning/phases/10-ai-sentiment-analysis/10-RESEARCH.md`. **Akcja po implementacji:** Manual review pierwszych 20-30 analyzed posts, tune prompts jesli accuracy < 80%.
