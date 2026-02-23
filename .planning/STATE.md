@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-10)
 
 **Core value:** Hub narzędziowy — AI analizuje maile (email-analyzer) i posty z grup FB (fb-analyzer) dla audytu komunikacji administracji osiedli
-**Current focus:** Milestone v1.1 — FB Analyzer. Phase 10 (AI Sentiment Analysis) IN PROGRESS. Plans 01-02 COMPLETE.
+**Current focus:** Milestone v1.1 — FB Analyzer. Phase 10 (AI Sentiment Analysis) COMPLETE. All 3 plans done.
 
 ## Current Position
 
-Phase: Phase 10 (AI Sentiment Analysis) — IN PROGRESS
-Plan: 2 of 3
-Status: Plans 10-01 and 10-02 COMPLETE. Plan 10-03 pending.
-Last activity: 2026-02-23 — Completed 10-02-PLAN.md (AI Analysis API Routes)
+Phase: Phase 10 (AI Sentiment Analysis) — COMPLETE
+Plan: 3 of 3
+Status: All plans COMPLETE. Phase 10 done.
+Last activity: 2026-02-23 — Completed 10-03-PLAN.md (Analysis UI)
 
 Progress (v1.0 Email Analyzer): [####################] 100% (Phases 1-6 + Phase 2.1 + Phase 2.2 ALL COMPLETE)
-Progress (v1.1 FB Analyzer): [################....] 80% (phases 7-9 COMPLETE, phase 10 plans 1-2/3 done, phases 11-12 pending)
+Progress (v1.1 FB Analyzer): [##################..] 87% (phases 7-10 COMPLETE, phases 11-12 pending)
 
 ## Planning Status
 
@@ -76,10 +76,10 @@ Progress (v1.1 FB Analyzer): [################....] 80% (phases 7-9 COMPLETE, ph
 - [x] 09-03-PLAN.md (Wave 2, autonomous) — Scrape UI: useScrapeJob hook, ScrapeProgress, ScrapeButton (5ef5572, 2ebc558)
 - [x] 09-04-PLAN.md (Wave 1, autonomous, gap closure) — Cookie health check: pre-scrape validation (aa9aaf3, fe9f981)
 
-**Phase 10 plans (3 plans, 2 waves) — IN PROGRESS:**
+**Phase 10 plans (3 plans, 2 waves) — ALL COMPLETE:**
 - [x] 10-01-PLAN.md (Wave 1, autonomous) — AI Foundation: SQL migration, callAI responseFormat, fb-analysis-prompt, fb-keywords, default-prompts (f9ded10, 748ecbb)
 - [x] 10-02-PLAN.md (Wave 2, autonomous) — API routes: create job, process batch, pause/resume/cancel (1ca8658, 066bc3b)
-- [ ] 10-03-PLAN.md (Wave 2, autonomous) — UI: useFbAnalysisJob hook, FbAnalysisPanel
+- [x] 10-03-PLAN.md (Wave 2, autonomous) — UI: useFbAnalysisJob hook, FbAnalysisPanel, keywords settings (c835b15, 53d2ea0)
 
 ## Accumulated Context
 
@@ -156,6 +156,11 @@ Progress (v1.1 FB Analyzer): [################....] 80% (phases 7-9 COMPLETE, ph
 - [10-02]: AI errors per post logowane ale nie failuja joba — graceful degradation
 - [10-02]: Keyword boost +1-2 w process route (nie w prompcie) — deterministyczne scoring
 - [10-02]: Prompt override z prompt_templates DB, fallback na hardcoded defaults
+- [10-03]: useFbAnalysisJob uproszczony vs useAnalysisJob — bez ETA, startedAt, processedAtStart (FB analysis szybsza)
+- [10-03]: FbAnalysisPanel jako osobny komponent (reusable) z group select, progress bar, pause/resume, recent jobs
+- [10-03]: Keywords parse: split by comma + newline, trim, lowercase, unique — robust input handling
+- [10-03]: Prompt preview readonly z linkiem do /email-analyzer/prompts (existing page, new tab)
+- [10-03]: fb_keywords w GET response z JSON.parse + try/catch (graceful na corrupted data)
 
 - [Phase 2.1 INSERTED]: Multi-folder sync — /messages zamiast /mailFolders/inbox/messages
 - [Phase 2.1]: Delta sync zmieniony na smart resync z $filter=receivedDateTime ge (delta per-folder only w Graph API)
@@ -234,9 +239,9 @@ organizations, organization_members, **mailboxes** (extended: +8 cols, sync_stat
 
 ## Session Continuity
 
-Last session: 2026-02-23T13:46Z
-Stopped at: Completed 10-02-PLAN.md (AI Analysis API Routes) — Phase 10 plan 2/3 done
-Resume file: .planning/phases/10-ai-sentiment-analysis/10-02-SUMMARY.md
-Next step: Execute 10-03-PLAN.md (UI: useFbAnalysisJob hook, FbAnalysisPanel)
+Last session: 2026-02-23T13:57Z
+Stopped at: Completed 10-03-PLAN.md (Analysis UI) — Phase 10 ALL COMPLETE
+Resume file: .planning/phases/10-ai-sentiment-analysis/10-03-SUMMARY.md
+Next step: /gsd:discuss-phase 11 (FB Reports) lub /gsd:plan-phase 11
 Version tag: v1.0.8
 SQL migration pending: 20260223_10_01_fb_analysis_paused_metadata.sql (user musi wkleic w SQL Editor)
