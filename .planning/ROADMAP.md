@@ -32,7 +32,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 7: FB Foundation** - Migracja DB (6 tabel + RLS), typy TS, nawigacja sidebar, layout + shell pages, admin utilities extraction — **3 plans, 2 waves**
 - [ ] **Phase 8: Group Management** - CRUD grup FB, status active/paused, bulk ops, konfiguracja Apify (token szyfrowany + FB cookies) — **4 plans, 3 waves**
-- [ ] **Phase 9: Scraping Engine** - Integracja Apify Actor API, dwufazowa architektura polling, ochrona konta FB, rate limiting, error handling
+- [ ] **Phase 9: Scraping Engine** - Integracja Apify Actor API, dwufazowa architektura polling, ochrona konta FB, rate limiting, error handling — **3 plans, 3 waves**
 - [ ] **Phase 10: AI Sentiment Analysis** - Kwalifikacja postow (sentyment + relevance + kategorie), domain-specific prompty PL, batch processing, edytowalne prompty
 - [ ] **Phase 11: Post Browsing & Dashboard** - Widok TYLKO istotnych postow z filtrami i linkami do FB, dashboard KPI, alerty negatywne, quick actions
 - [ ] **Phase 12: Reports & Export** - Raporty na zadanie z sekcjami per grupa, tabela postow z linkami FB, edytowalne prompty, eksport DOCX, historia
@@ -204,7 +204,12 @@ Plans:
   4. Bledy scrapowania (timeout, expired cookies, Apify error) sa logowane, wyswietlane w UI z opisem i sugestia rozwiazania, a system proponuje retry
   5. Przed scrapowaniem wykonywany jest cookie health check (testowy scrape maxPosts: 1) — jesli cookies wygasly, user widzi alert z instrukcja odswiezenia
 
-Plans: TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 09-01-PLAN.md — Backend foundation: Apify API wrapper (3 funkcje), post mapper z graceful fallbacks, typy TS scrape
+- [ ] 09-02-PLAN.md — API routes: POST /api/fb/scrape (start job), POST /api/fb/scrape/process (3-mode pipeline), GET /api/fb/scrape/status/[jobId]
+- [ ] 09-03-PLAN.md — Frontend: useScrapeJob hook z multi-group queue, ScrapeProgress/ScrapeButton komponenty, integracja z tabela grup
 
 ### Phase 10: AI Sentiment Analysis
 **Goal**: Admin moze uruchomic analiza AI na scrapowanych postach — kazdy post otrzymuje sentyment, relevance score, kategorie i AI snippet w jednym wywolaniu AI
@@ -268,7 +273,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 |-------|----------------|--------|-----------|
 | 7. FB Foundation | 3/3 | **COMPLETE** | 2026-02-12 |
 | 8. Group Management | 4/4 | **COMPLETE** | 2026-02-12 |
-| 9. Scraping Engine | 0/? | Pending | — |
+| 9. Scraping Engine | 0/3 | **Planned** | — |
 | 10. AI Sentiment Analysis | 0/? | Pending | — |
 | 11. Post Browsing & Dashboard | 0/? | Pending | — |
 | 12. Reports & Export | 0/? | Pending | — |
@@ -286,5 +291,5 @@ Fazy 3-6 zostaly zaimplementowane w trybie fast-track (jeden commit 1f853d6 + po
 
 Fazy wymagajace glebszego researchu przed implementacja:
 
-1. **Phase 9 (Scraping Engine) — CRITICAL**: Apify Actor output schema wymaga walidacji (test run). Nazwy pol (`postId` vs `post_id`?), input params (`sessionCookies` vs `cookies`?), dataset pagination, timing runow. **Akcja:** Manual test run via Apify Console przed implementacja.
+1. **Phase 9 (Scraping Engine) — RESOLVED**: Research DONE (2026-02-23). Apify API v2, actor input/output, cookie format, polling architecture — wszystko zweryfikowane. Research: `.planning/phases/09-scraping-engine/09-RESEARCH.md`
 2. **Phase 10 (AI Analysis) — MEDIUM**: Prompty AI dla polskiego real estate wymagaja iteracji. Few-shot examples, sarkazm, kolokwializmy. **Akcja:** Manual review pierwszych 20-30 analyzed posts, tune prompts jesli accuracy < 80%.
