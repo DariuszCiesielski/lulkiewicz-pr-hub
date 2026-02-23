@@ -55,13 +55,13 @@ Requirements for milestone v1.1. Each maps to roadmap phases 7+.
 
 ### Scrapowanie Postów
 
-- [ ] **FBSCR-01**: Trigger scrapowania per grupa przez Apify Actor API (natywny fetch, bez apify-client)
-- [ ] **FBSCR-02**: Dwufazowa architektura: start Apify run → poll status co 5s → fetch wyników (mieści się w Vercel 60s)
-- [ ] **FBSCR-03**: useScrapeJob hook z progress bar (wzorzec useSyncJob)
-- [ ] **FBSCR-04**: Upsert postów z deduplikacją ON CONFLICT (group_id, facebook_post_id)
-- [ ] **FBSCR-05**: Rate limiting między grupami (min. 3 min przerwy, losowe opóźnienia)
-- [ ] **FBSCR-06**: Error handling: logowanie błędów, retry, informacja w UI o statusie
-- [ ] **FBSCR-07**: Ochrona konta FB: dedykowane konto, Apify Proxy, losowe opóźnienia, limit dzienny scrapowań, cookie health check przed scrapowaniem
+- [x] **FBSCR-01**: Trigger scrapowania per grupa przez Apify Actor API (natywny fetch, bez apify-client)
+- [x] **FBSCR-02**: Dwufazowa architektura: start Apify run → poll status co 5s → fetch wyników (mieści się w Vercel 60s)
+- [x] **FBSCR-03**: useScrapeJob hook z progress bar (wzorzec useSyncJob)
+- [x] **FBSCR-04**: Upsert postów z deduplikacją ON CONFLICT (group_id, facebook_post_id)
+- [x] **FBSCR-05**: Rate limiting między grupami (min. 3 min przerwy, losowe opóźnienia)
+- [x] **FBSCR-06**: Error handling: logowanie błędów, retry, informacja w UI o statusie
+- [x] **FBSCR-07**: Ochrona konta FB: dedykowane konto, Apify Proxy, losowe opóźnienia, limit dzienny scrapowań, cookie health check przed scrapowaniem
 
 ### Analiza AI
 
@@ -149,7 +149,7 @@ Requirements for milestone v1.1. Each maps to roadmap phases 7+.
 |-------------|-------|--------|
 | FBNAV-01..06 | Phase 7 (FB Foundation) | **Complete** |
 | FBGRP-01..04 | Phase 8 (Group Management) | Pending |
-| FBSCR-01..07 | Phase 9 (Scraping Engine) | Pending |
+| FBSCR-01..07 | Phase 9 (Scraping Engine) | Complete |
 | FBAI-01..06 | Phase 10 (AI Sentiment Analysis) | Pending |
 | FBVIEW-01..04 | Phase 11 (Post Browsing & Dashboard) | Pending |
 | FBREP-01..06 | Phase 12 (Reports & Export) | Pending |

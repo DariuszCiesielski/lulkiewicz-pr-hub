@@ -32,7 +32,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 7: FB Foundation** - Migracja DB (6 tabel + RLS), typy TS, nawigacja sidebar, layout + shell pages, admin utilities extraction — **3 plans, 2 waves**
 - [ ] **Phase 8: Group Management** - CRUD grup FB, status active/paused, bulk ops, konfiguracja Apify (token szyfrowany + FB cookies) — **4 plans, 3 waves**
-- [ ] **Phase 9: Scraping Engine** - Integracja Apify Actor API, dwufazowa architektura polling, ochrona konta FB, rate limiting, error handling — **3 plans, 3 waves**
+- [x] **Phase 9: Scraping Engine** - Integracja Apify Actor API, dwufazowa architektura polling, ochrona konta FB, rate limiting, error handling — **4 plans, 2 waves**
 - [ ] **Phase 10: AI Sentiment Analysis** - Kwalifikacja postow (sentyment + relevance + kategorie), domain-specific prompty PL, batch processing, edytowalne prompty
 - [ ] **Phase 11: Post Browsing & Dashboard** - Widok TYLKO istotnych postow z filtrami i linkami do FB, dashboard KPI, alerty negatywne, quick actions
 - [ ] **Phase 12: Reports & Export** - Raporty na zadanie z sekcjami per grupa, tabela postow z linkami FB, edytowalne prompty, eksport DOCX, historia
@@ -210,7 +210,7 @@ Plans:
 - [x] 09-01-PLAN.md — Backend foundation: Apify API wrapper (3 funkcje), post mapper z graceful fallbacks, typy TS scrape
 - [x] 09-02-PLAN.md — API routes: POST /api/fb/scrape (start job), POST /api/fb/scrape/process (3-mode pipeline), GET /api/fb/scrape/status/[jobId]
 - [x] 09-03-PLAN.md — Frontend: useScrapeJob hook z multi-group queue, ScrapeProgress/ScrapeButton komponenty, integracja z tabela grup
-- [ ] 09-04-PLAN.md — Gap closure: Pre-scrape cookie health check (testowy Apify run, status cookie_check, warning UI)
+- [x] 09-04-PLAN.md — Gap closure: Pre-scrape cookie health check (testowy Apify run, status cookie_check, warning UI)
 
 ### Phase 10: AI Sentiment Analysis
 **Goal**: Admin moze uruchomic analiza AI na scrapowanych postach — kazdy post otrzymuje sentyment, relevance score, kategorie i AI snippet w jednym wywolaniu AI
@@ -274,7 +274,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 |-------|----------------|--------|-----------|
 | 7. FB Foundation | 3/3 | **COMPLETE** | 2026-02-12 |
 | 8. Group Management | 4/4 | **COMPLETE** | 2026-02-12 |
-| 9. Scraping Engine | 3/4 | **Gap closure** | — |
+| 9. Scraping Engine | 4/4 | **COMPLETE** | 2026-02-23 |
 | 10. AI Sentiment Analysis | 0/? | Pending | — |
 | 11. Post Browsing & Dashboard | 0/? | Pending | — |
 | 12. Reports & Export | 0/? | Pending | — |
