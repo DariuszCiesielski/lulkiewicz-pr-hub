@@ -52,11 +52,23 @@ export async function GET() {
     }
   }
 
+  // Slowa kluczowe
+  const fbKeywordsRecord = settings.find((s) => s.key === 'fb_keywords');
+  let fbKeywords: string[] = [];
+  if (fbKeywordsRecord?.value_plain) {
+    try {
+      fbKeywords = JSON.parse(fbKeywordsRecord.value_plain);
+    } catch {
+      fbKeywords = [];
+    }
+  }
+
   return NextResponse.json({
     has_apify_token: !!(apifyTokenRecord?.value_encrypted),
     has_fb_cookies: !!(fbCookiesRecord?.value_encrypted),
     apify_actor_id: actorIdRecord?.value_plain || DEFAULT_APIFY_ACTOR,
     developer_instructions: developerInstructions,
+    fb_keywords: fbKeywords,
   });
 }
 

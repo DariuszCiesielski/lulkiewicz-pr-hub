@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  Key, Cookie, Settings2, CheckCircle2, XCircle, Shield, Brain, Loader2, Upload,
+  Key, Cookie, Settings2, CheckCircle2, XCircle, Shield, Brain, Loader2, Upload, Tag,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -18,6 +18,8 @@ export default function SettingsForm() {
   const [apifyActorId, setApifyActorId] = useState('curious_coder/facebook-post-scraper');
   const [developerInstructions, setDeveloperInstructions] = useState<Record<string, string>>({});
   const [developers, setDevelopers] = useState<string[]>([]);
+  const [keywords, setKeywords] = useState<string[]>([]);
+  const [keywordsInput, setKeywordsInput] = useState('');
 
   // Form inputs
   const [newApifyToken, setNewApifyToken] = useState('');
@@ -53,6 +55,11 @@ export default function SettingsForm() {
       setNewActorId(settingsData.apify_actor_id);
       setDeveloperInstructions(settingsData.developer_instructions || {});
       setDevelopers(developersData);
+
+      // Load keywords
+      const loadedKeywords: string[] = settingsData.fb_keywords || [];
+      setKeywords(loadedKeywords);
+      setKeywordsInput(loadedKeywords.join(', '));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Błąd ładowania ustawień');
     } finally {
@@ -106,6 +113,9 @@ export default function SettingsForm() {
         setApifyActorId(settingsData.apify_actor_id);
         setNewActorId(settingsData.apify_actor_id);
         setDeveloperInstructions(settingsData.developer_instructions || {});
+        const updatedKeywords: string[] = settingsData.fb_keywords || [];
+        setKeywords(updatedKeywords);
+        setKeywordsInput(updatedKeywords.join(', '));
       }
 
       // Clear form inputs after successful save
@@ -443,6 +453,88 @@ export default function SettingsForm() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Card 5: Keywords */}
+      <div
+        className="rounded-lg border p-4"
+        style={{
+          borderColor: 'var(--border-primary)',
+          backgroundColor: 'var(--bg-secondary)',
+        }}
+      >
+        <div className="flex items-center gap-2 mb-3">
+          <Tag className="h-4 w-4" style={{ color: 'var(--text-muted)' }} />
+          <h2 className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
+            Slowa kluczowe do monitorowania
+          </h2>
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs mb-1" style={{ color: 'var(--text-muted)' }}>
+              Wpisz slowa kluczowe (oddzielone przecinkiem lub nowa linia)
+            </label>
+            <textarea
+              value={keywordsInput}
+              onChange={(e) => setKeywordsInput(e.target.value)}
+              rows={4}
+              placeholder="winda, awaria, przeciek, smrod, ochrona, monitoring, oplaty, czynsz, parking, smieci, sprzatanie, remont"
+              className="w-full rounded-md border p-3 text-xs resize-none"
+              style={{
+                borderColor: 'var(--border-primary)',
+                backgroundColor: 'var(--bg-primary)',
+                color: 'var(--text-primary)',
+              }}
+            />
+          </div>
+
+          {/* Current keywords preview */}
+          {keywords.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {keywords.map((kw) => (
+                <span
+                  key={kw}
+                  className="rounded-full px-2 py-0.5 text-xs"
+                  style={{
+                    backgroundColor: 'rgba(139, 92, 246, 0.15)',
+                    color: '#8b5cf6',
+                  }}
+                >
+                  {kw}
+                </span>
+              ))}
+            </div>
+          )}
+
+          <div className="flex items-center justify-between">
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              Posty zawierajace te slowa kluczowe otrzymaja podwyzszone relevance score (+1-2 pkt).
+            </p>
+            <button
+              onClick={() => {
+                // Parse: split by newline and comma, trim, filter empty, unique
+                const parsed = keywordsInput
+                  .split(/[,\n]+/)
+                  .map((s) => s.trim().toLowerCase())
+                  .filter((s) => s.length > 0);
+                const unique = [...new Set(parsed)];
+                saveSetting('fb_keywords', JSON.stringify(unique), 'Slowa kluczowe');
+              }}
+              disabled={saving === 'fb_keywords'}
+              className="rounded-md px-4 py-1.5 text-xs font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50 whitespace-nowrap ml-3"
+              style={{ backgroundColor: 'var(--accent-primary)' }}
+            >
+              {saving === 'fb_keywords' ? (
+                <span className="flex items-center gap-1">
+                  <Loader2 className="h-3 w-3 animate-spin" /> Zapisywanie...
+                </span>
+              ) : (
+                'Zapisz slowa'
+              )}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
