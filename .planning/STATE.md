@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-10)
 
 **Core value:** Hub narzędziowy — AI analizuje maile (email-analyzer) i posty z grup FB (fb-analyzer) dla audytu komunikacji administracji osiedli
-**Current focus:** Milestone v1.1 — FB Analyzer. Phase 9 (Scraping Engine) IN PROGRESS. Plan 01/03 COMPLETE.
+**Current focus:** Milestone v1.1 — FB Analyzer. Phase 9 (Scraping Engine) IN PROGRESS. Plans 01-02/03 COMPLETE.
 
 ## Current Position
 
 Phase: Phase 9 (Scraping Engine) — IN PROGRESS
-Plan: 1 of 3
-Status: Plan 09-01 COMPLETE. Plans 09-02, 09-03 pending.
-Last activity: 2026-02-23 — Completed 09-01-PLAN.md (Apify client + post mapper + scraping types)
+Plan: 2 of 3
+Status: Plans 09-01, 09-02 COMPLETE. Plan 09-03 pending.
+Last activity: 2026-02-23 — Completed 09-02-PLAN.md (Scrape API routes: start, process, status)
 
 Progress (v1.0 Email Analyzer): [####################] 100% (Phases 1-6 + Phase 2.1 + Phase 2.2 ALL COMPLETE)
-Progress (v1.1 FB Analyzer): [##########..........] 50% (phases 7-8 COMPLETE, phase 9 plan 1/3 done)
+Progress (v1.1 FB Analyzer): [############........] 60% (phases 7-8 COMPLETE, phase 9 plans 1-2/3 done)
 
 ## Planning Status
 
@@ -72,7 +72,7 @@ Progress (v1.1 FB Analyzer): [##########..........] 50% (phases 7-8 COMPLETE, ph
 
 **Phase 9 plans (3 plans, 2 waves) — IN PROGRESS:**
 - [x] 09-01-PLAN.md (Wave 1, autonomous) — Apify client + post mapper + scraping types (b1c3606, 30780e8)
-- [ ] 09-02-PLAN.md (Wave 1, autonomous) — Scrape API routes (/api/fb/scrape, /process, /status)
+- [x] 09-02-PLAN.md (Wave 1, autonomous) — Scrape API routes: start, process(3-mode), status (7d568d4, 2c1efac)
 - [ ] 09-03-PLAN.md (Wave 2, autonomous) — Scrape UI (useScrapeJob hook, ScrapeProgress, ScrapeButton)
 
 ## Accumulated Context
@@ -126,6 +126,11 @@ Progress (v1.1 FB Analyzer): [##########..........] 50% (phases 7-8 COMPLETE, ph
 - [09-01]: MappedFbPost/MappedFbComment osobne od FbPost/FbComment — mapper tworzy rows do upsert
 - [09-01]: extractFacebookPostId: 3 patterny URL + fallback na caly URL (nigdy pusty string)
 - [09-01]: logRawPostSample debug helper — weryfikacja schematu aktora przy pierwszym scrapowaniu
+- [09-02]: datasetId z getRunStatus() response (defaultDatasetId) zamiast kodowania w apify_run_id
+- [09-02]: loadToken osobny helper od loadScrapeConfig — MODE 2/3 potrzebuja tylko token
+- [09-02]: Pre-flight config check w start route — walidacja token+cookies przed tworzeniem joba
+- [09-02]: Upsert errors logowane ale nie failuja joba — partial progress zachowany
+- [09-02]: Per-group cookie override: group.cookies_encrypted > fb_settings.fb_cookies
 
 - [Phase 2.1 INSERTED]: Multi-folder sync — /messages zamiast /mailFolders/inbox/messages
 - [Phase 2.1]: Delta sync zmieniony na smart resync z $filter=receivedDateTime ge (delta per-folder only w Graph API)
@@ -204,8 +209,8 @@ organizations, organization_members, **mailboxes** (extended: +8 cols, sync_stat
 
 ## Session Continuity
 
-Last session: 2026-02-23T09:05Z
-Stopped at: Completed 09-01-PLAN.md (Apify client + post mapper + scraping types)
-Resume file: .planning/phases/09-scraping-engine/09-01-SUMMARY.md
-Next step: Execute 09-02-PLAN.md (Scrape API routes)
+Last session: 2026-02-23T09:15Z
+Stopped at: Completed 09-02-PLAN.md (Scrape API routes: start, process, status)
+Resume file: .planning/phases/09-scraping-engine/09-02-SUMMARY.md
+Next step: Execute 09-03-PLAN.md (Scrape UI: useScrapeJob hook, ScrapeProgress, ScrapeButton)
 Version tag: v1.0.8
