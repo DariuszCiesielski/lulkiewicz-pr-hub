@@ -204,12 +204,13 @@ Plans:
   4. Bledy scrapowania (timeout, expired cookies, Apify error) sa logowane, wyswietlane w UI z opisem i sugestia rozwiazania, a system proponuje retry
   5. Przed scrapowaniem wykonywany jest cookie health check (testowy scrape maxPosts: 1) — jesli cookies wygasly, user widzi alert z instrukcja odswiezenia
 
-**Plans:** 3 plans
+**Plans:** 4 plans
 
 Plans:
-- [ ] 09-01-PLAN.md — Backend foundation: Apify API wrapper (3 funkcje), post mapper z graceful fallbacks, typy TS scrape
-- [ ] 09-02-PLAN.md — API routes: POST /api/fb/scrape (start job), POST /api/fb/scrape/process (3-mode pipeline), GET /api/fb/scrape/status/[jobId]
-- [ ] 09-03-PLAN.md — Frontend: useScrapeJob hook z multi-group queue, ScrapeProgress/ScrapeButton komponenty, integracja z tabela grup
+- [x] 09-01-PLAN.md — Backend foundation: Apify API wrapper (3 funkcje), post mapper z graceful fallbacks, typy TS scrape
+- [x] 09-02-PLAN.md — API routes: POST /api/fb/scrape (start job), POST /api/fb/scrape/process (3-mode pipeline), GET /api/fb/scrape/status/[jobId]
+- [x] 09-03-PLAN.md — Frontend: useScrapeJob hook z multi-group queue, ScrapeProgress/ScrapeButton komponenty, integracja z tabela grup
+- [ ] 09-04-PLAN.md — Gap closure: Pre-scrape cookie health check (testowy Apify run, status cookie_check, warning UI)
 
 ### Phase 10: AI Sentiment Analysis
 **Goal**: Admin moze uruchomic analiza AI na scrapowanych postach — kazdy post otrzymuje sentyment, relevance score, kategorie i AI snippet w jednym wywolaniu AI
@@ -273,7 +274,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 |-------|----------------|--------|-----------|
 | 7. FB Foundation | 3/3 | **COMPLETE** | 2026-02-12 |
 | 8. Group Management | 4/4 | **COMPLETE** | 2026-02-12 |
-| 9. Scraping Engine | 0/3 | **Planned** | — |
+| 9. Scraping Engine | 3/4 | **Gap closure** | — |
 | 10. AI Sentiment Analysis | 0/? | Pending | — |
 | 11. Post Browsing & Dashboard | 0/? | Pending | — |
 | 12. Reports & Export | 0/? | Pending | — |
