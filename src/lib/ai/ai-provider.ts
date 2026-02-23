@@ -60,7 +60,8 @@ export async function loadAIConfig(supabase: SupabaseClient): Promise<AIConfig> 
 export async function callAI(
   config: AIConfig,
   systemPrompt: string,
-  userPrompt: string
+  userPrompt: string,
+  responseFormat?: { type: string; json_schema?: { name: string; strict: boolean; schema: object } }
 ): Promise<AIResponse> {
   const startTime = Date.now();
 
@@ -72,6 +73,20 @@ export async function callAI(
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 50_000);
 
+  const requestBody: Record<string, unknown> = {
+    model: config.model,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ],
+    temperature: config.temperature,
+    max_completion_tokens: config.maxTokens,
+  };
+
+  if (responseFormat) {
+    requestBody.response_format = responseFormat;
+  }
+
   let res: Response;
   try {
     res = await fetch(`${baseUrl}/chat/completions`, {
@@ -80,15 +95,7 @@ export async function callAI(
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${config.apiKey}`,
       },
-      body: JSON.stringify({
-        model: config.model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        temperature: config.temperature,
-        max_completion_tokens: config.maxTokens,
-      }),
+      body: JSON.stringify(requestBody),
       signal: controller.signal,
     });
   } catch (err) {

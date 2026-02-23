@@ -12,7 +12,7 @@ export type FbSentiment = 'positive' | 'negative' | 'neutral';
 
 export type FbScrapeStatus = 'pending' | 'running' | 'downloading' | 'completed' | 'failed';
 
-export type FbAnalysisStatus = 'pending' | 'running' | 'completed' | 'failed';
+export type FbAnalysisStatus = 'pending' | 'running' | 'paused' | 'completed' | 'failed';
 
 export type FbReportStatus = 'draft' | 'generating' | 'completed' | 'failed';
 
@@ -90,6 +90,16 @@ export interface FbAnalysisJob {
   started_at: string | null;
   completed_at: string | null;
   created_at: string;
+  metadata: Record<string, unknown> | null;
+}
+
+/** Wynik analizy AI postu FB — odwzorowuje JSON schema z fb-analysis-prompt.ts */
+export interface FbPostAnalysisResult {
+  is_relevant: boolean;
+  sentiment: 'positive' | 'negative' | 'neutral';
+  relevance_score: number;
+  categories: string[];
+  ai_snippet: string;
 }
 
 export interface FbReport {
@@ -126,7 +136,9 @@ export type FbSettingsKey =
   | 'apify_token'
   | 'fb_cookies'
   | 'apify_actor_id'
-  | `developer_instruction:${string}`;
+  | `developer_instruction:${string}`
+  | 'fb_keywords'
+  | `fb_keywords:${string}`;
 
 // --- Phase 9: Scraping Types ---
 
