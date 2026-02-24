@@ -43,7 +43,7 @@ export default function AISettingsPage() {
 
   const [config, setConfig] = useState<AIConfigState>({
     provider: 'openai',
-    model: 'gpt-5.2',
+    model: 'gpt-5.1',
     temperature: 0.3,
     max_tokens: 16384,
     api_key: '',

@@ -69,9 +69,9 @@ export async function callAI(
     ? process.env.AZURE_OPENAI_ENDPOINT
     : 'https://api.openai.com/v1';
 
-  // 55s timeout — leaves 5s headroom within Vercel's 60s function limit
+  // 240s timeout — leaves 60s headroom within Vercel Pro's 300s function limit
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 55_000);
+  const timeout = setTimeout(() => controller.abort(), 240_000);
 
   const requestBody: Record<string, unknown> = {
     model: config.model,

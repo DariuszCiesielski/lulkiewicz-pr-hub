@@ -11,9 +11,9 @@ import {
 import { loadKeywords, matchKeywords } from '@/lib/fb/fb-keywords';
 import type { FbPostAnalysisResult } from '@/types/fb';
 
-export const maxDuration = 60;
+export const maxDuration = 300;
 
-/** Max posts to process per HTTP request — 5 concurrent AI calls fit under 60s. */
+/** Max posts to process per HTTP request — 5 concurrent AI calls. */
 const POSTS_PER_REQUEST = 5;
 
 /** Posts shorter than this are marked irrelevant without AI call. */

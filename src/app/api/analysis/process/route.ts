@@ -9,7 +9,7 @@ import {
   verifyScopedAdminAccess,
 } from '@/lib/api/demo-scope';
 
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 /** Max threads to process per HTTP request — 2 concurrent AI calls fit under 60s. */
 const THREADS_PER_REQUEST = 2;
