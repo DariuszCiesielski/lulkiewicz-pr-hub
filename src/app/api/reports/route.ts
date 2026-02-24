@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { DEFAULT_PROMPTS, CLIENT_REPORT_SECTIONS } from '@/lib/ai/default-prompts';
 import { loadProfile, loadProfileSections } from '@/lib/ai/profile-loader';
+import { getAnalysisProfile } from '@/lib/ai/analysis-profiles';
+import type { AnalysisProfileId } from '@/types/email';
 import { getAdminClient } from '@/lib/api/admin';
 import {
   getScopedMailboxIds,
@@ -164,20 +166,38 @@ export async function POST(request: NextRequest) {
     ? await loadProfileSections(adminClient, profile.id)
     : [];
 
-  // Build section definitions: DB-driven sections or fallback to DEFAULT_PROMPTS
-  const profilePromptDefs = profileSections.length > 0
-    ? profileSections.map((s) => ({
-        section_key: s.sectionKey,
-        title: s.title,
-        section_order: s.sectionOrder,
-        system_prompt: s.systemPrompt,
-        user_prompt_template: s.userPromptTemplate,
-      }))
-    : DEFAULT_PROMPTS;
+  // Build section definitions: DB sections > hardcoded profile sections > DEFAULT_PROMPTS
+  let profilePromptDefs;
+  let profileClientSections: string[];
 
-  const profileClientSections = profileSections.length > 0
-    ? profileSections.filter((s) => s.inClientReport).map((s) => s.sectionKey)
-    : CLIENT_REPORT_SECTIONS;
+  if (profileSections.length > 0) {
+    profilePromptDefs = profileSections.map((s) => ({
+      section_key: s.sectionKey,
+      title: s.title,
+      section_order: s.sectionOrder,
+      system_prompt: s.systemPrompt,
+      user_prompt_template: s.userPromptTemplate,
+    }));
+    profileClientSections = profileSections.filter((s) => s.inClientReport).map((s) => s.sectionKey);
+  } else {
+    const slug = profile?.slug || 'communication_audit';
+    const hardcodedProfile = getAnalysisProfile(slug as AnalysisProfileId);
+    if (hardcodedProfile.reportSections.length > 0) {
+      profilePromptDefs = hardcodedProfile.reportSections.map((s) => ({
+        section_key: s.section_key,
+        title: s.title,
+        section_order: s.section_order,
+        system_prompt: '',
+        user_prompt_template: '',
+      }));
+      profileClientSections = hardcodedProfile.reportSections
+        .filter((s) => s.inClientReport)
+        .map((s) => s.section_key);
+    } else {
+      profilePromptDefs = DEFAULT_PROMPTS;
+      profileClientSections = CLIENT_REPORT_SECTIONS;
+    }
+  }
 
   // Load user-configured prompt overrides from DB
   const { data: dbPrompts } = await adminClient
@@ -226,9 +246,17 @@ export async function POST(request: NextRequest) {
     })
     .map((p) => p.section_key);
 
-  // Count unique threads
-  const uniqueThreadIds = new Set(results.map((r) => r.thread_id));
-  const threadCount = uniqueThreadIds.size;
+  // Count threads with actual content (exclude error/empty results)
+  const threadSectionKey = profile?.threadSectionKey || '_thread_summary';
+  const threadsWithContent = new Set(
+    results
+      .filter((r) => r.section_key === threadSectionKey && r.result_data?.content)
+      .map((r) => r.thread_id)
+  );
+  // Fallback: if no thread summaries found, count all unique threads
+  const threadCount = threadsWithContent.size > 0
+    ? threadsWithContent.size
+    : new Set(results.map((r) => r.thread_id)).size;
 
   // Build title
   const levelLabel = detailLevel === 'synthetic' ? 'syntetyczny' : 'standardowy';

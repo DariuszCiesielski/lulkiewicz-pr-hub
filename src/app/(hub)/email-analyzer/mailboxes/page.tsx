@@ -103,9 +103,6 @@ export default function MailboxesPage() {
       connection_type: mailbox.connection_type as 'ropc' | 'client_credentials',
       tenant_id: '',
       client_id: '',
-      analysis_profile: mailbox.analysis_profile || 'communication_audit',
-      default_profile_id: mailbox.default_profile_id || null,
-      cc_filter_mode: mailbox.cc_filter_mode || 'off',
     });
   };
 

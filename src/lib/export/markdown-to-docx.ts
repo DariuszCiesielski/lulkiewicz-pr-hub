@@ -21,6 +21,7 @@ import {
   BorderStyle,
   AlignmentType,
   ShadingType,
+  TableLayoutType,
 } from 'docx';
 
 type DocxChild = Paragraph | Table;
@@ -94,7 +95,14 @@ function parseTableRow(line: string): string[] {
     .map((cell) => cell.trim());
 }
 
+/** A4 text width in DXA (twips) with default 1-inch margins: ~6.3 inches = 9072 DXA */
+const TABLE_PAGE_WIDTH_DXA = 9072;
+
 function buildTable(rows: string[][]): Table {
+  const colCount = rows[0]?.length || 1;
+  const colWidth = Math.floor(TABLE_PAGE_WIDTH_DXA / colCount);
+  const columnWidths = Array(colCount).fill(colWidth);
+
   const tableRows = rows.map((cells, rowIndex) => {
     const isHeader = rowIndex === 0;
     return new TableRow({
@@ -110,6 +118,7 @@ function buildTable(rows: string[][]): Table {
                 spacing: { before: 60, after: 60 },
               }),
             ],
+            width: { size: colWidth, type: WidthType.DXA },
             shading: isHeader
               ? { type: ShadingType.SOLID, color: COLOR.TABLE_HEADER_BG }
               : undefined,
@@ -121,6 +130,8 @@ function buildTable(rows: string[][]): Table {
   return new Table({
     rows: tableRows,
     width: { size: 100, type: WidthType.PERCENTAGE },
+    layout: TableLayoutType.FIXED,
+    columnWidths,
     borders: {
       top: { style: BorderStyle.SINGLE, size: 1, color: COLOR.TABLE_BORDER },
       bottom: { style: BorderStyle.SINGLE, size: 1, color: COLOR.TABLE_BORDER },

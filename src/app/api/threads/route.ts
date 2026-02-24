@@ -46,10 +46,28 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Skrzynka nie została znaleziona' }, { status: 404 });
   }
 
+  // Fetch mailbox cc_filter_mode to apply thread filtering
+  const { data: mailbox } = await adminClient
+    .from('mailboxes')
+    .select('cc_filter_mode')
+    .eq('id', mailboxId)
+    .single();
+
+  const ccFilterMode = mailbox?.cc_filter_mode || 'off';
+
   let query = adminClient
     .from('email_threads')
     .select('*', { count: 'exact' })
     .eq('mailbox_id', mailboxId);
+
+  // Apply CC filter: hide threads where mailbox is only CC/BCC recipient
+  if (ccFilterMode === 'never_in_to') {
+    // Hide threads where mailbox NEVER appears in To field
+    query = query.neq('cc_filter_status', 'cc_always');
+  } else if (ccFilterMode === 'first_email_cc') {
+    // Hide threads where first email has mailbox in CC only (stricter)
+    query = query.eq('cc_filter_status', 'direct');
+  }
 
   if (status === 'closed_all') {
     query = query.in('status', ['closed', 'closed_positive', 'closed_negative']);

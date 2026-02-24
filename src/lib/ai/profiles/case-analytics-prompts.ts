@@ -15,27 +15,37 @@ Odpowiadasz po polsku, zwięźle i strukturalnie.`;
 
 export const CASE_THREAD_USER_PROMPT_TEMPLATE = `Przeanalizuj poniższy wątek email i wyodrębnij dane zgłoszeniowe. Dla każdego wymiaru podaj konkretne informacje.
 
+KONTEKST: Analizujesz korespondencję kierowaną do rzecznika dewelopera. Wiele wiadomości trafia w kopii (DW/CC) — NIE oceniaj jakości komunikacji ani czasu reakcji. Skup się WYŁĄCZNIE na wyodrębnieniu danych o zgłaszanych sprawach.
+
 ## WYMIARY DO WYODRĘBNIENIA:
 
-**1. METADANE ZGŁOSZENIA**: Temat sprawy, data pierwszego kontaktu, data ostatniego kontaktu, liczba wiadomości, uczestnicy i ich role (mieszkaniec/administracja/deweloper/firma zewnętrzna).
+**1. METADANE ZGŁOSZENIA**: Temat sprawy, data pierwszego kontaktu, data ostatniego kontaktu, liczba wiadomości, uczestnicy i ich role (mieszkaniec/klient/administracja/deweloper/firma zewnętrzna).
 
 **2. LOKALIZACJA**: Zidentyfikuj lokalizację/inwestycję, której dotyczy zgłoszenie. Szukaj nazw osiedli, miast (Gdańsk, Poznań, Wrocław, Warszawa, inne), adresów, numerów budynków/lokali. Jeśli lokalizacja nie jest jednoznaczna, napisz "nie określono".
 
-**3. ETAP PROCESU**: Określ etap w cyklu życia zgłoszenia:
-  - Nowe zgłoszenie (pierwsze zgłoszenie, brak odpowiedzi)
-  - Przyjęte (potwierdzono odbiór, przydzielono)
-  - W realizacji (trwają prace, oczekiwanie na wykonawcę)
-  - Oczekiwanie na odpowiedź (czeka na informację zwrotną)
-  - Zamknięte pozytywnie (rozwiązane, mieszkaniec zadowolony)
-  - Zamknięte negatywnie (odmowa, brak rozwiązania)
-  - Eskalowane (przekazane wyżej, groźba prawna)
+**3. ETAP PROCESU**: Określ dwa aspekty:
+  a) Etap relacji z deweloperem:
+    - Przedsprzedażowy (zapytania przed zakupem, oferty, warunki umowy)
+    - Posprzedażowy — odbiór (odbiory lokali, protokoły zdawczo-odbiorcze, usterki odbiorcze)
+    - Posprzedażowy — gwarancja (usterki i reklamacje w okresie gwarancyjnym)
+    - Posprzedażowy — eksploatacja (bieżące zarządzanie, sprawy wspólnoty/administracji)
+    - Nie określono
+  b) Status rozpatrzenia zgłoszenia:
+    - Nowe zgłoszenie (pierwsze zgłoszenie, brak odpowiedzi)
+    - Przyjęte (potwierdzono odbiór, przydzielono)
+    - W realizacji (trwają prace, oczekiwanie na wykonawcę)
+    - Oczekiwanie na odpowiedź (czeka na informację zwrotną)
+    - Zamknięte pozytywnie (rozwiązane, klient zadowolony)
+    - Zamknięte negatywnie (odmowa, brak rozwiązania)
+    - Eskalowane (przekazane wyżej, groźba prawna)
 
 **4. TYP ZGŁOSZENIA**: Sklasyfikuj typ sprawy:
   - Usterka techniczna (wada budowlana, awaria instalacji)
   - Reklamacja gwarancyjna (formalne roszczenie gwarancyjne)
-  - Pytanie/informacja (zapytanie o termin, status)
+  - Pytanie/informacja (zapytanie o termin, status, warunki)
   - Skarga (niezadowolenie z obsługi, opóźnień)
   - Procedura administracyjna (odbiory, protokoły, dokumenty)
+  - Sprawa przedsprzedażowa (oferta, warunki, dostępność)
   - Inne (co dokładnie)
 
 **5. KATEGORIA PROBLEMU**: Jeśli to usterka/reklamacja, określ kategorię:
@@ -45,6 +55,7 @@ export const CASE_THREAD_USER_PROMPT_TEMPLATE = `Przeanalizuj poniższy wątek e
   - Elewacja/izolacja
   - Części wspólne (klatka, garaż, plac zabaw)
   - Teren zewnętrzny (drogi, chodniki, zieleń)
+  - Wykończenie wnętrz (podłogi, ściany, tynki)
   - Inne (co dokładnie)
   Jeśli to nie usterka/reklamacja, napisz "nie dotyczy".
 

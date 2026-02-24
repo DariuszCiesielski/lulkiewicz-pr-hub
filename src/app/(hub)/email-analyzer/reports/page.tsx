@@ -282,8 +282,8 @@ export default function ReportsPage() {
                   color: 'var(--text-primary)',
                 }}
               >
-                <option value="internal">Wewnętrzny ({coverage?.internal?.total ?? 13} sekcji)</option>
-                <option value="client">Kliencki ({coverage?.client?.total ?? 12} sekcji)</option>
+                <option value="internal">Wewnętrzny ({coverage?.internal?.total ?? '...'} sekcji)</option>
+                <option value="client">Kliencki ({coverage?.client?.total ?? '...'} sekcji)</option>
               </select>
             </div>
             <div className="flex flex-col gap-1">

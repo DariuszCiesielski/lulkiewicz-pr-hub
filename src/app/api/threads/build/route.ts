@@ -33,10 +33,10 @@ export async function POST(request: NextRequest) {
 
   const adminClient = getAdminClient();
 
-  // Get mailbox email address
+  // Get mailbox email address + cc_filter_mode
   let mailboxQuery = adminClient
     .from('mailboxes')
-    .select('email_address')
+    .select('email_address, cc_filter_mode')
     .eq('id', mailboxId);
   mailboxQuery = applyMailboxDemoScope(mailboxQuery, scope.isDemoUser);
   const { data: mailbox, error: mailboxError } = await mailboxQuery.single();
@@ -52,13 +52,43 @@ export async function POST(request: NextRequest) {
       mailbox.email_address
     );
 
-    const summaryInfo = result.summariesGenerated > 0
-      ? `, wygenerowano ${result.summariesGenerated} podsumowań AI`
-      : '';
+    const parts = [`Zbudowano ${result.threadsCreated} wątków z ${result.emailsUpdated} emaili`];
+    if (result.emailsFiltered > 0) {
+      parts.push(`pominięto ${result.emailsFiltered} śmieciowych`);
+    }
+    if (result.summariesGenerated > 0) {
+      parts.push(`wygenerowano ${result.summariesGenerated} podsumowań AI`);
+    }
+
+    // Count visible threads after CC filter
+    const ccFilterMode = mailbox.cc_filter_mode || 'off';
+    let visibleThreads = result.threadsCreated;
+
+    if (ccFilterMode !== 'off' && result.threadsCreated > 0) {
+      let countQuery = adminClient
+        .from('email_threads')
+        .select('*', { count: 'exact', head: true })
+        .eq('mailbox_id', mailboxId);
+
+      if (ccFilterMode === 'never_in_to') {
+        countQuery = countQuery.neq('cc_filter_status', 'cc_always');
+      } else if (ccFilterMode === 'first_email_cc') {
+        countQuery = countQuery.eq('cc_filter_status', 'direct');
+      }
+
+      const { count } = await countQuery;
+      visibleThreads = count ?? result.threadsCreated;
+
+      const hidden = result.threadsCreated - visibleThreads;
+      if (hidden > 0) {
+        parts.push(`${hidden} ukrytych filtrem CC`);
+      }
+    }
 
     return NextResponse.json({
       success: true,
-      message: `Zbudowano ${result.threadsCreated} wątków, zaktualizowano ${result.emailsUpdated} emaili${summaryInfo}`,
+      message: parts.join(', '),
+      visibleThreads,
       ...result,
     });
   } catch (error) {

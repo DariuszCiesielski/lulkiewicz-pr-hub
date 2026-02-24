@@ -360,9 +360,16 @@ function buildUserPrompt(input: SynthesisInput, resultsBlock: string): string {
   parts.push(`\nDANE ŹRÓDŁOWE (podsumowania wątków):\n${resultsBlock}`);
 
   if (input.detailLevel === 'synthetic') {
-    parts.push(
-      `\nINSTRUKCJA: Napisz max 3-4 zdania zwartej prozy. BEZ nagłówków (##/###), BEZ list punktowanych, BEZ tabel (chyba że FOKUS jawnie wymaga tabeli). NIE opisuj wątków z osobna — wyciągaj ogólne wnioski.`
-    );
+    const isDefaultProfile = !input.profileSlug || input.profileSlug === 'communication_audit';
+    if (isDefaultProfile) {
+      parts.push(
+        `\nINSTRUKCJA: Napisz max 3-4 zdania zwartej prozy. BEZ nagłówków (##/###), BEZ list punktowanych, BEZ tabel (chyba że FOKUS jawnie wymaga tabeli). NIE opisuj wątków z osobna — wyciągaj ogólne wnioski.`
+      );
+    } else {
+      parts.push(
+        `\nINSTRUKCJA: Postępuj DOKŁADNIE wg FOKUS SEKCJI powyżej — użyj wymaganego formatu (tabela, lista lub proza). Po tabelach/listach dodaj akapit analityczny z wnioskami (2-3 zdania). NIE opisuj wątków z osobna — wyciągaj ogólne wnioski.`
+      );
+    }
   } else {
     parts.push(
       `\nINSTRUKCJA: Napisz sekcję raportu zgodnie z FOKUSEM SEKCJI powyżej. Jeśli FOKUS wymaga podsekcji (## / ###), ZASTOSUJ JE. NIE zaczynaj od nagłówka ## powtarzającego tytuł sekcji. NIE używaj nagłówków # (tylko ## i ###). Przytaczaj wątki TYLKO jako krótkie wzmianki (np. „wątek: Awaria windy"). NIE opisuj każdego wątku z osobna — wyciągaj ogólne wnioski.`

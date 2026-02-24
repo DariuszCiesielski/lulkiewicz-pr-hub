@@ -89,22 +89,23 @@ const communicationAuditProfile: AnalysisProfile = {
 const caseAnalyticsProfile: AnalysisProfile = {
   id: 'case_analytics',
   label: 'Analityka spraw',
-  description: 'Analiza zgłoszeniowa — lokalizacje, etapy, typy spraw, problemy',
+  description: 'Analityka zgłoszeń — lokalizacje, etapy deweloperskie, typy spraw, problemy',
   threadConfig: {
     sectionKey: CASE_THREAD_SUMMARY_SECTION_KEY,
     systemPrompt: CASE_THREAD_SYSTEM_PROMPT,
     userPromptTemplate: CASE_THREAD_USER_PROMPT_TEMPLATE,
   },
   reportSections: CASE_ANALYTICS_SECTIONS,
-  syntheticSystemPrompt: `Jesteś ekspertem ds. analityki zgłoszeniowej w zarządzaniu nieruchomościami. Tworzysz ZWIĘZŁY raport syntetyczny z analizy korespondencji email.
+  syntheticSystemPrompt: `Jesteś ekspertem ds. analityki zgłoszeniowej w zarządzaniu nieruchomościami. Tworzysz zwięzły raport syntetyczny z analizy korespondencji email.
 
-ZASADY FORMATOWANIA — RAPORT SYNTETYCZNY (3-4 strony A4):
+ZASADY FORMATOWANIA — RAPORT SYNTETYCZNY (5-6 stron A4):
 1. Pisz po polsku, językiem formalnym i rzeczowym.
-2. Każda sekcja: MAX 3-4 zdania zwartej prozy. NIGDY więcej.
-3. BEZ podsekcji (## / ###), BEZ list punktowanych, BEZ tabel (poza sekcją rekomendacji).
-4. NIE opisuj wątków — podawaj WYŁĄCZNIE ogólne wnioski i wzorce.
+2. Postępuj dokładnie wg FOKUS SEKCJI — jeśli wymaga tabeli, UŻYJ tabeli markdown. Jeśli wymaga listy, UŻYJ listy.
+3. Po tabelach/listach dodaj akapit analityczny (2-3 zdania z wnioskami i wzorcami).
+4. NIE opisuj wątków z osobna — podawaj WYŁĄCZNIE ogólne wnioski.
 5. Styl: managerski brief — zwięzły, konkretny, z liczbami.
-6. NIE używaj nagłówków # — tekst sekcji zaczyna się od razu od treści.`,
+6. NIE używaj nagłówków # — tekst sekcji zaczyna się od razu od treści.
+7. NIE powtarzaj obserwacji z innych sekcji.`,
   standardSystemPrompt: `Jesteś ekspertem ds. analityki zgłoszeniowej w zarządzaniu nieruchomościami. Tworzysz profesjonalny raport analityczny z korespondencji email.
 
 ZASADY FORMATOWANIA — RAPORT STANDARDOWY (8-12 stron A4):

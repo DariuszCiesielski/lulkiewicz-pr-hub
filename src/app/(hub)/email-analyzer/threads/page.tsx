@@ -6,12 +6,13 @@ import { MessageSquare, RefreshCw, Hammer } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import ThreadList from '@/components/threads/ThreadList';
 import ThreadFilters, { type ThreadFilterValues } from '@/components/threads/ThreadFilters';
-import type { EmailThread } from '@/types/email';
+import type { EmailThread, CcFilterMode } from '@/types/email';
 
 interface MailboxOption {
   id: string;
   display_name: string | null;
   email_address: string;
+  cc_filter_mode?: CcFilterMode;
 }
 
 interface Pagination {
@@ -33,6 +34,8 @@ export default function ThreadsPage() {
   const [isBuilding, setIsBuilding] = useState(false);
   const [buildResult, setBuildResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [ccFilterMode, setCcFilterMode] = useState<CcFilterMode>('off');
+  const [isSavingCcFilter, setIsSavingCcFilter] = useState(false);
   const [filters, setFilters] = useState<ThreadFilterValues>({
     search: '', status: '', from: '', to: '',
   });
@@ -60,12 +63,14 @@ export default function ThreadsPage() {
       .catch(() => setMailboxes([]));
   }, [isAdmin, selectedMailboxId]);
 
-  // Persist mailbox selection
+  // Persist mailbox selection + sync CC filter mode
   useEffect(() => {
     if (selectedMailboxId) {
       localStorage.setItem('ea-selected-mailbox', selectedMailboxId);
+      const mailbox = mailboxes.find((m) => m.id === selectedMailboxId);
+      setCcFilterMode(mailbox?.cc_filter_mode ?? 'off');
     }
-  }, [selectedMailboxId]);
+  }, [selectedMailboxId, mailboxes]);
 
   // Fetch threads
   const fetchThreads = useCallback(async (page = 1) => {
@@ -123,6 +128,31 @@ export default function ThreadsPage() {
       setError(err instanceof Error ? err.message : 'Błąd');
     } finally {
       setIsBuilding(false);
+    }
+  };
+
+  // Save CC filter mode to mailbox
+  const handleCcFilterChange = async (mode: CcFilterMode) => {
+    setCcFilterMode(mode);
+    if (!selectedMailboxId) return;
+    setIsSavingCcFilter(true);
+    try {
+      const res = await fetch(`/api/mailboxes/${selectedMailboxId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cc_filter_mode: mode }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || 'Błąd zapisu filtra CC');
+      } else {
+        // Refresh thread list with new filter applied server-side
+        await fetchThreads(1);
+      }
+    } catch {
+      setError('Błąd zapisu filtra CC');
+    } finally {
+      setIsSavingCcFilter(false);
     }
   };
 
@@ -188,6 +218,31 @@ export default function ThreadsPage() {
             </option>
           ))}
         </select>
+      </div>
+
+      {/* CC filter mode */}
+      <div className="mb-4 flex items-center gap-3">
+        <label className="text-sm font-medium whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>
+          Filtrowanie wątków CC
+        </label>
+        <select
+          value={ccFilterMode}
+          onChange={(e) => handleCcFilterChange(e.target.value as CcFilterMode)}
+          disabled={isSavingCcFilter || !selectedMailboxId}
+          className="rounded-md border px-3 py-1.5 text-sm outline-none disabled:opacity-50"
+          style={{
+            borderColor: 'var(--border-primary)',
+            backgroundColor: 'var(--bg-primary)',
+            color: 'var(--text-primary)',
+          }}
+        >
+          <option value="off">Wyłączone</option>
+          <option value="never_in_to">Pomiń — nigdy w polu &quot;Do&quot;</option>
+          <option value="first_email_cc">Pomiń — pierwszy mail jako DW</option>
+        </select>
+        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+          Pomijaj wątki, w których skrzynka jest tylko odbiorcą DW/UDW
+        </span>
       </div>
 
       {/* Filters */}

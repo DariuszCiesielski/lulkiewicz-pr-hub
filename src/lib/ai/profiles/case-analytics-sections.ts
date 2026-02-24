@@ -18,7 +18,13 @@ export const CASE_ANALYTICS_SECTIONS: ProfileReportSection[] = [
     title: 'Metadane analizy zgłoszeń',
     section_order: 1,
     inClientReport: true,
-    syntheticFocus: 'Wymiar "1. METADANE". Podaj: zakres dat, liczbę zgłoszeń, główne lokalizacje, główne typy spraw. Max 3-4 zdania.',
+    syntheticFocus: `Wymiar "1. METADANE". Podaj w formie listy z pogrubionymi etykietami:
+- **Zakres dat**: najstarsza i najnowsza wiadomość
+- **Łączna liczba zgłoszeń** (wątków) i wiadomości
+- **Główne lokalizacje**: rozkład zgłoszeń per lokalizacja (z liczbami)
+- **Główne typy spraw**: rozkład procentowy lub liczbowy
+- **Główni uczestnicy**: role (mieszkańcy, administracja, deweloper)
+- **Ograniczenia**: czego nie można ocenić z samych emaili`,
     standardFocus: `Wyodrębnij metadane analizy zgłoszeniowej.
 
 WYMAGANE ELEMENTY:
@@ -36,7 +42,12 @@ Napisz w formie listy z pogrubionymi etykietami.`,
     title: 'Rozkład geograficzny zgłoszeń',
     section_order: 2,
     inClientReport: true,
-    syntheticFocus: 'Wymiar "2. LOKALIZACJA". Podaj rozkład zgłoszeń per lokalizacja/inwestycja. Które lokalizacje generują najwięcej zgłoszeń? Max 3-4 zdania.',
+    syntheticFocus: `Wymiar "2. LOKALIZACJA". Podaj tabelę markdown z rozkładem zgłoszeń per lokalizacja:
+
+| Lokalizacja | Liczba zgłoszeń | % | Główne problemy |
+|---|---|---|---|
+
+Po tabeli 2-3 zdania: które lokalizacje generują nieproporcjonalnie dużo zgłoszeń, widoczne wzorce.`,
     standardFocus: `Przeanalizuj rozkład geograficzny zgłoszeń.
 
 WYMAGANA STRUKTURA:
@@ -58,15 +69,36 @@ Ile zgłoszeń nie udało się przypisać do lokalizacji? Dlaczego?`,
     title: 'Etapy procesu zgłoszeniowego',
     section_order: 3,
     inClientReport: true,
-    syntheticFocus: 'Wymiar "3. ETAPY PROCESU". Podaj rozkład zgłoszeń per etap (nowe/w realizacji/zamknięte). Ile spraw jest otwartych? Max 3-4 zdania.',
-    standardFocus: `Przeanalizuj etapy procesu zgłoszeniowego.
+    syntheticFocus: `Wymiar "3. ETAPY PROCESU". Podaj dwie zwięzłe tabele markdown:
+
+1) Etap relacji z deweloperem:
+| Etap relacji | Liczba | % |
+|---|---|---|
+
+2) Status rozpatrzenia:
+| Status | Liczba | % |
+|---|---|---|
+
+Po tabelach 2-3 zdania: jaki % zgłoszeń rozwiązany, bottlenecki, sprawy otwarte najdłużej.`,
+    standardFocus: `Przeanalizuj etapy procesu zgłoszeniowego w dwóch wymiarach.
 
 WYMAGANA STRUKTURA:
 
-## Rozkład per etap
+## Etap relacji z deweloperem
 Podaj tabelę markdown:
 
-| Etap procesu | Liczba zgłoszeń | % |
+| Etap relacji | Liczba zgłoszeń | % | Główne typy spraw |
+|---|---|---|---|
+| Przedsprzedażowy | N | X% | ... |
+| Posprzedażowy — odbiór | N | X% | ... |
+| Posprzedażowy — gwarancja | N | X% | ... |
+| Posprzedażowy — eksploatacja | N | X% | ... |
+| Nie określono | N | X% | ... |
+
+## Status rozpatrzenia zgłoszeń
+Podaj tabelę markdown:
+
+| Status rozpatrzenia | Liczba zgłoszeń | % |
 |---|---|---|
 | Nowe zgłoszenie | N | X% |
 | Przyjęte | N | X% |
@@ -77,7 +109,7 @@ Podaj tabelę markdown:
 | Eskalowane | N | X% |
 
 ## Analiza przepływu
-Jaki % zgłoszeń jest rozwiązywany? Średni czas od zgłoszenia do zamknięcia? Bottlenecki w procesie?
+Jaki % zgłoszeń jest rozwiązywany? Który etap relacji generuje najdłużej otwarte sprawy? Bottlenecki w procesie?
 
 ## Sprawy otwarte wymagające uwagi
 Wymień sprawy, które są otwarte najdłużej lub mają status "eskalowane".`,
@@ -87,7 +119,12 @@ Wymień sprawy, które są otwarte najdłużej lub mają status "eskalowane".`,
     title: 'Typologie zgłoszeń',
     section_order: 4,
     inClientReport: true,
-    syntheticFocus: 'Wymiar "4. TYPY ZGŁOSZEŃ". Podaj rozkład typów (usterki/reklamacje/pytania/skargi). Który typ dominuje? Max 3-4 zdania.',
+    syntheticFocus: `Wymiar "4. TYPY ZGŁOSZEŃ". Podaj tabelę markdown z rozkładem typów zgłoszeń:
+
+| Typ zgłoszenia | Liczba | % | Główne lokalizacje |
+|---|---|---|---|
+
+Po tabeli 2-3 zdania: dominujące typy, korelacja z lokalizacją, wzorce.`,
     standardFocus: `Przeanalizuj typy zgłoszeń.
 
 WYMAGANA STRUKTURA:
@@ -102,6 +139,7 @@ Podaj tabelę markdown:
 | Pytanie/informacja | N | X% | ... |
 | Skarga | N | X% | ... |
 | Procedura administracyjna | N | X% | ... |
+| Sprawa przedsprzedażowa | N | X% | ... |
 
 ## Trendy i wzorce
 Czy widać dominację jednego typu? Korelacja między typem a lokalizacją? Sezonowość?
@@ -114,7 +152,12 @@ Które typy zgłoszeń najczęściej utykają na etapie "w realizacji"? Które s
     title: 'Analiza problemów technicznych',
     section_order: 5,
     inClientReport: true,
-    syntheticFocus: 'Wymiar "5. KATEGORIE PROBLEMÓW". Podaj najczęstsze kategorie problemów (wod-kan, elektryka, stolarka, elewacja). Które wymagają pilnej uwagi? Max 3-4 zdania.',
+    syntheticFocus: `Wymiar "5. KATEGORIE PROBLEMÓW". Podaj tabelę markdown (TYLKO usterki/reklamacje):
+
+| Kategoria problemu | Liczba | % | Lokalizacje |
+|---|---|---|---|
+
+Po tabeli 2-3 zdania: problemy systemowe, powtarzające się wzorce, ocena pilności — które wymagają natychmiastowej interwencji.`,
     standardFocus: `Przeanalizuj kategorie problemów technicznych.
 
 WYMAGANA STRUKTURA:
@@ -130,6 +173,7 @@ Podaj tabelę markdown (TYLKO dla usterek/reklamacji):
 | Elewacja/izolacja | N | X% | ... |
 | Części wspólne | N | X% | ... |
 | Teren zewnętrzny | N | X% | ... |
+| Wykończenie wnętrz | N | X% | ... |
 
 ## Problemy systemowe
 Czy widać powtarzające się problemy w konkretnych lokalizacjach? Czy wskazuje to na wadę systemową (np. seria okien, partia materiałów)?

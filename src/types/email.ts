@@ -179,9 +179,9 @@ export interface MailboxFormData {
   connection_type: ConnectionType;
   tenant_id: string;
   client_id: string;
-  analysis_profile: AnalysisProfileId;
+  analysis_profile?: AnalysisProfileId;
   default_profile_id?: string;
-  cc_filter_mode: CcFilterMode;
+  cc_filter_mode?: CcFilterMode;
   // ROPC fields
   username: string;
   password: string;

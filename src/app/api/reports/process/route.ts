@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { DEFAULT_PROMPTS, CLIENT_REPORT_SECTIONS } from '@/lib/ai/default-prompts';
+import { getAnalysisProfile } from '@/lib/ai/analysis-profiles';
+import type { AnalysisProfileId } from '@/types/email';
 import { getAdminClient } from '@/lib/api/admin';
 import {
   isMailboxInScope,
@@ -10,11 +12,11 @@ import { loadAIConfig } from '@/lib/ai/ai-provider';
 import { loadProfile, loadProfileSections, loadGlobalContext } from '@/lib/ai/profile-loader';
 import type { PerThreadResult, SynthesisInput, DetailLevel } from '@/lib/ai/report-synthesizer';
 
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 /** Max sections to synthesize per request.
  *  With thread-summary format each section processes ALL summaries at once,
- *  so keep at 1 to give full 60s budget per synthesis call. */
+ *  so keep at 1 to give full budget per synthesis call. */
 const SECTIONS_PER_REQUEST = 1;
 
 /**
@@ -164,19 +166,38 @@ export async function POST(request: NextRequest) {
       ? await loadProfileSections(adminClient, profile.id)
       : [];
 
-    const profilePromptDefs = dbProfileSections.length > 0
-      ? dbProfileSections.map((s) => ({
-          section_key: s.sectionKey,
-          title: s.title,
-          section_order: s.sectionOrder,
-          system_prompt: s.systemPrompt,
-          user_prompt_template: s.userPromptTemplate,
-        }))
-      : DEFAULT_PROMPTS;
+    // Build section defs: DB sections > hardcoded profile sections > DEFAULT_PROMPTS
+    let profilePromptDefs;
+    let profileClientSections: string[];
 
-    const profileClientSections = dbProfileSections.length > 0
-      ? dbProfileSections.filter((s) => s.inClientReport).map((s) => s.sectionKey)
-      : CLIENT_REPORT_SECTIONS;
+    if (dbProfileSections.length > 0) {
+      profilePromptDefs = dbProfileSections.map((s) => ({
+        section_key: s.sectionKey,
+        title: s.title,
+        section_order: s.sectionOrder,
+        system_prompt: s.systemPrompt,
+        user_prompt_template: s.userPromptTemplate,
+      }));
+      profileClientSections = dbProfileSections.filter((s) => s.inClientReport).map((s) => s.sectionKey);
+    } else {
+      const slug = profile.slug || 'communication_audit';
+      const hardcodedProfile = getAnalysisProfile(slug as AnalysisProfileId);
+      if (hardcodedProfile.reportSections.length > 0) {
+        profilePromptDefs = hardcodedProfile.reportSections.map((s) => ({
+          section_key: s.section_key,
+          title: s.title,
+          section_order: s.section_order,
+          system_prompt: '',
+          user_prompt_template: '',
+        }));
+        profileClientSections = hardcodedProfile.reportSections
+          .filter((s) => s.inClientReport)
+          .map((s) => s.section_key);
+      } else {
+        profilePromptDefs = DEFAULT_PROMPTS;
+        profileClientSections = CLIENT_REPORT_SECTIONS;
+      }
+    }
 
     // Load prompt definitions (same merge logic as POST /api/reports)
     const { data: dbPrompts } = await adminClient
@@ -306,6 +327,23 @@ export async function POST(request: NextRequest) {
 
       const dbSection = dbProfileSections.find((s) => s.sectionKey === sectionKey);
 
+      // Focus prompts: DB sections first, then hardcoded profile sections
+      let focusPrompt: string | undefined;
+      if (dbSection) {
+        focusPrompt = detailLevel === 'synthetic'
+          ? (dbSection.syntheticFocus || undefined)
+          : (dbSection.standardFocus || undefined);
+      } else {
+        const slug = profile.slug || 'communication_audit';
+        const hardcodedProfile = getAnalysisProfile(slug as AnalysisProfileId);
+        const hardcodedSection = hardcodedProfile.reportSections.find((s) => s.section_key === sectionKey);
+        if (hardcodedSection) {
+          focusPrompt = detailLevel === 'synthetic'
+            ? hardcodedSection.syntheticFocus
+            : hardcodedSection.standardFocus;
+        }
+      }
+
       const input: SynthesisInput = {
         sectionKey,
         sectionTitle: promptDef.title,
@@ -320,9 +358,7 @@ export async function POST(request: NextRequest) {
         profileSlug: profile.slug,
         syntheticSystemPromptOverride: profile.syntheticSystemPrompt || undefined,
         standardSystemPromptOverride: profile.standardSystemPrompt || undefined,
-        focusPromptOverride: dbSection
-          ? (detailLevel === 'synthetic' ? (dbSection.syntheticFocus || undefined) : (dbSection.standardFocus || undefined))
-          : undefined,
+        focusPromptOverride: focusPrompt,
         modelOverride: dbSection?.model || undefined,
         temperatureOverride: dbSection?.temperature ?? undefined,
         maxTokensOverride: dbSection?.maxTokens ?? undefined,

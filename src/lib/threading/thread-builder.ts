@@ -265,6 +265,48 @@ export function computeCcFilterStatus(
   return 'cc_always';
 }
 
+// --- Junk email filtering ---
+
+/** System/no-reply senders that produce noise threads */
+const JUNK_SENDERS = [
+  'postmaster@',
+  'mailer-daemon@',
+  'noreply@',
+  'no-reply@',
+  'quarantine@',
+];
+
+/** Subject patterns that indicate system notifications or junk */
+const JUNK_SUBJECT_PATTERNS = [
+  /kwarantann/i,                   // "kwarantanna", "kwarantannie", etc.
+  /quarantine/i,
+  /spam notification/i,
+  /undeliverable/i,
+  /niedostarczono/i,
+  /delivery.*failed/i,
+  /message blocked/i,
+  /zabezpiecze\w* platformy microsoft/i, // "zabezpieczenia platformy microsoft 365"
+];
+
+/**
+ * Check if an email is junk (system notification, test, bounce).
+ * These emails are excluded from thread building entirely.
+ */
+function isJunkEmail(email: RawEmail): boolean {
+  const from = (email.from_address || '').toLowerCase();
+  if (JUNK_SENDERS.some((prefix) => from.startsWith(prefix))) return true;
+
+  const subject = (email.subject || '').trim();
+
+  // Exact "test" subject (case-insensitive) with no meaningful body
+  if (/^test$/i.test(subject)) return true;
+
+  // System notification subjects
+  if (JUNK_SUBJECT_PATTERNS.some((pat) => pat.test(subject))) return true;
+
+  return false;
+}
+
 // --- Main builder ---
 
 export async function buildThreadsForMailbox(
@@ -272,7 +314,7 @@ export async function buildThreadsForMailbox(
   mailboxId: string,
   mailboxEmail: string,
   options: BuildThreadsOptions = {}
-): Promise<{ threadsCreated: number; emailsUpdated: number; summariesGenerated: number }> {
+): Promise<{ threadsCreated: number; emailsUpdated: number; emailsFiltered: number; summariesGenerated: number }> {
   // 1. Fetch all emails for this mailbox (paginated — Supabase returns max 1000 per query)
   const PAGE_SIZE = 1000;
   const emails: RawEmail[] = [];
@@ -296,11 +338,20 @@ export async function buildThreadsForMailbox(
     from += PAGE_SIZE;
   }
 
-  if (emails.length === 0) return { threadsCreated: 0, emailsUpdated: 0, summariesGenerated: 0 };
+  if (emails.length === 0) return { threadsCreated: 0, emailsUpdated: 0, emailsFiltered: 0, summariesGenerated: 0 };
+
+  // 1b. Filter out junk emails (system notifications, test messages, bounces)
+  const filteredEmails = emails.filter((e) => !isJunkEmail(e));
+  const junkCount = emails.length - filteredEmails.length;
+  if (junkCount > 0) {
+    console.log(`Thread builder: odfiltrowano ${junkCount} śmieciowych emaili z ${emails.length}`);
+  }
+
+  if (filteredEmails.length === 0) return { threadsCreated: 0, emailsUpdated: 0, emailsFiltered: junkCount, summariesGenerated: 0 };
 
   // 2. Build message-id index
   const messageIdMap = new Map<string, RawEmail>();
-  for (const email of emails) {
+  for (const email of filteredEmails) {
     if (email.header_message_id) {
       messageIdMap.set(email.header_message_id, email);
     }
@@ -332,12 +383,12 @@ export async function buildThreadsForMailbox(
   }
 
   // Initialize all emails
-  for (const email of emails) {
+  for (const email of filteredEmails) {
     find(email.id);
   }
 
   // Link via In-Reply-To
-  for (const email of emails) {
+  for (const email of filteredEmails) {
     if (email.header_in_reply_to) {
       const replyTo = messageIdMap.get(email.header_in_reply_to);
       if (replyTo) union(email.id, replyTo.id);
@@ -345,7 +396,7 @@ export async function buildThreadsForMailbox(
   }
 
   // Link via References
-  for (const email of emails) {
+  for (const email of filteredEmails) {
     if (email.header_references && email.header_references.length > 0) {
       for (const ref of email.header_references) {
         const refEmail = messageIdMap.get(ref);
@@ -362,7 +413,7 @@ export async function buildThreadsForMailbox(
 
   // Build subject groups from emails not yet linked
   const subjectBuckets = new Map<string, RawEmail[]>();
-  for (const email of emails) {
+  for (const email of filteredEmails) {
     const norm = normalizeSubject(email.subject);
     if (!norm) continue;
     const bucket = subjectBuckets.get(norm) || [];
@@ -389,7 +440,7 @@ export async function buildThreadsForMailbox(
 
   // 4. Collect thread groups
   const groups = new Map<string, ThreadGroup>();
-  for (const email of emails) {
+  for (const email of filteredEmails) {
     const root = find(email.id);
     if (!groups.has(root)) {
       groups.set(root, {
@@ -578,5 +629,5 @@ export async function buildThreadsForMailbox(
     emailsUpdated += results.filter((r) => !r.error).length;
   }
 
-  return { threadsCreated: allThreadIds.length, emailsUpdated, summariesGenerated };
+  return { threadsCreated: allThreadIds.length, emailsUpdated, emailsFiltered: junkCount, summariesGenerated };
 }
