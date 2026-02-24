@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-10)
 
 **Core value:** Hub narzędziowy — AI analizuje maile (email-analyzer) i posty z grup FB (fb-analyzer) dla audytu komunikacji administracji osiedli
-**Current focus:** Milestone v1.1 — FB Analyzer. Phase 10 COMPLETE. Side task: Analysis Profiles v2 (DB-driven) — ALL COMPLETE.
+**Current focus:** Milestone v1.1 — FB Analyzer. Phase 10 COMPLETE. Analysis Profiles v2 COMPLETE. Report fixes + Vercel Pro deployed.
 
 ## Current Position
 
 Phase: Phase 10 (AI Sentiment Analysis) — COMPLETE
 Plan: 3 of 3
-Status: All plans COMPLETE. Phase 10 done.
-Last activity: 2026-02-25 — Analysis Profiles v2 ALL 6 PHASES COMPLETE
+Status: All plans COMPLETE. Phase 10 done. v1.0.10 tagged & deployed.
+Last activity: 2026-02-25 — Vercel Pro upgrade (maxDuration 300s, AI timeout 240s), report generation fixes, DOCX table fix
 
 ### Side Task: Analysis Profiles v2 (DB-driven)
 Status: ALL 6 PHASES COMPLETE
@@ -116,7 +116,7 @@ Progress (v1.1 FB Analyzer): [##################..] 87% (phases 7-10 COMPLETE, p
 - [02-02]: Redirect /email-analyzer → /mailboxes (brak dedykowanej strony glownej modulu)
 - [02-02]: comingSoon pattern w sidebarze dla niezaimplementowanych stron
 - [02-03]: Upsert ON CONFLICT (mailbox_id, internet_message_id) dla deduplikacji emaili
-- [02-03]: Safety timeout 50s (Vercel limit 60s, 10s bufor)
+- [02-03]: Safety timeout 240s (Vercel Pro limit 300s, 60s bufor)
 - [02-03]: 100 messages per batch via Graph API $top=100
 - [02-03]: Delta link stored on mailbox for incremental sync
 - [02-03]: No $select on @odata.nextLink (already contains params)
@@ -252,9 +252,9 @@ organizations, organization_members, **mailboxes** (extended: +8 cols, sync_stat
 
 ## Session Continuity
 
-Last session: 2026-02-23T15:30Z
-Stopped at: Phase 10 COMPLETE (all 3 plans, verified 5/5, pushed to GitHub, deployed to Vercel). Human testing pending.
-Resume file: .planning/phases/10-ai-sentiment-analysis/10-VERIFICATION.md
-Next step: /gsd:discuss-phase 11 (Post Browsing & Dashboard) — ale najpierw user testuje Phase 10 na produkcji
-Version tag: v1.0.9
+Last session: 2026-02-25
+Stopped at: v1.0.10 deployed — Analysis Profiles v2, report fixes, Vercel Pro. Awaiting human testing of case_analytics reports.
+Resume file: docs/HANDOFF-2026-02-25-F.md
+Next step: Test case_analytics report generation (re-run AI for 3 timed-out threads), then /gsd:discuss-phase 11
+Version tag: v1.0.10
 SQL migration 20260223_10_01 APPLIED (paused status + metadata JSONB on fb_analysis_jobs)

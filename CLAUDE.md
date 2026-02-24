@@ -8,7 +8,7 @@ Next.js 16 App Router + Supabase (hosted) + Tailwind v4. Język UI: polski. Kod:
 - **API routes**: każdy route używa `verifyScopedAdminAccess()` + `getAdminClient()` z `src/lib/api/admin.ts`
 - **Polling pattern**: Długie operacje (analiza AI, sync email, scrape FB) przez polling:
   hook → POST /api/.../process → batch N items → {hasMore, status} → poll again
-- **AI Provider**: `src/lib/ai/ai-provider.ts` — callAI() z 55s abort timeout (Vercel limit 60s)
+- **AI Provider**: `src/lib/ai/ai-provider.ts` — callAI() z 240s abort timeout (Vercel Pro limit 300s)
 - **Analysis Profiles**: `src/lib/ai/analysis-profiles.ts` — per-mailbox (communication_audit | case_analytics)
 
 ## Kluczowe pliki
@@ -37,11 +37,10 @@ Next.js 16 App Router + Supabase (hosted) + Tailwind v4. Język UI: polski. Kod:
 
 ## Gotchas
 
-- Vercel function: 60s limit → AI timeout 55s (5s bufor)
+- Vercel Pro: 300s limit → AI timeout 240s (60s bufor)
 - PostgREST default: 1000 rows → zawsze `.limit(10000)` przy dużych queries
 - Polling hooks: network error → retry z backoff; HTTP 4xx/5xx → stop + pokaż błąd
 - Supabase CLI: BROKEN — migracje przez Dashboard lub Management API
-- Duże wątki email mogą przekroczyć 55s timeout AI (szczególnie profil case_analytics)
 
 ## Debugowanie
 
@@ -51,7 +50,6 @@ Next.js 16 App Router + Supabase (hosted) + Tailwind v4. Język UI: polski. Kod:
 
 ## Stan projektu
 
-- v1.0 Email Analyzer: COMPLETE (fazy 1-6 + 2.1 + 2.2)
+- v1.0 Email Analyzer: COMPLETE (fazy 1-6 + 2.1 + 2.2 + Analysis Profiles v2)
 - v1.1 FB Analyzer: 87% (fazy 7-10 COMPLETE, 11-12 pending)
-- Side task: Analysis Profiles — plan approved, częściowo wdrożony
-- Infrastruktura: GitHub → Vercel auto-deploy, Supabase eu-north-1
+- Infrastruktura: GitHub → Vercel Pro auto-deploy, Supabase eu-north-1
