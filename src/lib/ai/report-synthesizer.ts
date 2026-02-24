@@ -367,7 +367,7 @@ function buildUserPrompt(input: SynthesisInput, resultsBlock: string): string {
       );
     } else {
       parts.push(
-        `\nINSTRUKCJA: Postępuj DOKŁADNIE wg FOKUS SEKCJI powyżej — użyj wymaganego formatu (tabela, lista lub proza). Po tabelach/listach dodaj akapit analityczny z wnioskami (2-3 zdania). NIE opisuj wątków z osobna — wyciągaj ogólne wnioski.`
+        `\nINSTRUKCJA: Postępuj DOKŁADNIE wg FOKUS SEKCJI powyżej — użyj wymaganego formatu (tabela, lista lub proza). Po tabelach/listach dodaj rozbudowany akapit analityczny wg wskazówek w FOKUS SEKCJI. NIE opisuj wątków z osobna — wyciągaj ogólne wnioski.`
       );
     }
   } else {

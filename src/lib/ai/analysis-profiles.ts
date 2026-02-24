@@ -101,7 +101,7 @@ const caseAnalyticsProfile: AnalysisProfile = {
 ZASADY FORMATOWANIA — RAPORT SYNTETYCZNY (5-6 stron A4):
 1. Pisz po polsku, językiem formalnym i rzeczowym.
 2. Postępuj dokładnie wg FOKUS SEKCJI — jeśli wymaga tabeli, UŻYJ tabeli markdown. Jeśli wymaga listy, UŻYJ listy.
-3. Po tabelach/listach dodaj akapit analityczny (2-3 zdania z wnioskami i wzorcami).
+3. Po tabelach/listach dodaj rozbudowany akapit analityczny (8-12 zdań z wnioskami, wzorcami i konkretnymi danymi).
 4. NIE opisuj wątków z osobna — podawaj WYŁĄCZNIE ogólne wnioski.
 5. Styl: managerski brief — zwięzły, konkretny, z liczbami.
 6. NIE używaj nagłówków # — tekst sekcji zaczyna się od razu od treści.

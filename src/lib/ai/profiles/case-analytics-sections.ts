@@ -24,7 +24,9 @@ export const CASE_ANALYTICS_SECTIONS: ProfileReportSection[] = [
 - **Główne lokalizacje**: rozkład zgłoszeń per lokalizacja (z liczbami)
 - **Główne typy spraw**: rozkład procentowy lub liczbowy
 - **Główni uczestnicy**: role (mieszkańcy, administracja, deweloper)
-- **Ograniczenia**: czego nie można ocenić z samych emaili`,
+- **Ograniczenia**: czego nie można ocenić z samych emaili
+
+Po liście napisz akapit analityczny (8-12 zdań): ogólna charakterystyka analizowanej korespondencji, dominujące tematy, intensywność komunikacji, kluczowe obserwacje kontekstowe.`,
     standardFocus: `Wyodrębnij metadane analizy zgłoszeniowej.
 
 WYMAGANE ELEMENTY:
@@ -47,7 +49,7 @@ Napisz w formie listy z pogrubionymi etykietami.`,
 | Lokalizacja | Liczba zgłoszeń | % | Główne problemy |
 |---|---|---|---|
 
-Po tabeli 2-3 zdania: które lokalizacje generują nieproporcjonalnie dużo zgłoszeń, widoczne wzorce.`,
+Po tabeli napisz rozbudowany akapit analityczny (8-12 zdań): które lokalizacje generują nieproporcjonalnie dużo zgłoszeń, widoczne wzorce geograficzne, korelacja między lokalizacją a typem problemów, porównanie nowych vs starszych inwestycji, lokalizacje wymagające priorytetowej uwagi i dlaczego.`,
     standardFocus: `Przeanalizuj rozkład geograficzny zgłoszeń.
 
 WYMAGANA STRUKTURA:
@@ -79,7 +81,7 @@ Ile zgłoszeń nie udało się przypisać do lokalizacji? Dlaczego?`,
 | Status | Liczba | % |
 |---|---|---|
 
-Po tabelach 2-3 zdania: jaki % zgłoszeń rozwiązany, bottlenecki, sprawy otwarte najdłużej.`,
+Po tabelach napisz rozbudowany akapit analityczny (8-12 zdań): jaki % zgłoszeń rozwiązany vs otwartych, główne bottlenecki w procesie, które etapy relacji generują najwięcej eskalacji, sprawy otwarte najdłużej i ich wspólne cechy, trendy w statusach rozpatrzenia, rekomendowane usprawnienia przepływu.`,
     standardFocus: `Przeanalizuj etapy procesu zgłoszeniowego w dwóch wymiarach.
 
 WYMAGANA STRUKTURA:
@@ -124,7 +126,7 @@ Wymień sprawy, które są otwarte najdłużej lub mają status "eskalowane".`,
 | Typ zgłoszenia | Liczba | % | Główne lokalizacje |
 |---|---|---|---|
 
-Po tabeli 2-3 zdania: dominujące typy, korelacja z lokalizacją, wzorce.`,
+Po tabeli napisz rozbudowany akapit analityczny (8-12 zdań): dominujące typy zgłoszeń i ich przyczyny, korelacja między typem a lokalizacją, czy widać sezonowość lub trendy czasowe, które typy spraw utykają najdłużej, porównanie usterek technicznych vs skarg proceduralnych, wnioski dla zarządzania.`,
     standardFocus: `Przeanalizuj typy zgłoszeń.
 
 WYMAGANA STRUKTURA:
@@ -157,7 +159,7 @@ Które typy zgłoszeń najczęściej utykają na etapie "w realizacji"? Które s
 | Kategoria problemu | Liczba | % | Lokalizacje |
 |---|---|---|---|
 
-Po tabeli 2-3 zdania: problemy systemowe, powtarzające się wzorce, ocena pilności — które wymagają natychmiastowej interwencji.`,
+Po tabeli napisz rozbudowany akapit analityczny (8-12 zdań): problemy systemowe i powtarzające się wzorce, czy widać wadę seryjną (np. seria okien, partia materiałów, konkretny wykonawca), ocena pilności — które wymagają natychmiastowej interwencji i dlaczego, korelacja kategorii problemów z lokalizacjami, priorytetyzacja napraw.`,
     standardFocus: `Przeanalizuj kategorie problemów technicznych.
 
 WYMAGANA STRUKTURA:
@@ -194,7 +196,7 @@ WYMAGANY FORMAT — tabela markdown:
 |---|---|---|---|
 | 1 | Opis... | Pilne / Krótkoterminowe / Długoterminowe | Proces / Techniczny / Organizacyjny |
 
-Po tabeli 1-2 zdania o priorytetach strategicznych.`,
+Po tabeli napisz akapit (4-6 zdań) o priorytetach strategicznych: co wymaga natychmiastowej uwagi, jakie działania systemowe mogą zmniejszyć liczbę zgłoszeń, kluczowe wnioski dla zarządu.`,
     standardFocus: `Zbierz i zsyntezuj rekomendacje ze WSZYSTKICH wymiarów analizy zgłoszeniowej.
 
 WYMAGANY FORMAT — tabela markdown:
