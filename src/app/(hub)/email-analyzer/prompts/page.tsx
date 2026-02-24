@@ -86,6 +86,13 @@ export default function PromptsPage() {
   const [editedThreadUser, setEditedThreadUser] = useState('');
   const [isSavingThread, setIsSavingThread] = useState(false);
 
+  // Global AI config (read-only, for display)
+  const [globalAiConfig, setGlobalAiConfig] = useState<{
+    model: string;
+    temperature: number;
+    max_tokens: number;
+  } | null>(null);
+
   // Profile CRUD dialog
   const [profileDialog, setProfileDialog] = useState<'create' | 'rename' | 'delete' | null>(null);
   const [profileNameInput, setProfileNameInput] = useState('');
@@ -119,6 +126,19 @@ export default function PromptsPage() {
           setSelectedProfileId(fetched[0].id);
         }
       });
+      // Load global AI config for display
+      fetch('/api/ai-config')
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.config) {
+            setGlobalAiConfig({
+              model: data.config.model,
+              temperature: data.config.temperature,
+              max_tokens: data.config.max_tokens,
+            });
+          }
+        })
+        .catch(() => {});
     }
   }, [isAdmin, fetchProfiles]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -1126,6 +1146,22 @@ export default function PromptsPage() {
                 </button>
                 {showAiConfig && (
                   <div className="p-3 space-y-3 border-t" style={{ borderColor: 'var(--border-primary)' }}>
+                    {globalAiConfig && (
+                      <div
+                        className="flex items-center gap-3 rounded-md px-3 py-2 text-xs"
+                        style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}
+                      >
+                        <Info className="h-3.5 w-3.5 shrink-0" style={{ color: 'var(--text-muted)' }} />
+                        <span>
+                          Aktualnie:{' '}
+                          <strong style={{ color: 'var(--text-primary)' }}>{globalAiConfig.model}</strong>
+                          {' | Temperatura: '}
+                          <strong style={{ color: 'var(--text-primary)' }}>{globalAiConfig.temperature}</strong>
+                          {' | Max tokens: '}
+                          <strong style={{ color: 'var(--text-primary)' }}>{globalAiConfig.max_tokens.toLocaleString()}</strong>
+                        </span>
+                      </div>
+                    )}
                     <div className="grid grid-cols-3 gap-3">
                       <div className="flex flex-col gap-1">
                         <label className="text-xs" style={{ color: 'var(--text-muted)' }}>
@@ -1140,7 +1176,7 @@ export default function PromptsPage() {
                               model: e.target.value || null,
                             })
                           }
-                          placeholder="np. gpt-4o"
+                          placeholder={globalAiConfig?.model ?? 'np. gpt-4o'}
                           className="rounded-md border px-2 py-1.5 text-xs outline-none"
                           style={{
                             borderColor: 'var(--border-primary)',
@@ -1165,7 +1201,7 @@ export default function PromptsPage() {
                               temperature: e.target.value ? parseFloat(e.target.value) : null,
                             })
                           }
-                          placeholder="domyślna"
+                          placeholder={globalAiConfig ? String(globalAiConfig.temperature) : 'domyślna'}
                           className="rounded-md border px-2 py-1.5 text-xs outline-none"
                           style={{
                             borderColor: 'var(--border-primary)',
@@ -1190,7 +1226,7 @@ export default function PromptsPage() {
                               max_tokens: e.target.value ? parseInt(e.target.value) : null,
                             })
                           }
-                          placeholder="domyślna"
+                          placeholder={globalAiConfig ? globalAiConfig.max_tokens.toLocaleString() : 'domyślna'}
                           className="rounded-md border px-2 py-1.5 text-xs outline-none"
                           style={{
                             borderColor: 'var(--border-primary)',
