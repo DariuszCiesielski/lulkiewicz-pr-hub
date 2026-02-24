@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
-  let body: { mailboxId?: string; dateRangeFrom?: string; dateRangeTo?: string };
+  let body: { mailboxId?: string; dateRangeFrom?: string; dateRangeTo?: string; profileId?: string };
   try {
     body = await request.json();
   } catch {
@@ -132,6 +132,29 @@ export async function POST(request: NextRequest) {
       { error: 'Skrzynka nie została znaleziona' },
       { status: 404 }
     );
+  }
+
+  // Load mailbox to get analysis profile
+  const { data: mailbox } = await adminClient
+    .from('mailboxes')
+    .select('analysis_profile, default_profile_id, cc_filter_mode')
+    .eq('id', body.mailboxId)
+    .single();
+
+  // Profile override from request takes priority over mailbox default
+  const analysisProfileId = body.profileId || mailbox?.default_profile_id || null;
+
+  // Resolve slug from profile UUID for backward compat
+  let analysisProfile = mailbox?.analysis_profile || 'communication_audit';
+  if (body.profileId) {
+    const { data: overrideProfile } = await adminClient
+      .from('analysis_profiles')
+      .select('slug')
+      .eq('id', body.profileId)
+      .single();
+    if (overrideProfile?.slug) {
+      analysisProfile = overrideProfile.slug;
+    }
   }
 
   // Check AI config exists
@@ -159,6 +182,14 @@ export async function POST(request: NextRequest) {
   }
   if (body.dateRangeTo) {
     threadQuery = threadQuery.lte('last_message_at', body.dateRangeTo);
+  }
+
+  // Apply CC filter
+  const ccFilterMode = mailbox?.cc_filter_mode || 'off';
+  if (ccFilterMode === 'never_in_to') {
+    threadQuery = threadQuery.neq('cc_filter_status', 'cc_always');
+  } else if (ccFilterMode === 'first_email_cc') {
+    threadQuery = threadQuery.eq('cc_filter_status', 'direct');
   }
 
   const { count: totalThreads } = await threadQuery;
@@ -195,6 +226,8 @@ export async function POST(request: NextRequest) {
       date_range_from: body.dateRangeFrom || null,
       date_range_to: body.dateRangeTo || null,
       ai_config_id: aiConfig.id,
+      analysis_profile: analysisProfile,
+      analysis_profile_id: analysisProfileId,
       started_at: new Date().toISOString(),
     })
     .select('id, status, total_threads')

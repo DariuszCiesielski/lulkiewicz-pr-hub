@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Mail, Plus, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import MailboxList from '@/components/email/MailboxList';
+import type { ProfileInfo } from '@/components/email/MailboxList';
 import MailboxForm from '@/components/email/MailboxForm';
 import type { MailboxEditData } from '@/components/email/MailboxForm';
 import type { MailboxListItem } from '@/components/email/MailboxList';
@@ -20,6 +21,7 @@ export default function MailboxesPage() {
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingMailbox, setEditingMailbox] = useState<MailboxEditData | null>(null);
+  const [profiles, setProfiles] = useState<ProfileInfo[]>([]);
 
   // Sync state
   const [activeSyncMailboxId, setActiveSyncMailboxId] = useState<string | null>(null);
@@ -56,6 +58,19 @@ export default function MailboxesPage() {
   useEffect(() => {
     if (isAdmin) {
       fetchMailboxes();
+      // Fetch analysis profiles for dynamic badges
+      fetch('/api/analysis-profiles')
+        .then((res) => res.json())
+        .then((data) => {
+          setProfiles(
+            (data.profiles || []).map((p: Record<string, unknown>) => ({
+              id: p.id as string,
+              slug: p.slug as string,
+              name: p.name as string,
+            }))
+          );
+        })
+        .catch(() => setProfiles([]));
     }
   }, [isAdmin, fetchMailboxes]);
 
@@ -88,6 +103,9 @@ export default function MailboxesPage() {
       connection_type: mailbox.connection_type as 'ropc' | 'client_credentials',
       tenant_id: '',
       client_id: '',
+      analysis_profile: mailbox.analysis_profile || 'communication_audit',
+      default_profile_id: mailbox.default_profile_id || null,
+      cc_filter_mode: mailbox.cc_filter_mode || 'off',
     });
   };
 
@@ -246,6 +264,7 @@ export default function MailboxesPage() {
       ) : (
         <MailboxList
           mailboxes={mailboxes}
+          profiles={profiles}
           onTestConnection={handleTestConnection}
           onDelete={handleDelete}
           onEdit={handleEdit}

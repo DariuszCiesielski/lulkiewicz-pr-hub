@@ -13,6 +13,7 @@ interface AnalysisProgressProps {
   jobStartedAt: Date | null;
   processedAtStart?: number;
   onReset: () => void;
+  onResume?: () => void;
 }
 
 function getETA(processed: number, total: number, startedAt: Date | null, processedAtStart: number): string {
@@ -60,6 +61,7 @@ export default function AnalysisProgress({
   jobStartedAt,
   processedAtStart = 0,
   onReset,
+  onResume,
 }: AnalysisProgressProps) {
   const router = useRouter();
   const [soundEnabled, setSoundEnabled] = useState(() => {
@@ -209,11 +211,35 @@ export default function AnalysisProgress({
         </label>
       )}
 
-      {/* Error message */}
+      {/* Error message + resume */}
       {error && (
-        <p className="mt-2 text-sm" style={{ color: '#ef4444' }}>
-          {error}
-        </p>
+        <div className="mt-2">
+          <p className="text-sm" style={{ color: '#ef4444' }}>
+            {error}
+          </p>
+          {status === 'error' && onResume && progress.processedThreads < progress.totalThreads && (
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={onResume}
+                className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm text-white hover:opacity-90"
+                style={{ backgroundColor: 'var(--accent-primary)' }}
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                Wznów analizę
+              </button>
+              <button
+                onClick={onReset}
+                className="flex items-center gap-1 rounded-md border px-3 py-1.5 text-sm hover:opacity-80"
+                style={{
+                  borderColor: 'var(--border-primary)',
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                Zamknij
+              </button>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Completion summary */}

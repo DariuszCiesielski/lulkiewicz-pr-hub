@@ -9,7 +9,7 @@ import {
 } from '@/lib/api/demo-scope';
 import type { ConnectionType } from '@/types/email';
 
-const MAILBOX_SELECT_COLUMNS = 'id, email_address, display_name, connection_type, tenant_id, client_id, sync_status, last_sync_at, total_emails, delta_link, created_at, updated_at, connection_tested_at, connection_test_ok';
+const MAILBOX_SELECT_COLUMNS = 'id, email_address, display_name, connection_type, tenant_id, client_id, sync_status, last_sync_at, total_emails, delta_link, created_at, updated_at, connection_tested_at, connection_test_ok, analysis_profile, default_profile_id, cc_filter_mode';
 
 export async function GET(
   _request: NextRequest,
@@ -58,6 +58,9 @@ export async function PATCH(
     connection_type?: ConnectionType;
     tenant_id?: string;
     client_id?: string;
+    analysis_profile?: string;
+    default_profile_id?: string;
+    cc_filter_mode?: string;
     username?: string;
     password?: string;
     client_secret?: string;
@@ -111,6 +114,9 @@ export async function PATCH(
       : normalizedDisplayName;
   }
   if (body.connection_type !== undefined) update.connection_type = body.connection_type;
+  if (body.analysis_profile !== undefined) update.analysis_profile = body.analysis_profile;
+  if (body.default_profile_id !== undefined) update.default_profile_id = body.default_profile_id || null;
+  if (body.cc_filter_mode !== undefined) update.cc_filter_mode = body.cc_filter_mode;
   // Only update tenant_id / client_id if non-empty value provided (empty = keep existing)
   if (body.tenant_id) update.tenant_id = body.tenant_id;
   if (body.client_id) update.client_id = body.client_id;

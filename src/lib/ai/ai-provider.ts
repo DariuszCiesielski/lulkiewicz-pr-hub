@@ -69,9 +69,9 @@ export async function callAI(
     ? process.env.AZURE_OPENAI_ENDPOINT
     : 'https://api.openai.com/v1';
 
-  // 50s timeout — leaves 10s headroom within Vercel's 60s function limit
+  // 55s timeout — leaves 5s headroom within Vercel's 60s function limit
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 50_000);
+  const timeout = setTimeout(() => controller.abort(), 55_000);
 
   const requestBody: Record<string, unknown> = {
     model: config.model,
@@ -101,7 +101,7 @@ export async function callAI(
   } catch (err) {
     clearTimeout(timeout);
     if (err instanceof Error && err.name === 'AbortError') {
-      throw new Error('Przekroczono limit czasu wywołania AI (50s). Spróbuj ponownie.');
+      throw new Error('Przekroczono limit czasu wywołania AI (55s). Spróbuj ponownie.');
     }
     throw err;
   } finally {

@@ -14,6 +14,8 @@
 import { callAI, loadAIConfig } from '@/lib/ai/ai-provider';
 import type { AIConfig } from '@/lib/ai/ai-provider';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { getAnalysisProfile } from '@/lib/ai/analysis-profiles';
+
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -67,8 +69,22 @@ ZASADY FORMATOWANIA — RAPORT STANDARDOWY (15-20 stron A4):
 9. Twórz tabele markdown TYLKO gdy wyraźnie wymagane w FOKUSIE SEKCJI.
 10. Zamiast „w wątku X zaobserwowano Y" pisz „Zaobserwowano trend Y (np. wątki X, Z)".`;
 
-function getSystemPrompt(detailLevel: DetailLevel): string {
-  return detailLevel === 'synthetic' ? SYNTHETIC_SYSTEM_PROMPT : STANDARD_SYSTEM_PROMPT;
+function getSystemPrompt(input: SynthesisInput): string {
+  // DB-driven override takes priority
+  const override = input.detailLevel === 'synthetic'
+    ? input.syntheticSystemPromptOverride
+    : input.standardSystemPromptOverride;
+  if (override) return override;
+
+  // Fallback to hardcoded for non-default profiles
+  if (input.profileSlug && input.profileSlug !== 'communication_audit') {
+    const profile = getAnalysisProfile(input.profileSlug as 'communication_audit' | 'case_analytics');
+    const profilePrompt = input.detailLevel === 'synthetic'
+      ? profile.syntheticSystemPrompt
+      : profile.standardSystemPrompt;
+    if (profilePrompt) return profilePrompt;
+  }
+  return input.detailLevel === 'synthetic' ? SYNTHETIC_SYSTEM_PROMPT : STANDARD_SYSTEM_PROMPT;
 }
 
 // ---------------------------------------------------------------------------
@@ -93,6 +109,20 @@ export interface SynthesisInput {
   globalContext?: string;
   includeThreadSummaries?: boolean;
   detailLevel: DetailLevel;
+  profileId?: string;
+  profileSlug?: string;
+  /** DB-driven override for system prompt (synthetic detail level) */
+  syntheticSystemPromptOverride?: string;
+  /** DB-driven override for system prompt (standard detail level) */
+  standardSystemPromptOverride?: string;
+  /** DB-driven override for section focus prompt */
+  focusPromptOverride?: string;
+  /** Per-section model override (from prompt_templates.model) */
+  modelOverride?: string;
+  /** Per-section temperature override (from prompt_templates.temperature) */
+  temperatureOverride?: number;
+  /** Per-section max_tokens override (from prompt_templates.max_tokens) */
+  maxTokensOverride?: number;
 }
 
 export interface SynthesisOutput {
@@ -283,10 +313,21 @@ Po tabeli dodaj krótki akapit z 3 najważniejszymi priorytetami strategicznymi.
 // Focus prompt router
 // ---------------------------------------------------------------------------
 
-function getSectionFocusPrompt(sectionKey: string, detailLevel: DetailLevel): string | null {
-  return detailLevel === 'synthetic'
-    ? getSyntheticFocusPrompt(sectionKey)
-    : getStandardFocusPrompt(sectionKey);
+function getSectionFocusPrompt(input: SynthesisInput): string | null {
+  // DB-driven override takes priority
+  if (input.focusPromptOverride) return input.focusPromptOverride;
+
+  // Fallback to hardcoded for non-default profiles
+  if (input.profileSlug && input.profileSlug !== 'communication_audit') {
+    const profile = getAnalysisProfile(input.profileSlug as 'communication_audit' | 'case_analytics');
+    const section = profile.reportSections.find((s) => s.section_key === input.sectionKey);
+    if (section) {
+      return input.detailLevel === 'synthetic' ? section.syntheticFocus : section.standardFocus;
+    }
+  }
+  return input.detailLevel === 'synthetic'
+    ? getSyntheticFocusPrompt(input.sectionKey)
+    : getStandardFocusPrompt(input.sectionKey);
 }
 
 /**
@@ -299,7 +340,7 @@ function buildUserPrompt(input: SynthesisInput, resultsBlock: string): string {
     `Napisz ZWIĘZŁE podsumowanie sekcji "${input.sectionTitle}" na podstawie kompleksowych analiz ${input.perThreadResults.length} wątków email.`
   );
 
-  const focusPrompt = getSectionFocusPrompt(input.sectionKey, input.detailLevel);
+  const focusPrompt = getSectionFocusPrompt(input);
   if (focusPrompt) {
     parts.push(`\nFOKUS SEKCJI: ${focusPrompt}`);
   }
@@ -329,6 +370,22 @@ function buildUserPrompt(input: SynthesisInput, resultsBlock: string): string {
   }
 
   return parts.join('\n');
+}
+
+// ---------------------------------------------------------------------------
+// Per-section AI config override
+// ---------------------------------------------------------------------------
+
+function applyConfigOverrides(aiConfig: AIConfig, input: SynthesisInput): AIConfig {
+  if (!input.modelOverride && input.temperatureOverride === undefined && input.maxTokensOverride === undefined) {
+    return aiConfig;
+  }
+  return {
+    ...aiConfig,
+    ...(input.modelOverride && { model: input.modelOverride }),
+    ...(input.temperatureOverride !== undefined && { temperature: input.temperatureOverride }),
+    ...(input.maxTokensOverride !== undefined && { maxTokens: input.maxTokensOverride }),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -368,12 +425,13 @@ async function singlePassSynthesis(
   aiConfig: AIConfig,
   input: SynthesisInput
 ): Promise<SynthesisOutput> {
+  const effectiveConfig = applyConfigOverrides(aiConfig, input);
   const resultsBlock = formatResultsForPrompt(input.perThreadResults);
   const truncatedBlock = truncateToLimit(resultsBlock, MAX_INPUT_CHARS);
   const userPrompt = buildUserPrompt(input, truncatedBlock);
-  const systemPrompt = getSystemPrompt(input.detailLevel);
+  const systemPrompt = getSystemPrompt(input);
 
-  const response = await callAI(aiConfig, systemPrompt, userPrompt);
+  const response = await callAI(effectiveConfig, systemPrompt, userPrompt);
 
   return {
     sectionKey: input.sectionKey,
@@ -393,7 +451,7 @@ async function twoLevelSynthesis(
   aiConfig: AIConfig,
   input: SynthesisInput
 ): Promise<SynthesisOutput> {
-  // Use full aiConfig.maxTokens — reasoning models need ample token budget
+  const effectiveConfig = applyConfigOverrides(aiConfig, input);
   const { perThreadResults, sectionTitle } = input;
   const startTime = Date.now();
   let totalTokens = 0;
@@ -404,7 +462,7 @@ async function twoLevelSynthesis(
     batches.push(perThreadResults.slice(i, i + SUB_BATCH_SIZE));
   }
 
-  const systemPrompt = getSystemPrompt(input.detailLevel);
+  const systemPrompt = getSystemPrompt(input);
 
   // Synthesize each sub-batch (sequential to respect rate limits)
   const batchSummaries: string[] = [];
@@ -420,7 +478,7 @@ async function twoLevelSynthesis(
     const truncatedBlock = truncateToLimit(resultsBlock, MAX_INPUT_CHARS);
     const userPrompt = buildUserPrompt(batchInput, truncatedBlock);
 
-    const response = await callAI(aiConfig, systemPrompt, userPrompt);
+    const response = await callAI(effectiveConfig, systemPrompt, userPrompt);
     batchSummaries.push(
       `## Grupa ${i + 1} (wątki ${i * SUB_BATCH_SIZE + 1}-${Math.min((i + 1) * SUB_BATCH_SIZE, perThreadResults.length)})\n\n${response.content}`
     );
@@ -444,7 +502,7 @@ ${batchSummaries.join('\n---\n')}
 INSTRUKCJA: ${metaInstruction}`;
 
   const metaResponse = await callAI(
-    aiConfig,
+    effectiveConfig,
     systemPrompt,
     truncateToLimit(metaPrompt, MAX_INPUT_CHARS)
   );

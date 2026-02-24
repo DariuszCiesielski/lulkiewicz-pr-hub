@@ -10,6 +10,54 @@ export type SyncJobStatus = 'pending' | 'processing' | 'has_more' | 'completed' 
 
 export type SyncJobType = 'full' | 'delta';
 
+export type AnalysisProfileId = 'communication_audit' | 'case_analytics';
+
+export type PromptTemplateTier = 'default' | 'global' | 'profile' | 'per_report';
+
+// --- Analysis Profile DB row (analysis_profiles table) ---
+
+export interface AnalysisProfileDb {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  thread_section_key: string;
+  thread_system_prompt: string;
+  thread_user_prompt_template: string;
+  synthetic_system_prompt: string | null;
+  standard_system_prompt: string | null;
+  uses_default_prompts: boolean;
+  is_system: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// --- Prompt Template DB row (extended with profile columns) ---
+
+export interface PromptTemplateDb {
+  id: string;
+  profile_id: string | null;
+  section_key: string;
+  tier: PromptTemplateTier;
+  title: string;
+  system_prompt: string;
+  user_prompt_template: string;
+  section_order: number;
+  is_active: boolean;
+  in_internal_report: boolean;
+  in_client_report: boolean;
+  synthetic_focus: string | null;
+  standard_focus: string | null;
+  model: string | null;
+  temperature: number | null;
+  max_tokens: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type CcFilterMode = 'off' | 'never_in_to' | 'first_email_cc';
+export type CcFilterStatus = 'direct' | 'cc_first_only' | 'cc_always' | 'unknown';
+
 // --- Database row interfaces ---
 
 export interface Mailbox {
@@ -24,6 +72,9 @@ export interface Mailbox {
   last_sync_at: string | null;
   total_emails: number;
   delta_link: string | null;
+  analysis_profile: AnalysisProfileId;
+  default_profile_id: string | null;
+  cc_filter_mode: CcFilterMode;
   created_at: string;
   updated_at: string;
 }
@@ -104,6 +155,7 @@ export interface EmailThread {
   message_count: number;
   participant_addresses: string[];
   status: ThreadStatus;
+  cc_filter_status: CcFilterStatus;
   summary: string | null;
   avg_response_time_minutes: number | null;
   created_at: string;
@@ -127,6 +179,9 @@ export interface MailboxFormData {
   connection_type: ConnectionType;
   tenant_id: string;
   client_id: string;
+  analysis_profile: AnalysisProfileId;
+  default_profile_id?: string;
+  cc_filter_mode: CcFilterMode;
   // ROPC fields
   username: string;
   password: string;

@@ -1,8 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import type { ConnectionType, MailboxFormData } from '@/types/email';
+import type { ConnectionType, AnalysisProfileId, CcFilterMode, MailboxFormData } from '@/types/email';
+
+interface ProfileOption {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+}
 
 export interface MailboxEditData {
   id: string;
@@ -11,6 +18,9 @@ export interface MailboxEditData {
   connection_type: ConnectionType;
   tenant_id: string;
   client_id: string;
+  analysis_profile: AnalysisProfileId;
+  default_profile_id: string | null;
+  cc_filter_mode: CcFilterMode;
 }
 
 interface MailboxFormProps {
@@ -31,6 +41,49 @@ export default function MailboxForm({ onSubmit, onClose, initialData }: MailboxF
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [clientSecret, setClientSecret] = useState('');
+  const [profileOptions, setProfileOptions] = useState<ProfileOption[]>([]);
+  const [selectedProfileId, setSelectedProfileId] = useState<string>(
+    initialData?.default_profile_id ?? ''
+  );
+  const [ccFilterMode, setCcFilterMode] = useState<CcFilterMode>(
+    initialData?.cc_filter_mode ?? 'off'
+  );
+
+  // Fetch profiles from API
+  useEffect(() => {
+    fetch('/api/analysis-profiles')
+      .then((res) => res.json())
+      .then((data) => {
+        const profiles: ProfileOption[] = (data.profiles || []).map((p: Record<string, unknown>) => ({
+          id: p.id as string,
+          slug: p.slug as string,
+          name: p.name as string,
+          description: p.description as string | null,
+        }));
+        setProfileOptions(profiles);
+        // Set default selection if not editing
+        if (!selectedProfileId && profiles.length > 0) {
+          const defaultProfile = profiles.find((p) => p.slug === 'communication_audit') || profiles[0];
+          setSelectedProfileId(defaultProfile.id);
+        }
+      })
+      .catch(() => {
+        // Fallback if API fails
+        setProfileOptions([
+          { id: '', slug: 'communication_audit', name: 'Audyt komunikacji', description: '13 sekcji oceny jakości komunikacji (domyślny)' },
+          { id: '', slug: 'case_analytics', name: 'Analityka spraw', description: 'Lokalizacje, etapy, typy zgłoszeń, problemy' },
+        ]);
+      });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const selectedProfile = profileOptions.find((p) => p.id === selectedProfileId);
+  const selectedSlug = (selectedProfile?.slug || 'communication_audit') as AnalysisProfileId;
+
+  const handleProfileChange = (newProfileId: string) => {
+    setSelectedProfileId(newProfileId);
+    const profile = profileOptions.find((p) => p.id === newProfileId);
+    setCcFilterMode(profile?.slug === 'case_analytics' ? 'never_in_to' : 'off');
+  };
   const [tenantId, setTenantId] = useState(initialData?.tenant_id ?? '');
   const [clientId, setClientId] = useState(initialData?.client_id ?? '');
   const [isLoading, setIsLoading] = useState(false);
@@ -48,6 +101,9 @@ export default function MailboxForm({ onSubmit, onClose, initialData }: MailboxF
         connection_type: connectionType,
         tenant_id: tenantId,
         client_id: clientId,
+        analysis_profile: selectedSlug,
+        default_profile_id: selectedProfileId || undefined,
+        cc_filter_mode: ccFilterMode,
         username,
         password,
         client_secret: clientSecret,
@@ -191,6 +247,48 @@ export default function MailboxForm({ onSubmit, onClose, initialData }: MailboxF
               </p>
             </div>
           )}
+
+          {/* Analysis profile */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700">
+              Profil analizy
+            </label>
+            <select
+              value={selectedProfileId}
+              onChange={(e) => handleProfileChange(e.target.value)}
+              className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            >
+              {profileOptions.map((opt) => (
+                <option key={opt.id || opt.slug} value={opt.id}>
+                  {opt.name}
+                </option>
+              ))}
+            </select>
+            {selectedProfile?.description && (
+              <p className="mt-1 text-xs text-slate-500">
+                {selectedProfile.description}
+              </p>
+            )}
+          </div>
+
+          {/* CC filter mode */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700">
+              Filtrowanie wątków CC
+            </label>
+            <select
+              value={ccFilterMode}
+              onChange={(e) => setCcFilterMode(e.target.value as CcFilterMode)}
+              className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            >
+              <option value="off">Wyłączone</option>
+              <option value="never_in_to">Pomiń — nigdy w polu &quot;Do&quot;</option>
+              <option value="first_email_cc">Pomiń — pierwszy mail jako DW</option>
+            </select>
+            <p className="mt-1 text-xs text-slate-500">
+              Pomijaj wątki, w których skrzynka jest tylko odbiorcą DW/UDW. Przydatne dla skrzynek rzeczników.
+            </p>
+          </div>
 
           {/* Azure configuration (optional) */}
           <div className="border-t border-slate-200 pt-4">

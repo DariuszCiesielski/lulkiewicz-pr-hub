@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { DEFAULT_PROMPTS, CLIENT_REPORT_SECTIONS } from '@/lib/ai/default-prompts';
+import { loadProfile, loadProfileSections } from '@/lib/ai/profile-loader';
 import { getAdminClient } from '@/lib/api/admin';
 import {
   getScopedMailboxIds,
@@ -156,6 +157,28 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Brak wyników analizy' }, { status: 400 });
   }
 
+  // Load analysis profile from DB
+  const profileRef = job.analysis_profile_id || job.analysis_profile || 'communication_audit';
+  const profile = await loadProfile(adminClient, profileRef);
+  const profileSections = profile?.id
+    ? await loadProfileSections(adminClient, profile.id)
+    : [];
+
+  // Build section definitions: DB-driven sections or fallback to DEFAULT_PROMPTS
+  const profilePromptDefs = profileSections.length > 0
+    ? profileSections.map((s) => ({
+        section_key: s.sectionKey,
+        title: s.title,
+        section_order: s.sectionOrder,
+        system_prompt: s.systemPrompt,
+        user_prompt_template: s.userPromptTemplate,
+      }))
+    : DEFAULT_PROMPTS;
+
+  const profileClientSections = profileSections.length > 0
+    ? profileSections.filter((s) => s.inClientReport).map((s) => s.sectionKey)
+    : CLIENT_REPORT_SECTIONS;
+
   // Load user-configured prompt overrides from DB
   const { data: dbPrompts } = await adminClient
     .from('prompt_templates')
@@ -167,29 +190,32 @@ export async function POST(request: NextRequest) {
     (dbPrompts || []).map((p: Record<string, unknown>) => [p.section_key as string, p])
   );
 
-  // Build full prompt definitions: defaults merged with DB overrides + custom sections
+  // Build full prompt definitions: profile defaults merged with DB overrides
   const allPromptDefs = [
-    ...DEFAULT_PROMPTS.map((def) => {
+    ...profilePromptDefs.map((def) => {
       const override = dbPromptMap.get(def.section_key);
       return {
         ...def,
         in_internal_report: override ? (override.in_internal_report as boolean) : true,
-        in_client_report: override ? (override.in_client_report as boolean) : CLIENT_REPORT_SECTIONS.includes(def.section_key),
+        in_client_report: override ? (override.in_client_report as boolean) : profileClientSections.includes(def.section_key),
       };
     }),
-    ...(dbPrompts || [])
-      .filter((p: Record<string, unknown>) =>
-        !DEFAULT_PROMPTS.some((d) => d.section_key === (p.section_key as string))
-      )
-      .map((p: Record<string, unknown>) => ({
-        section_key: p.section_key as string,
-        title: p.title as string,
-        section_order: (p.section_order as number) || 0,
-        system_prompt: p.system_prompt as string,
-        user_prompt_template: p.user_prompt_template as string,
-        in_internal_report: p.in_internal_report as boolean,
-        in_client_report: p.in_client_report as boolean,
-      })),
+    // Only include DB-only custom sections for profiles that use default prompts
+    ...(profile?.usesDefaultPrompts
+      ? (dbPrompts || [])
+          .filter((p: Record<string, unknown>) =>
+            !profilePromptDefs.some((d) => d.section_key === (p.section_key as string))
+          )
+          .map((p: Record<string, unknown>) => ({
+            section_key: p.section_key as string,
+            title: p.title as string,
+            section_order: (p.section_order as number) || 0,
+            system_prompt: p.system_prompt as string,
+            user_prompt_template: p.user_prompt_template as string,
+            in_internal_report: p.in_internal_report as boolean,
+            in_client_report: p.in_client_report as boolean,
+          }))
+      : []),
   ];
 
   // Filter sections: respect user's in_internal_report/in_client_report flags, exclude _global_context

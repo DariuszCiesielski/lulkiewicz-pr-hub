@@ -4,8 +4,14 @@ import { useState } from 'react';
 import { Wifi, Trash2, Mail, Play, RotateCcw, CheckCircle2, XCircle, CircleDashed, Pencil, Info } from 'lucide-react';
 import ConnectionStatus from './ConnectionStatus';
 import SyncProgress from './SyncProgress';
-import type { SyncStatus, SyncJobType } from '@/types/email';
+import type { SyncStatus, SyncJobType, AnalysisProfileId, CcFilterMode } from '@/types/email';
 import type { SyncUIStatus, SyncProgress as SyncProgressData } from '@/hooks/useSyncJob';
+
+export interface ProfileInfo {
+  id: string;
+  slug: string;
+  name: string;
+}
 
 export interface MailboxListItem {
   id: string;
@@ -19,6 +25,9 @@ export interface MailboxListItem {
   created_at: string;
   connection_tested_at: string | null;
   connection_test_ok: boolean | null;
+  analysis_profile: AnalysisProfileId;
+  default_profile_id: string | null;
+  cc_filter_mode: CcFilterMode;
 }
 
 export interface MailboxSyncState {
@@ -31,6 +40,7 @@ export interface MailboxSyncState {
 
 interface MailboxListProps {
   mailboxes: MailboxListItem[];
+  profiles: ProfileInfo[];
   onTestConnection: (id: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onEdit: (mailbox: MailboxListItem) => void;
@@ -53,6 +63,7 @@ function formatTestDate(isoDate: string): string {
 
 export default function MailboxList({
   mailboxes,
+  profiles,
   onTestConnection,
   onDelete,
   onEdit,
@@ -160,6 +171,26 @@ export default function MailboxList({
                   >
                     {mailbox.connection_type === 'ropc' ? 'ROPC' : 'OAuth2'}
                   </span>
+                  {(() => {
+                    const profile = mailbox.default_profile_id
+                      ? profiles.find((p) => p.id === mailbox.default_profile_id)
+                      : null;
+                    // Show badge for non-default profiles (skip communication_audit)
+                    if (profile && profile.slug !== 'communication_audit') {
+                      return (
+                        <span
+                          className="shrink-0 rounded-full px-2 py-0.5 text-xs"
+                          style={{
+                            backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                            color: 'rgb(168, 85, 247)',
+                          }}
+                        >
+                          {profile.name}
+                        </span>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
                 {mailbox.display_name && (
                   <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>

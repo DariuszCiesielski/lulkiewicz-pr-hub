@@ -2,11 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { loadAIConfig, callAI } from '@/lib/ai/ai-provider';
 import { calculateCost } from '@/lib/ai/pricing';
 import { Anonymizer } from '@/lib/ai/anonymizer';
-import {
-  THREAD_SUMMARY_SECTION_KEY,
-  THREAD_SUMMARY_SYSTEM_PROMPT,
-  THREAD_SUMMARY_USER_PROMPT_TEMPLATE,
-} from '@/lib/ai/thread-summary-prompt';
+import { loadProfile } from '@/lib/ai/profile-loader';
 import { getAdminClient } from '@/lib/api/admin';
 import {
   isMailboxInScope,
@@ -65,6 +61,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Zadanie nie znalezione' }, { status: 404 });
   }
 
+  // Load mailbox cc_filter_mode
+  const { data: mailboxData } = await adminClient
+    .from('mailboxes')
+    .select('cc_filter_mode')
+    .eq('id', job.mailbox_id)
+    .single();
+
   if (job.status === 'completed' || job.status === 'failed') {
     return NextResponse.json({ status: job.status, processedThreads: job.processed_threads, totalThreads: job.total_threads });
   }
@@ -85,12 +88,20 @@ export async function POST(request: NextRequest) {
     // Load AI config
     const aiConfig = await loadAIConfig(adminClient);
 
-    // Get ALL existing results for this job (only _thread_summary entries)
+    // Load analysis profile from DB (UUID preferred, slug fallback)
+    const profileRef = job.analysis_profile_id || job.analysis_profile || 'communication_audit';
+    const profile = await loadProfile(adminClient, profileRef);
+    if (!profile) {
+      throw new Error(`Profil analizy nie znaleziony: ${profileRef}`);
+    }
+    const threadSectionKey = profile.threadSectionKey;
+
+    // Get ALL existing results for this job (only thread summary entries for this profile)
     const { data: existingResults } = await adminClient
       .from('analysis_results')
       .select('id, thread_id, section_key, result_data')
       .eq('analysis_job_id', job.id)
-      .eq('section_key', THREAD_SUMMARY_SECTION_KEY)
+      .eq('section_key', threadSectionKey)
       .limit(10000);
 
     // Build sets: completed threads and retryable errors
@@ -118,6 +129,13 @@ export async function POST(request: NextRequest) {
 
     if (job.date_range_from) threadQuery = threadQuery.gte('first_message_at', job.date_range_from);
     if (job.date_range_to) threadQuery = threadQuery.lte('last_message_at', job.date_range_to);
+
+    // Apply CC filter
+    if (mailboxData?.cc_filter_mode === 'never_in_to') {
+      threadQuery = threadQuery.neq('cc_filter_status', 'cc_always');
+    } else if (mailboxData?.cc_filter_mode === 'first_email_cc') {
+      threadQuery = threadQuery.eq('cc_filter_status', 'direct');
+    }
 
     const { data: allThreads } = await threadQuery.order('last_message_at', { ascending: false });
     const threads = allThreads || [];
@@ -171,7 +189,7 @@ export async function POST(request: NextRequest) {
           await adminClient.from('analysis_results').insert({
             analysis_job_id: job.id,
             thread_id: thread.id,
-            section_key: THREAD_SUMMARY_SECTION_KEY,
+            section_key: threadSectionKey,
             result_data: {
               content: '(brak wiadomości w wątku)',
               thread_subject: thread.subject_normalized,
@@ -207,15 +225,15 @@ export async function POST(request: NextRequest) {
           })
           .join('\n\n');
 
-        const userPrompt = THREAD_SUMMARY_USER_PROMPT_TEMPLATE.replace('{{threads}}', threadText);
+        const userPrompt = profile.threadUserPromptTemplate.replace('{{threads}}', threadText);
 
         try {
-          const response = await callAI(aiConfig, THREAD_SUMMARY_SYSTEM_PROMPT, userPrompt);
+          const response = await callAI(aiConfig, profile.threadSystemPrompt, userPrompt);
 
           await adminClient.from('analysis_results').insert({
             analysis_job_id: job.id,
             thread_id: thread.id,
-            section_key: THREAD_SUMMARY_SECTION_KEY,
+            section_key: threadSectionKey,
             result_data: {
               content: response.content,
               thread_subject: thread.subject_normalized,
@@ -232,7 +250,7 @@ export async function POST(request: NextRequest) {
           await adminClient.from('analysis_results').insert({
             analysis_job_id: job.id,
             thread_id: thread.id,
-            section_key: THREAD_SUMMARY_SECTION_KEY,
+            section_key: threadSectionKey,
             result_data: {
               error: aiError instanceof Error ? aiError.message : 'Błąd AI',
               thread_subject: thread.subject_normalized,

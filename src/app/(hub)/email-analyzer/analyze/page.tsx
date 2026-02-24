@@ -12,6 +12,14 @@ interface MailboxOption {
   id: string;
   display_name: string | null;
   email_address: string;
+  default_profile_id: string | null;
+}
+
+interface ProfileOption {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
 }
 
 interface AnalysisHistoryItem {
@@ -69,6 +77,8 @@ export default function AnalyzePage() {
 
   const [mailboxes, setMailboxes] = useState<MailboxOption[]>([]);
   const [selectedMailboxId, setSelectedMailboxId] = useState<string>('');
+  const [profiles, setProfiles] = useState<ProfileOption[]>([]);
+  const [selectedProfileId, setSelectedProfileId] = useState<string>('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [history, setHistory] = useState<AnalysisHistoryItem[]>([]);
@@ -120,11 +130,42 @@ export default function AnalyzePage() {
         if (list.length > 0 && !selectedMailboxId) {
           const saved = localStorage.getItem('ea-selected-mailbox');
           const validSaved = saved && list.some((m: MailboxOption) => m.id === saved);
-          setSelectedMailboxId(validSaved ? saved : list[0].id);
+          const initialId = validSaved ? saved : list[0].id;
+          setSelectedMailboxId(initialId);
+          // Set initial profile from mailbox default
+          const initialMailbox = list.find((m: MailboxOption) => m.id === initialId);
+          if (initialMailbox?.default_profile_id) {
+            setSelectedProfileId(initialMailbox.default_profile_id);
+          }
         }
       })
       .catch(() => setMailboxes([]));
   }, [isAdmin, selectedMailboxId]);
+
+  // Fetch profiles
+  useEffect(() => {
+    if (!isAdmin) return;
+    fetch('/api/analysis-profiles')
+      .then((res) => res.json())
+      .then((data) => {
+        setProfiles((data.profiles || []).map((p: Record<string, unknown>) => ({
+          id: p.id as string,
+          slug: p.slug as string,
+          name: p.name as string,
+          description: p.description as string | null,
+        })));
+      })
+      .catch(() => setProfiles([]));
+  }, [isAdmin]);
+
+  // Update profile selection when mailbox changes
+  useEffect(() => {
+    if (!selectedMailboxId) return;
+    const mailbox = mailboxes.find((m) => m.id === selectedMailboxId);
+    if (mailbox?.default_profile_id) {
+      setSelectedProfileId(mailbox.default_profile_id);
+    }
+  }, [selectedMailboxId, mailboxes]);
 
   // Persist mailbox selection
   useEffect(() => {
@@ -157,9 +198,10 @@ export default function AnalyzePage() {
     analysisJob.startAnalysis(
       selectedMailboxId,
       dateFrom || undefined,
-      dateTo || undefined
+      dateTo || undefined,
+      selectedProfileId || undefined
     );
-  }, [selectedMailboxId, dateFrom, dateTo, analysisJob]);
+  }, [selectedMailboxId, dateFrom, dateTo, selectedProfileId, analysisJob]);
 
   const handlePause = useCallback(() => {
     analysisJob.pauseJob();
@@ -247,6 +289,37 @@ export default function AnalyzePage() {
             ))}
           </select>
         </div>
+
+        {/* Profile selector */}
+        {profiles.length > 1 && (
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+              Profil analizy
+            </label>
+            <select
+              value={selectedProfileId}
+              onChange={(e) => setSelectedProfileId(e.target.value)}
+              disabled={isRunning || isPaused}
+              className="rounded-md border px-3 py-2 text-sm outline-none disabled:opacity-50"
+              style={{
+                borderColor: 'var(--border-primary)',
+                backgroundColor: 'var(--bg-primary)',
+                color: 'var(--text-primary)',
+              }}
+            >
+              {profiles.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+            {profiles.find((p) => p.id === selectedProfileId)?.description && (
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                {profiles.find((p) => p.id === selectedProfileId)!.description}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Date range */}
         <div className="grid grid-cols-2 gap-3">
@@ -344,6 +417,7 @@ export default function AnalyzePage() {
             jobStartedAt={analysisJob.jobStartedAt}
             processedAtStart={analysisJob.processedAtStart}
             onReset={analysisJob.reset}
+            onResume={handleResume}
           />
         </div>
       )}

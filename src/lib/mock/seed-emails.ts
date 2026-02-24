@@ -1293,6 +1293,73 @@ Biuro Rzecznika Robyg`,
   },
 ];
 
+// --- Watek 14: CC-only — korespondencja miedzy stronami, rzecznik w CC (3 emaile) ---
+const B4_MSG1 = '<b4-001@budimex.example>';
+const B4_MSG2 = '<b4-002@nieruchomosci-expert.pl>';
+const B4_MSG3 = '<b4-003@budimex.example>';
+
+const robygThread4: MockEmail[] = [
+  {
+    mailbox_id: ROBYG, internet_message_id: B4_MSG1, graph_id: 'mock-graph-b4-001',
+    conversation_id: 'conv-robyg-4', subject: 'Uzgodnienia techniczne - garaż podziemny',
+    from_address: 'jan.wolski@budimex.example', from_name: 'Jan Wolski (Budimex)',
+    to_addresses: [{ address: 'anna.kowal@nieruchomosci-expert.pl', name: 'Anna Kowal' }],
+    cc_addresses: [{ address: 'rzecznik@demo-developer.example', name: 'Rzecznik Robyg' }],
+    sent_at: daysAgo(10), received_at: daysAgo(10),
+    body_text: `Pani Anno,
+
+Przesyłam dokumentację techniczną dotyczącą hydroizolacji garażu podziemnego. Proszę o weryfikację i zatwierdzenie zakresu prac.
+
+W załączeniu kosztorys i harmonogram.
+
+Pozdrawiam,
+Jan Wolski
+Kierownik projektu, Budimex S.A.`,
+    has_attachments: true,
+    header_message_id: B4_MSG1, header_in_reply_to: null, header_references: [],
+    is_read: true,
+  },
+  {
+    mailbox_id: ROBYG, internet_message_id: B4_MSG2, graph_id: 'mock-graph-b4-002',
+    conversation_id: 'conv-robyg-4', subject: 'RE: Uzgodnienia techniczne - garaż podziemny',
+    from_address: 'anna.kowal@nieruchomosci-expert.pl', from_name: 'Anna Kowal',
+    to_addresses: [{ address: 'jan.wolski@budimex.example', name: 'Jan Wolski (Budimex)' }],
+    cc_addresses: [{ address: 'rzecznik@demo-developer.example', name: 'Rzecznik Robyg' }],
+    sent_at: daysAgo(9), received_at: daysAgo(9),
+    body_text: `Panie Janie,
+
+Dokumentacja wygląda dobrze. Mam kilka uwag do harmonogramu — prace w weekendy powinny być ograniczone ze względu na mieszkańców.
+
+Proszę o korektę harmonogramu i ponowne przesłanie.
+
+Pozdrawiam,
+Anna Kowal
+Zarządca nieruchomości`,
+    has_attachments: false,
+    header_message_id: B4_MSG2, header_in_reply_to: B4_MSG1, header_references: [B4_MSG1],
+    is_read: true,
+  },
+  {
+    mailbox_id: ROBYG, internet_message_id: B4_MSG3, graph_id: 'mock-graph-b4-003',
+    conversation_id: 'conv-robyg-4', subject: 'RE: Uzgodnienia techniczne - garaż podziemny',
+    from_address: 'jan.wolski@budimex.example', from_name: 'Jan Wolski (Budimex)',
+    to_addresses: [{ address: 'anna.kowal@nieruchomosci-expert.pl', name: 'Anna Kowal' }],
+    cc_addresses: [{ address: 'rzecznik@demo-developer.example', name: 'Rzecznik Robyg' }],
+    sent_at: daysAgo(8), received_at: daysAgo(8),
+    body_text: `Pani Anno,
+
+Przyjąłem uwagi. Zaktualizowany harmonogram w załączeniu — prace weekendowe przesunięte na dni robocze.
+
+Proszę o akceptację i możemy startować w przyszłym tygodniu.
+
+Pozdrawiam,
+Jan Wolski`,
+    has_attachments: true,
+    header_message_id: B4_MSG3, header_in_reply_to: B4_MSG2, header_references: [B4_MSG1, B4_MSG2],
+    is_read: true,
+  },
+];
+
 // ============================================================
 // EKSPORT
 // ============================================================
@@ -1310,10 +1377,11 @@ export const ALL_MOCK_EMAILS: MockEmail[] = [
   ...sadyThread2,    // 4 emaile — opłaty parkingowe
   ...sadyThread3,    // 3 emaile — przegląd gazowy
   ...sadyThread4,    // 4 emaile — oświetlenie parkingu
-  // Rzecznik Robyg (3 watki, 13 emaili)
+  // Rzecznik Robyg (4 watki, 16 emaili)
   ...robygThread1,   // 6 emaili — wilgoć i pleśń (brak odpowiedzi)
   ...robygThread2,   // 4 emaile — brama wjazdowa (powtarzający się problem)
   ...robygThread3,   // 3 emaile — protokół zebrania (brak odpowiedzi)
+  ...robygThread4,   // 3 emaile — CC-only: uzgodnienia techniczne (rzecznik w CC)
 ];
 
-// Total: 13 watkow, 64 emaile
+// Total: 14 watkow, 67 emaili

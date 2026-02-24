@@ -10,7 +10,7 @@ import {
 import type { ConnectionType } from '@/types/email';
 
 // Columns to return in GET responses (never credentials_encrypted)
-const MAILBOX_SELECT_COLUMNS = 'id, email_address, display_name, connection_type, tenant_id, client_id, sync_status, last_sync_at, total_emails, delta_link, created_at, updated_at, connection_tested_at, connection_test_ok';
+const MAILBOX_SELECT_COLUMNS = 'id, email_address, display_name, connection_type, tenant_id, client_id, sync_status, last_sync_at, total_emails, delta_link, created_at, updated_at, connection_tested_at, connection_test_ok, analysis_profile, default_profile_id, cc_filter_mode';
 
 export async function GET() {
   const scope = await verifyScopedAdminAccess();
@@ -64,6 +64,9 @@ export async function POST(request: Request) {
     connection_type?: ConnectionType;
     tenant_id?: string;
     client_id?: string;
+    analysis_profile?: string;
+    default_profile_id?: string;
+    cc_filter_mode?: string;
     username?: string;
     password?: string;
     client_secret?: string;
@@ -81,6 +84,9 @@ export async function POST(request: Request) {
     connection_type = 'ropc',
     tenant_id,
     client_id,
+    analysis_profile = 'communication_audit',
+    default_profile_id,
+    cc_filter_mode,
     username,
     password,
     client_secret,
@@ -172,6 +178,9 @@ export async function POST(request: Request) {
       credentials_encrypted: credentialsEncrypted,
       tenant_id: resolvedTenantId,
       client_id: resolvedClientId,
+      analysis_profile,
+      default_profile_id: default_profile_id || null,
+      cc_filter_mode: cc_filter_mode || (analysis_profile === 'case_analytics' ? 'never_in_to' : 'off'),
       sync_status: 'never_synced',
       total_emails: 0,
     })

@@ -5,14 +5,27 @@
 See: .planning/PROJECT.md (updated 2026-02-10)
 
 **Core value:** Hub narzędziowy — AI analizuje maile (email-analyzer) i posty z grup FB (fb-analyzer) dla audytu komunikacji administracji osiedli
-**Current focus:** Milestone v1.1 — FB Analyzer. Phase 10 (AI Sentiment Analysis) COMPLETE. All 3 plans done.
+**Current focus:** Milestone v1.1 — FB Analyzer. Phase 10 COMPLETE. Side task: Analysis Profiles v2 (DB-driven) — ALL COMPLETE.
 
 ## Current Position
 
 Phase: Phase 10 (AI Sentiment Analysis) — COMPLETE
 Plan: 3 of 3
 Status: All plans COMPLETE. Phase 10 done.
-Last activity: 2026-02-23 — Completed 10-03-PLAN.md (Analysis UI)
+Last activity: 2026-02-25 — Analysis Profiles v2 ALL 6 PHASES COMPLETE
+
+### Side Task: Analysis Profiles v2 (DB-driven)
+Status: ALL 6 PHASES COMPLETE
+Plan: .claude/plans/recursive-hopping-book.md
+Handoff: docs/HANDOFF-2026-02-25-D.md (+ bazowy docs/HANDOFF-2026-02-25.md + docs/HANDOFF-2026-02-24-v2.md)
+Progress: 6/6 faz
+- [x] Faza A: Schemat DB + seed migracja (applied to Supabase)
+- [x] Faza B: API profili CRUD + profile-loader.ts
+- [x] Faza C: Pipeline integration (per-section model override)
+- [x] Faza D: UI strona promptow z profilem (profile dropdown, CRUD, thread prompt editor, AI config, focus prompts, seed reset)
+- [x] Faza E: UI dropdown na stronie analizy + mailbox form + dynamiczny badge
+- [x] Faza F: Czyszczenie (PROFILE_OPTIONS usunięty, unused imports) + build OK
+Parallel: CC Thread Filtering (docs/plans/2026-02-24-cc-thread-filtering-plan.md) — brak blokujących konfliktów
 
 Progress (v1.0 Email Analyzer): [####################] 100% (Phases 1-6 + Phase 2.1 + Phase 2.2 ALL COMPLETE)
 Progress (v1.1 FB Analyzer): [##################..] 87% (phases 7-10 COMPLETE, phases 11-12 pending)

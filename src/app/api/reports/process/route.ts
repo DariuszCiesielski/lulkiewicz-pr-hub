@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { DEFAULT_PROMPTS, CLIENT_REPORT_SECTIONS } from '@/lib/ai/default-prompts';
-import { THREAD_SUMMARY_SECTION_KEY } from '@/lib/ai/thread-summary-prompt';
 import { getAdminClient } from '@/lib/api/admin';
 import {
   isMailboxInScope,
@@ -8,6 +7,7 @@ import {
 } from '@/lib/api/demo-scope';
 import { synthesizeReportSection } from '@/lib/ai/report-synthesizer';
 import { loadAIConfig } from '@/lib/ai/ai-provider';
+import { loadProfile, loadProfileSections, loadGlobalContext } from '@/lib/ai/profile-loader';
 import type { PerThreadResult, SynthesisInput, DetailLevel } from '@/lib/ai/report-synthesizer';
 
 export const maxDuration = 60;
@@ -74,6 +74,20 @@ export async function POST(request: NextRequest) {
     // Load AI config
     const aiConfig = await loadAIConfig(adminClient);
 
+    // Load analysis job to get profile
+    const { data: analysisJob } = await adminClient
+      .from('analysis_jobs')
+      .select('analysis_profile, analysis_profile_id')
+      .eq('id', report.analysis_job_id)
+      .single();
+
+    const profileRef = analysisJob?.analysis_profile_id || analysisJob?.analysis_profile || 'communication_audit';
+    const profile = await loadProfile(adminClient, profileRef);
+    if (!profile) {
+      throw new Error(`Profil analizy nie znaleziony: ${profileRef}`);
+    }
+    const threadSectionKey = profile.threadSectionKey;
+
     // Load analysis results grouped by section (explicit limit to avoid PostgREST 1000-row default)
     const { data: results } = await adminClient
       .from('analysis_results')
@@ -99,7 +113,7 @@ export async function POST(request: NextRequest) {
     let summaryErrors = 0;
 
     for (const r of results) {
-      if (r.section_key !== THREAD_SUMMARY_SECTION_KEY) continue;
+      if (r.section_key !== threadSectionKey) continue;
       const content = r.result_data?.content;
       if (!content) {
         if (r.result_data?.error) summaryErrors++;
@@ -121,7 +135,7 @@ export async function POST(request: NextRequest) {
     } else {
       // OLD FORMAT (or new format with no content): group by section_key
       for (const r of results) {
-        if (r.section_key === THREAD_SUMMARY_SECTION_KEY) continue; // skip empty summaries
+        if (r.section_key === threadSectionKey) continue; // skip empty summaries
         const content = r.result_data?.content;
         if (!content) {
           if (r.result_data?.error) {
@@ -142,6 +156,28 @@ export async function POST(request: NextRequest) {
       console.log(`Report ${report.id}: OLD format — ${totalWithContent} results, ${totalWithError} errors. Sections: [${[...sectionResultsMap.keys()].join(', ')}]`);
     }
 
+    const templateType = report.template_type === 'client' ? 'client' : 'internal';
+    const detailLevel: DetailLevel = report.detail_level === 'standard' ? 'standard' : 'synthetic';
+
+    // Build section definitions from DB profile
+    const dbProfileSections = profile.id
+      ? await loadProfileSections(adminClient, profile.id)
+      : [];
+
+    const profilePromptDefs = dbProfileSections.length > 0
+      ? dbProfileSections.map((s) => ({
+          section_key: s.sectionKey,
+          title: s.title,
+          section_order: s.sectionOrder,
+          system_prompt: s.systemPrompt,
+          user_prompt_template: s.userPromptTemplate,
+        }))
+      : DEFAULT_PROMPTS;
+
+    const profileClientSections = dbProfileSections.length > 0
+      ? dbProfileSections.filter((s) => s.inClientReport).map((s) => s.sectionKey)
+      : CLIENT_REPORT_SECTIONS;
+
     // Load prompt definitions (same merge logic as POST /api/reports)
     const { data: dbPrompts } = await adminClient
       .from('prompt_templates')
@@ -154,44 +190,42 @@ export async function POST(request: NextRequest) {
     );
 
     const allPromptDefs = [
-      ...DEFAULT_PROMPTS.map((def) => {
+      ...profilePromptDefs.map((def) => {
         const override = dbPromptMap.get(def.section_key);
         return {
           ...def,
           in_internal_report: override ? (override.in_internal_report as boolean) : true,
-          in_client_report: override ? (override.in_client_report as boolean) : CLIENT_REPORT_SECTIONS.includes(def.section_key),
+          in_client_report: override ? (override.in_client_report as boolean) : profileClientSections.includes(def.section_key),
         };
       }),
-      ...(dbPrompts || [])
-        .filter((p: Record<string, unknown>) =>
-          !DEFAULT_PROMPTS.some((d) => d.section_key === (p.section_key as string))
-        )
-        .map((p: Record<string, unknown>) => ({
-          section_key: p.section_key as string,
-          title: p.title as string,
-          section_order: (p.section_order as number) || 0,
-          system_prompt: p.system_prompt as string,
-          user_prompt_template: p.user_prompt_template as string,
-          in_internal_report: p.in_internal_report as boolean,
-          in_client_report: p.in_client_report as boolean,
-        })),
+      // Only include DB-only custom sections for default profile
+      ...(profile.usesDefaultPrompts
+        ? (dbPrompts || [])
+            .filter((p: Record<string, unknown>) =>
+              !profilePromptDefs.some((d) => d.section_key === (p.section_key as string))
+            )
+            .map((p: Record<string, unknown>) => ({
+              section_key: p.section_key as string,
+              title: p.title as string,
+              section_order: (p.section_order as number) || 0,
+              system_prompt: p.system_prompt as string,
+              user_prompt_template: p.user_prompt_template as string,
+              in_internal_report: p.in_internal_report as boolean,
+              in_client_report: p.in_client_report as boolean,
+            }))
+        : []),
     ];
 
     const promptDefMap = new Map(allPromptDefs.map((p) => [p.section_key, p]));
 
-    const templateType = report.template_type === 'client' ? 'client' : 'internal';
-    const detailLevel: DetailLevel = report.detail_level === 'standard' ? 'standard' : 'synthetic';
-
-    // When using new format (thread summaries), only include sections from DEFAULT_PROMPTS.
-    // DB-only sections (e.g. old "response_time", "rodo_compliance") don't have matching
-    // dimensions in thread summaries and would produce duplicate/overlapping content.
-    const defaultSectionKeys = new Set(DEFAULT_PROMPTS.map(p => p.section_key));
+    // When using thread summaries, only include sections from the profile's prompt defs.
+    const profileSectionKeys = new Set(profilePromptDefs.map(p => p.section_key));
 
     // Filter sections to include
     const sectionsToInclude = allPromptDefs
       .filter((p) => {
         if (p.section_key === '_global_context') return false;
-        if (threadSummaries && !defaultSectionKeys.has(p.section_key)) return false;
+        if (threadSummaries && !profileSectionKeys.has(p.section_key)) return false;
         return templateType === 'client' ? p.in_client_report : p.in_internal_report;
       })
       .map((p) => p.section_key);
@@ -223,9 +257,11 @@ export async function POST(request: NextRequest) {
     // Take next batch
     const batchKeys = missingSections.slice(0, SECTIONS_PER_REQUEST);
 
-    // Load global context
+    // Load global context from DB profile, then fall back to tier=global, then hardcoded
+    const dbGlobalCtx = profile.id ? await loadGlobalContext(adminClient, profile.id) : null;
     const globalContextOverride = dbPromptMap.get('_global_context');
-    const globalContext = (globalContextOverride?.user_prompt_template as string) ||
+    const globalContext = dbGlobalCtx?.userPromptTemplate ||
+      (globalContextOverride?.user_prompt_template as string) ||
       DEFAULT_PROMPTS.find((p) => p.section_key === '_global_context')?.user_prompt_template ||
       undefined;
 
@@ -268,6 +304,8 @@ export async function POST(request: NextRequest) {
         };
       }
 
+      const dbSection = dbProfileSections.find((s) => s.sectionKey === sectionKey);
+
       const input: SynthesisInput = {
         sectionKey,
         sectionTitle: promptDef.title,
@@ -278,6 +316,16 @@ export async function POST(request: NextRequest) {
         globalContext,
         includeThreadSummaries,
         detailLevel,
+        profileId: profile.id,
+        profileSlug: profile.slug,
+        syntheticSystemPromptOverride: profile.syntheticSystemPrompt || undefined,
+        standardSystemPromptOverride: profile.standardSystemPrompt || undefined,
+        focusPromptOverride: dbSection
+          ? (detailLevel === 'synthetic' ? (dbSection.syntheticFocus || undefined) : (dbSection.standardFocus || undefined))
+          : undefined,
+        modelOverride: dbSection?.model || undefined,
+        temperatureOverride: dbSection?.temperature ?? undefined,
+        maxTokensOverride: dbSection?.maxTokens ?? undefined,
       };
 
       try {

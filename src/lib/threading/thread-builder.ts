@@ -88,6 +88,7 @@ interface RawEmail {
   header_message_id: string | null;
   header_in_reply_to: string | null;
   header_references: string[];
+  to_addresses: { address: string; name: string }[] | null;
 }
 
 interface ThreadGroup {
@@ -235,6 +236,35 @@ async function generateThreadSummaries(
   return results;
 }
 
+// --- CC filter status computation ---
+
+export type CcFilterStatusValue = 'direct' | 'cc_first_only' | 'cc_always';
+
+/**
+ * Determine if the mailbox is a direct recipient (To) or only CC/BCC in this thread.
+ *
+ * - 'direct': mailbox appears in To field in at least one email, including the first
+ * - 'cc_first_only': first email has mailbox in CC/BCC only, but later emails have it in To
+ * - 'cc_always': mailbox never appears in To field in any email
+ */
+export function computeCcFilterStatus(
+  emails: RawEmail[],
+  mailboxEmail: string
+): CcFilterStatusValue {
+  const mailboxAddr = mailboxEmail.toLowerCase();
+
+  const firstEmailHasTo = emails[0]?.to_addresses
+    ?.some((r) => r.address.toLowerCase() === mailboxAddr) ?? false;
+
+  const anyEmailHasTo = emails.some(
+    (e) => e.to_addresses?.some((r) => r.address.toLowerCase() === mailboxAddr) ?? false
+  );
+
+  if (anyEmailHasTo && firstEmailHasTo) return 'direct';
+  if (anyEmailHasTo && !firstEmailHasTo) return 'cc_first_only';
+  return 'cc_always';
+}
+
 // --- Main builder ---
 
 export async function buildThreadsForMailbox(
@@ -251,7 +281,7 @@ export async function buildThreadsForMailbox(
   while (true) {
     const { data, error } = await supabase
       .from('emails')
-      .select('id, mailbox_id, subject, from_address, from_name, sent_at, received_at, body_text, header_message_id, header_in_reply_to, header_references')
+      .select('id, mailbox_id, subject, from_address, from_name, sent_at, received_at, body_text, header_message_id, header_in_reply_to, header_references, to_addresses')
       .eq('mailbox_id', mailboxId)
       .eq('is_deleted', false)
       .order('received_at', { ascending: true })
@@ -381,6 +411,7 @@ export async function buildThreadsForMailbox(
     status: string;
     summary: string | null;
     avg_response_time_minutes: number | null;
+    cc_filter_status: string;
   }
 
   interface EmailUpdate {
@@ -443,6 +474,7 @@ export async function buildThreadsForMailbox(
       status: lastIsIncoming ? 'pending' : 'open',
       summary: null,
       avg_response_time_minutes: avgResponseTime,
+      cc_filter_status: computeCcFilterStatus(group.emails, mailboxEmail),
     });
 
     // Collect thread groups for AI summary generation

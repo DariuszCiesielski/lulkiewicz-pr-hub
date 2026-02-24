@@ -11,7 +11,7 @@ export interface AnalysisProgress {
 }
 
 export interface UseAnalysisJobReturn {
-  startAnalysis: (mailboxId: string, dateFrom?: string, dateTo?: string) => Promise<void>;
+  startAnalysis: (mailboxId: string, dateFrom?: string, dateTo?: string, profileId?: string) => Promise<void>;
   resumeJob: (jobId: string, processedThreads: number, totalThreads: number, jobStartedAt?: string) => void;
   pauseJob: () => Promise<void>;
   status: AnalysisUIStatus;
@@ -25,6 +25,8 @@ export interface UseAnalysisJobReturn {
 }
 
 const BATCH_DELAY_MS = 800;
+const MAX_NETWORK_RETRIES = 3;
+const RETRY_BASE_DELAY_MS = 2000;
 
 export function useAnalysisJob(onComplete?: () => void): UseAnalysisJobReturn {
   const [jobId, setJobId] = useState<string | null>(null);
@@ -51,6 +53,8 @@ export function useAnalysisJob(onComplete?: () => void): UseAnalysisJobReturn {
     }
   }, []);
 
+  const networkRetryRef = useRef(0);
+
   const processBatch = useCallback(async (jId: string) => {
     if (!mountedRef.current) return;
 
@@ -62,6 +66,9 @@ export function useAnalysisJob(onComplete?: () => void): UseAnalysisJobReturn {
       });
 
       if (!mountedRef.current) return;
+
+      // Reset retry counter on any successful HTTP response
+      networkRetryRef.current = 0;
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({ error: `Błąd HTTP ${res.status}` }));
@@ -103,6 +110,18 @@ export function useAnalysisJob(onComplete?: () => void): UseAnalysisJobReturn {
       }
     } catch (err) {
       if (!mountedRef.current) return;
+
+      // Retry on network errors (Failed to fetch, timeout, connection reset)
+      networkRetryRef.current += 1;
+      if (networkRetryRef.current <= MAX_NETWORK_RETRIES) {
+        const delay = RETRY_BASE_DELAY_MS * Math.pow(2, networkRetryRef.current - 1);
+        console.warn(`Network error (attempt ${networkRetryRef.current}/${MAX_NETWORK_RETRIES}), retrying in ${delay}ms...`, err);
+        timeoutRef.current = setTimeout(() => {
+          if (mountedRef.current) processBatch(jId);
+        }, delay);
+        return;
+      }
+
       setStatus('error');
       setError(err instanceof Error ? err.message : 'Błąd połączenia z serwerem');
     }
@@ -111,7 +130,8 @@ export function useAnalysisJob(onComplete?: () => void): UseAnalysisJobReturn {
   const startAnalysis = useCallback(async (
     mailboxId: string,
     dateFrom?: string,
-    dateTo?: string
+    dateTo?: string,
+    profileId?: string
   ) => {
     clearBatchTimeout();
     setJobId(null);
@@ -131,6 +151,7 @@ export function useAnalysisJob(onComplete?: () => void): UseAnalysisJobReturn {
           mailboxId,
           dateRangeFrom: dateFrom || undefined,
           dateRangeTo: dateTo || undefined,
+          profileId: profileId || undefined,
         }),
       });
 
@@ -186,9 +207,10 @@ export function useAnalysisJob(onComplete?: () => void): UseAnalysisJobReturn {
     }
   }, [jobId, clearBatchTimeout]);
 
-  // Resume a processing job (e.g. after page reload / hot reload / manual resume from paused)
+  // Resume a processing job (e.g. after page reload / hot reload / manual resume from paused / error retry)
   const resumeJob = useCallback(async (jId: string, processedThreads: number, totalThreads: number, realStartedAt?: string) => {
     clearBatchTimeout();
+    networkRetryRef.current = 0;
     setJobId(jId);
     setStatus('processing');
     setStartedAt(new Date()); // session start for ETA calculation

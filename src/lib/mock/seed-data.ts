@@ -13,7 +13,16 @@ export async function seedMockData(
 ) {
   resetCounter();
 
-  // 1. Upsert mailboxes
+  // 1. Look up analysis profile UUIDs
+  const { data: profiles } = await adminClient
+    .from('analysis_profiles')
+    .select('id, slug');
+
+  const profileMap = new Map(
+    (profiles || []).map((p: Record<string, unknown>) => [p.slug as string, p.id as string])
+  );
+
+  // 2. Upsert mailboxes
   const { error: mailboxError } = await adminClient
     .from('mailboxes')
     .upsert(
@@ -27,6 +36,8 @@ export async function seedMockData(
         sync_status: m.sync_status,
         last_sync_at: m.last_sync_at,
         total_emails: m.total_emails,
+        analysis_profile: m.analysis_profile,
+        default_profile_id: profileMap.get(m.analysis_profile) || null,
         credentials_encrypted: null,
         delta_link: null,
       })),
@@ -37,7 +48,7 @@ export async function seedMockData(
     throw new Error(`Błąd seedowania skrzynek: ${mailboxError.message}`);
   }
 
-  // 2. Upsert emails in batches of 50
+  // 3. Upsert emails in batches of 50
   const BATCH_SIZE = 50;
   let totalUpserted = 0;
 
@@ -75,7 +86,7 @@ export async function seedMockData(
     totalUpserted += batch.length;
   }
 
-  // 3. Update mailbox total_emails counts
+  // 4. Update mailbox total_emails counts
   for (const mailbox of MOCK_MAILBOXES) {
     const count = ALL_MOCK_EMAILS.filter((e) => e.mailbox_id === mailbox.id).length;
     await adminClient
