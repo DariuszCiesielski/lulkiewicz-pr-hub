@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-02-10)
 
 **Core value:** Hub narzędziowy — AI analizuje maile (email-analyzer) i posty z grup FB (fb-analyzer) dla audytu komunikacji administracji osiedli
-**Current focus:** Milestone v1.1 — FB Analyzer. Phase 10 COMPLETE. Analysis Profiles v2 COMPLETE. Report fixes + Vercel Pro deployed. AI config display in prompts page.
+**Current focus:** Milestone v1.1 — FB Analyzer. Phase 10 COMPLETE. Analysis Profiles v2 COMPLETE. Report fixes + Vercel Pro deployed. AI config display in prompts page. Mock data removed — all FB pages use real Supabase data.
 
 ## Current Position
 
@@ -253,8 +253,8 @@ organizations, organization_members, **mailboxes** (extended: +8 cols, sync_stat
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: v1.0.11 deployed — AI config display in prompts page (model, temperature, max tokens).
-Resume file: docs/HANDOFF-2026-02-25-F.md
+Stopped at: v1.0.12 deployed — Mock data removed, Dashboard/Reports/Analyze on real Supabase data, Polish diacritics fixed across 16+ files.
+Resume file: docs/HANDOFF-2026-02-25-G.md
 Next step: /gsd:discuss-phase 11
-Version tag: v1.0.11
+Version tag: v1.0.12
 SQL migration 20260223_10_01 APPLIED (paused status + metadata JSONB on fb_analysis_jobs)
