@@ -127,6 +127,7 @@ export async function POST(request: NextRequest) {
     developer?: string;
     ai_instruction?: string;
     urls?: string[];
+    names?: Record<string, string>;
   };
 
   try {
@@ -137,7 +138,7 @@ export async function POST(request: NextRequest) {
 
   // Rozróżnienie: bulk (urls array) vs single
   if (body.urls && Array.isArray(body.urls)) {
-    return handleBulkCreate(adminClient, body.urls, body.developer || null);
+    return handleBulkCreate(adminClient, body.urls, body.developer || null, body.names || null);
   }
 
   return handleSingleCreate(adminClient, body);
@@ -182,7 +183,8 @@ async function handleSingleCreate(
 async function handleBulkCreate(
   adminClient: ReturnType<typeof getAdminClient>,
   urls: string[],
-  developer: string | null
+  developer: string | null,
+  names: Record<string, string> | null
 ) {
   if (urls.length === 0) {
     return NextResponse.json({ error: 'Lista URL-ów jest pusta' }, { status: 400 });
@@ -227,7 +229,7 @@ async function handleBulkCreate(
     }
 
     validRecords.push({
-      name: extractGroupName(url),
+      name: names?.[url] || extractGroupName(url),
       facebook_url: url,
       developer: developer?.trim() || null,
       status: 'active',

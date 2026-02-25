@@ -9,8 +9,13 @@ interface GroupBulkUploadProps {
   onClose: () => void;
 }
 
+interface ParsedEntry {
+  url: string;
+  name: string | null;
+}
+
 interface ParseResult {
-  valid: string[];
+  valid: ParsedEntry[];
   errors: { line: number; url: string; reason: string }[];
 }
 
@@ -28,14 +33,31 @@ function isValidFbGroupUrl(url: string): boolean {
   }
 }
 
+function parseLine(line: string): { url: string; name: string | null } {
+  // Strip comment: "https://...  # [GDA] Nazwa grupy" → url + name
+  const hashIdx = line.indexOf('#');
+  if (hashIdx === -1) return { url: line.trim(), name: null };
+
+  const url = line.substring(0, hashIdx).trim();
+  const comment = line.substring(hashIdx + 1).trim();
+  // Strip optional [GDA]/[WAW] prefix from name
+  const name = comment.replace(/^\[[\w]+\]\s*/, '') || null;
+  return { url, name };
+}
+
 function parseUrls(text: string): ParseResult {
   const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
-  const valid: string[] = [];
+  const valid: ParsedEntry[] = [];
   const errors: { line: number; url: string; reason: string }[] = [];
   const seen = new Set<string>();
 
   for (let i = 0; i < lines.length; i++) {
-    const url = lines[i];
+    const line = lines[i];
+
+    // Skip comment-only lines
+    if (line.startsWith('#')) continue;
+
+    const { url, name } = parseLine(line);
 
     if (!isValidFbGroupUrl(url)) {
       errors.push({ line: i + 1, url, reason: 'Nieprawidłowy URL grupy Facebook' });
@@ -48,7 +70,7 @@ function parseUrls(text: string): ParseResult {
     }
 
     seen.add(url);
-    valid.push(url);
+    valid.push({ url, name });
   }
 
   return { valid, errors };
@@ -90,9 +112,10 @@ export default function GroupBulkUpload({
       return;
     }
 
-    const lines = urlText.split('\n').map((l) => l.trim()).filter(Boolean);
-    if (lines.length > 100) {
-      setError('Maksymalnie 100 URL-ów na raz. Obecna liczba: ' + lines.length);
+    // Count non-comment, non-empty lines
+    const dataLines = urlText.split('\n').map((l) => l.trim()).filter((l) => l && !l.startsWith('#'));
+    if (dataLines.length > 100) {
+      setError('Maksymalnie 100 URL-ów na raz. Obecna liczba: ' + dataLines.length);
       return;
     }
 
@@ -106,11 +129,18 @@ export default function GroupBulkUpload({
     setError(null);
 
     try {
+      // Build names map for entries that have a name from comments
+      const names: Record<string, string> = {};
+      for (const entry of parseResult.valid) {
+        if (entry.name) names[entry.url] = entry.name;
+      }
+
       const res = await fetch('/api/fb-groups', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          urls: parseResult.valid,
+          urls: parseResult.valid.map((e) => e.url),
+          names: Object.keys(names).length > 0 ? names : undefined,
           developer: developer.trim() || undefined,
         }),
       });
@@ -265,7 +295,27 @@ export default function GroupBulkUpload({
                 )}
               </div>
 
-              {/* Lista bledow */}
+              {/* Lista poprawnych grup */}
+              {parseResult.valid.length > 0 && (
+                <div
+                  className="rounded-md border p-3 text-xs max-h-48 overflow-y-auto space-y-1"
+                  style={{
+                    borderColor: 'rgba(34, 197, 94, 0.3)',
+                    backgroundColor: 'rgba(34, 197, 94, 0.05)',
+                  }}
+                >
+                  {parseResult.valid.map((entry, i) => (
+                    <div key={i} className="flex items-baseline gap-2">
+                      <span style={{ color: 'var(--text-muted)' }}>{i + 1}.</span>
+                      <span style={{ color: 'var(--text-primary)' }}>
+                        {entry.name || <span className="font-mono" style={{ color: 'var(--text-muted)' }}>{entry.url.split('/groups/')[1]?.replace(/\/$/, '') || entry.url}</span>}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Lista błędów */}
               {parseResult.errors.length > 0 && (
                 <div
                   className="rounded-md border p-3 text-xs max-h-32 overflow-y-auto"
