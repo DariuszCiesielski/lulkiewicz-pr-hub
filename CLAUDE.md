@@ -51,5 +51,5 @@ Next.js 16 App Router + Supabase (hosted) + Tailwind v4. Język UI: polski. Kod:
 ## Stan projektu
 
 - v1.0 Email Analyzer: COMPLETE (fazy 1-6 + 2.1 + 2.2 + Analysis Profiles v2)
-- v1.1 FB Analyzer: 87% (fazy 7-10 COMPLETE, 11-12 pending)
+- v1.1 FB Analyzer: 92% (fazy 7-10 COMPLETE, faza 12 FB Reports 6/8 tasks, faza 11 pending)
 - Infrastruktura: GitHub → Vercel Pro auto-deploy, Supabase eu-north-1

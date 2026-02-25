@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-02-10)
 
 **Core value:** Hub narzędziowy — AI analizuje maile (email-analyzer) i posty z grup FB (fb-analyzer) dla audytu komunikacji administracji osiedli
-**Current focus:** Milestone v1.1 — FB Analyzer. Phase 10 COMPLETE. Analysis Profiles v2 COMPLETE. Report fixes + Vercel Pro deployed. AI config display in prompts page. Mock data removed — all FB pages use real Supabase data.
+**Current focus:** Milestone v1.1 — FB Analyzer. Phases 7-10 COMPLETE. Phase 12 (FB Reports) 6/8 tasks done. Analysis Profiles v2 COMPLETE. Default developer AI instructions added. Mock data removed — all FB pages use real Supabase data.
 
 ## Current Position
 
@@ -28,7 +28,7 @@ Progress: 6/6 faz
 Parallel: CC Thread Filtering (docs/plans/2026-02-24-cc-thread-filtering-plan.md) — brak blokujących konfliktów
 
 Progress (v1.0 Email Analyzer): [####################] 100% (Phases 1-6 + Phase 2.1 + Phase 2.2 ALL COMPLETE)
-Progress (v1.1 FB Analyzer): [##################..] 87% (phases 7-10 COMPLETE, phases 11-12 pending)
+Progress (v1.1 FB Analyzer): [###################.] 92% (phases 7-10 COMPLETE, phase 12 75% done, phase 11 pending)
 
 ## Planning Status
 
@@ -253,8 +253,9 @@ organizations, organization_members, **mailboxes** (extended: +8 cols, sync_stat
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: v1.0.12 deployed — Mock data removed, Dashboard/Reports/Analyze on real Supabase data, Polish diacritics fixed across 16+ files.
+Stopped at: v1.1.1 deployed — FB Reports (phase 12) 6/8 tasks, default developer AI instructions, Vercel Pro.
 Resume file: docs/HANDOFF-2026-02-25-G.md
-Next step: /gsd:discuss-phase 11
-Version tag: v1.0.12
+Next step: /gsd:discuss-phase 11 (FB Dashboard Analytics) or finish phase 12 remaining 2 tasks
+Version tag: v1.1.1
 SQL migration 20260223_10_01 APPLIED (paused status + metadata JSONB on fb_analysis_jobs)
+SQL migration 20260225_case_analytics_prompts_update pending commit
