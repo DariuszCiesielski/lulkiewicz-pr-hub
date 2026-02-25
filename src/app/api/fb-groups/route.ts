@@ -19,7 +19,7 @@ function isValidFbGroupUrl(url: string): boolean {
 }
 
 /**
- * Wyciaga nazwe grupy z URL-a (ostatni segment po /groups/).
+ * Wyciąga nazwę grupy z URL-a (ostatni segment po /groups/).
  * np. https://www.facebook.com/groups/deweloperzy-krakow -> deweloperzy-krakow
  */
 function extractGroupName(url: string): string {
@@ -43,7 +43,7 @@ function extractGroupName(url: string): string {
  */
 export async function GET(request: NextRequest) {
   if (!(await verifyAdmin())) {
-    return NextResponse.json({ error: 'Brak uprawnien' }, { status: 403 });
+    return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
   const adminClient = getAdminClient();
@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   if (!(await verifyAdmin())) {
-    return NextResponse.json({ error: 'Brak uprawnien' }, { status: 403 });
+    return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
   const adminClient = getAdminClient();
@@ -132,10 +132,10 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Nieprawidlowy format danych' }, { status: 400 });
+    return NextResponse.json({ error: 'Nieprawidłowy format danych' }, { status: 400 });
   }
 
-  // Rozroznienie: bulk (urls array) vs single
+  // Rozróżnienie: bulk (urls array) vs single
   if (body.urls && Array.isArray(body.urls)) {
     return handleBulkCreate(adminClient, body.urls, body.developer || null);
   }
@@ -154,7 +154,7 @@ async function handleSingleCreate(
   }
   if (!facebook_url || !isValidFbGroupUrl(facebook_url)) {
     return NextResponse.json(
-      { error: 'Wymagany prawidlowy URL grupy Facebook (facebook.com/groups/...)' },
+      { error: 'Wymagany prawidłowy URL grupy Facebook (facebook.com/groups/...)' },
       { status: 400 }
     );
   }
@@ -185,10 +185,10 @@ async function handleBulkCreate(
   developer: string | null
 ) {
   if (urls.length === 0) {
-    return NextResponse.json({ error: 'Lista URL-ow jest pusta' }, { status: 400 });
+    return NextResponse.json({ error: 'Lista URL-ów jest pusta' }, { status: 400 });
   }
   if (urls.length > 100) {
-    return NextResponse.json({ error: 'Maksymalnie 100 URL-ow na raz' }, { status: 400 });
+    return NextResponse.json({ error: 'Maksymalnie 100 URL-ów na raz' }, { status: 400 });
   }
 
   const errors: { line: number; url: string; reason: string }[] = [];
@@ -211,18 +211,18 @@ async function handleBulkCreate(
     }
 
     if (!isValidFbGroupUrl(url)) {
-      errors.push({ line: i + 1, url, reason: 'Nieprawidlowy URL grupy Facebook' });
+      errors.push({ line: i + 1, url, reason: 'Nieprawidłowy URL grupy Facebook' });
       continue;
     }
 
     if (existingUrls.has(url)) {
-      errors.push({ line: i + 1, url, reason: 'Grupa o tym URL juz istnieje' });
+      errors.push({ line: i + 1, url, reason: 'Grupa o tym URL już istnieje' });
       continue;
     }
 
-    // Sprawdz duplikaty wewnatrz biezacego batcha
+    // Sprawdź duplikaty wewnątrz bieżącego batcha
     if (validRecords.some((r) => r.facebook_url === url)) {
-      errors.push({ line: i + 1, url, reason: 'Zduplikowany URL w liscie' });
+      errors.push({ line: i + 1, url, reason: 'Zduplikowany URL w liście' });
       continue;
     }
 

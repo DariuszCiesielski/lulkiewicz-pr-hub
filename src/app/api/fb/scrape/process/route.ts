@@ -48,7 +48,7 @@ export async function POST(request: Request) {
   const batchStartTime = Date.now();
 
   if (!(await verifyAdmin())) {
-    return NextResponse.json({ error: 'Brak uprawnien' }, { status: 403 });
+    return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
   const adminClient = getAdminClient();
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     body = await request.json();
   } catch {
     return NextResponse.json(
-      { error: 'Nieprawidlowy format danych' },
+      { error: 'Nieprawidłowy format danych' },
       { status: 400 }
     );
   }
@@ -156,9 +156,9 @@ export async function POST(request: Request) {
     if (job.status === 'running') {
       const runId = job.apify_run_id;
       if (!runId) {
-        await failJob(adminClient, jobId, 'Brak apify_run_id — nieprawidlowy stan joba');
+        await failJob(adminClient, jobId, 'Brak apify_run_id — nieprawidłowy stan joba');
         return NextResponse.json(
-          { error: 'Brak apify_run_id — nieprawidlowy stan joba', status: 'failed' },
+          { error: 'Brak apify_run_id — nieprawidłowy stan joba', status: 'failed' },
           { status: 500 }
         );
       }
@@ -183,7 +183,7 @@ export async function POST(request: Request) {
 
         // Uzyj SCRAPE_ERROR_MESSAGES jesli mamy odpowiedni klucz
         const errorInfo = SCRAPE_ERROR_MESSAGES[runStatus.status] || {
-          message: runStatus.statusMessage || 'Nieznany blad Apify',
+          message: runStatus.statusMessage || 'Nieznany błąd Apify',
           suggestion: 'Sprawdz logi Apify.',
         };
 
@@ -222,7 +222,7 @@ export async function POST(request: Request) {
     if (job.status === 'downloading') {
       const runId = job.apify_run_id;
       if (!runId) {
-        await failJob(adminClient, jobId, 'Brak apify_run_id — nieprawidlowy stan joba');
+        await failJob(adminClient, jobId, 'Brak apify_run_id — nieprawidłowy stan joba');
         return NextResponse.json(
           { error: 'Brak apify_run_id', status: 'failed' },
           { status: 500 }
@@ -360,7 +360,7 @@ export async function POST(request: Request) {
 
       // Wszystko pobrane — finalizuj
 
-      // Policz calkowita liczbe postow dla tej grupy
+      // Policz całkowitą liczbę postów dla tej grupy
       const { count: totalGroupPosts } = await adminClient
         .from('fb_posts')
         .select('*', { count: 'exact', head: true })

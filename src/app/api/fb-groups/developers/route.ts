@@ -7,7 +7,7 @@ import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
  */
 export async function GET() {
   if (!(await verifyAdmin())) {
-    return NextResponse.json({ error: 'Brak uprawnien' }, { status: 403 });
+    return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
   const adminClient = getAdminClient();

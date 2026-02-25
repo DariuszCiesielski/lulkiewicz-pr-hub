@@ -335,7 +335,7 @@ export default function FbGroupsPage() {
             }}
           >
             <Upload className="h-4 w-4" />
-            <span className="hidden sm:inline">Upload URL-ow</span>
+            <span className="hidden sm:inline">Upload URL-ów</span>
           </button>
 
           {/* Przycisk Dodaj */}

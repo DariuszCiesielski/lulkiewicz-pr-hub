@@ -15,7 +15,7 @@ export async function GET(
   { params }: { params: Promise<{ jobId: string }> }
 ) {
   if (!(await verifyAdmin())) {
-    return NextResponse.json({ error: 'Brak uprawnien' }, { status: 403 });
+    return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
   const { jobId } = await params;

@@ -10,7 +10,7 @@ import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
  */
 export async function GET(request: NextRequest) {
   if (!(await verifyAdmin())) {
-    return NextResponse.json({ error: 'Brak uprawnien' }, { status: 403 });
+    return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
   const profileId = request.nextUrl.searchParams.get('profileId');
@@ -116,7 +116,7 @@ async function getLegacyPrompts() {
  */
 export async function POST(request: NextRequest) {
   if (!(await verifyAdmin())) {
-    return NextResponse.json({ error: 'Brak uprawnien' }, { status: 403 });
+    return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
   let body: {
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Nieprawidlowy format danych' }, { status: 400 });
+    return NextResponse.json({ error: 'Nieprawidłowy format danych' }, { status: 400 });
   }
 
   if (!body.section_key) {
@@ -204,7 +204,7 @@ export async function POST(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   if (!(await verifyAdmin())) {
-    return NextResponse.json({ error: 'Brak uprawnien' }, { status: 403 });
+    return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
   let body: { section_key: string; profileId?: string };
@@ -212,7 +212,7 @@ export async function DELETE(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Nieprawidlowy format danych' }, { status: 400 });
+    return NextResponse.json({ error: 'Nieprawidłowy format danych' }, { status: 400 });
   }
 
   if (!body.section_key) {

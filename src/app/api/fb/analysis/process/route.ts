@@ -20,10 +20,10 @@ const POSTS_PER_REQUEST = 5;
 const MIN_CONTENT_LENGTH = 20;
 
 /**
- * POST /api/fb/analysis/process — Przetwarza batch postow FB z AI.
+ * POST /api/fb/analysis/process — Przetwarza batch postów FB z AI.
  * Body: { jobId }
  *
- * Kazdy request przetwarza do POSTS_PER_REQUEST postow rownolegle.
+ * Każdy request przetwarza do POSTS_PER_REQUEST postów równolegle.
  * Polling loop w frontendzie wywoluje ten endpoint wielokrotnie az do ukonczenia.
  *
  * forceReanalyze jest odczytywany z job.metadata (persisted w DB, NIE z request body).
@@ -34,14 +34,14 @@ const MIN_CONTENT_LENGTH = 20;
 export async function POST(request: NextRequest) {
   const isAdmin = await verifyAdmin();
   if (!isAdmin) {
-    return NextResponse.json({ error: 'Brak uprawnien' }, { status: 403 });
+    return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
   let body: { jobId?: string };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Nieprawidlowy format danych' }, { status: 400 });
+    return NextResponse.json({ error: 'Nieprawidłowy format danych' }, { status: 400 });
   }
 
   if (!body.jobId) {
@@ -173,7 +173,7 @@ export async function POST(request: NextRequest) {
     const { data: posts, error: postsError } = await postsQuery;
 
     if (postsError) {
-      throw new Error(`Blad pobierania postow: ${postsError.message}`);
+      throw new Error(`Błąd pobierania postów: ${postsError.message}`);
     }
 
     if (!posts || posts.length === 0) {
@@ -255,7 +255,7 @@ export async function POST(request: NextRequest) {
             .update({
               sentiment: 'neutral',
               relevance_score: 0,
-              ai_snippet: `(Blad analizy AI: ${aiError instanceof Error ? aiError.message : 'Nieznany blad'})`,
+              ai_snippet: `(Błąd analizy AI: ${aiError instanceof Error ? aiError.message : 'Nieznany błąd'})`,
               ai_categories: ['inne'],
             })
             .eq('id', post.id);
@@ -292,7 +292,7 @@ export async function POST(request: NextRequest) {
       hasMore,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Nieznany blad';
+    const message = error instanceof Error ? error.message : 'Nieznany błąd';
     console.error(`[fb-analysis] Job ${job.id} failed:`, message);
 
     await adminClient

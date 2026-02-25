@@ -2,15 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdmin, getAdminClient } from '@/lib/api/admin';
 
 /**
- * GET /api/fb/analysis — Lista jobow analizy AI postow FB.
+ * GET /api/fb/analysis — Lista jobów analizy AI postów FB.
  * Query: ?groupId=uuid (opcjonalnie)
  * Zwraca ostatnie 10 jobow, posortowane od najnowszych.
- * Enrichment: dolacza nazwe grupy z fb_groups.
+ * Enrichment: dołącza nazwę grupy z fb_groups.
  */
 export async function GET(request: NextRequest) {
   const isAdmin = await verifyAdmin();
   if (!isAdmin) {
-    return NextResponse.json({ error: 'Brak uprawnien' }, { status: 403 });
+    return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
   const groupId = request.nextUrl.searchParams.get('groupId');
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * POST /api/fb/analysis — Tworzy nowy job analizy AI postow FB.
+ * POST /api/fb/analysis — Tworzy nowy job analizy AI postów FB.
  * Body: { groupId: string, forceReanalyze?: boolean }
  *
  * forceReanalyze jest persisted w job.metadata JSONB —
@@ -66,14 +66,14 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const isAdmin = await verifyAdmin();
   if (!isAdmin) {
-    return NextResponse.json({ error: 'Brak uprawnien' }, { status: 403 });
+    return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
   let body: { groupId?: string; forceReanalyze?: boolean };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Nieprawidlowy format danych' }, { status: 400 });
+    return NextResponse.json({ error: 'Nieprawidłowy format danych' }, { status: 400 });
   }
 
   if (!body.groupId) {
@@ -139,8 +139,8 @@ export async function POST(request: NextRequest) {
   if (!totalPosts || totalPosts === 0) {
     return NextResponse.json(
       { error: forceReanalyze
-          ? 'Brak postow z trescia do analizy w tej grupie'
-          : 'Brak nowych postow do analizy. Wszystkie posty zostaly juz przeanalizowane.'
+          ? 'Brak postów z treścią do analizy w tej grupie'
+          : 'Brak nowych postów do analizy. Wszystkie posty zostały już przeanalizowane.'
       },
       { status: 400 }
     );
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
 
   if (jobError || !job) {
     return NextResponse.json(
-      { error: `Blad tworzenia zadania: ${jobError?.message}` },
+      { error: `Błąd tworzenia zadania: ${jobError?.message}` },
       { status: 500 }
     );
   }

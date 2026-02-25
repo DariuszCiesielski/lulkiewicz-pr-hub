@@ -19,7 +19,7 @@ export const maxDuration = 30;
  */
 export async function POST(request: Request) {
   if (!(await verifyAdmin())) {
-    return NextResponse.json({ error: 'Brak uprawnien' }, { status: 403 });
+    return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
   const adminClient = getAdminClient();
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     body = await request.json();
   } catch {
     return NextResponse.json(
-      { error: 'Nieprawidlowy format danych' },
+      { error: 'Nieprawidłowy format danych' },
       { status: 400 }
     );
   }
@@ -121,7 +121,7 @@ export async function POST(request: Request) {
 
   if (jobError || !job) {
     return NextResponse.json(
-      { error: `Blad tworzenia zadania scrapowania: ${jobError?.message}` },
+      { error: `Błąd tworzenia zadania scrapowania: ${jobError?.message}` },
       { status: 500 }
     );
   }

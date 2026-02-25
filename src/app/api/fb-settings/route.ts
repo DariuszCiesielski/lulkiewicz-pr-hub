@@ -23,7 +23,7 @@ async function getCurrentUserEmail(): Promise<string | null> {
  */
 export async function GET() {
   if (!(await verifyAdmin())) {
-    return NextResponse.json({ error: 'Brak uprawnien' }, { status: 403 });
+    return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
   const adminClient = getAdminClient();
@@ -79,7 +79,7 @@ export async function GET() {
  */
 export async function POST(request: NextRequest) {
   if (!(await verifyAdmin())) {
-    return NextResponse.json({ error: 'Brak uprawnien' }, { status: 403 });
+    return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
   const adminClient = getAdminClient();
@@ -88,13 +88,13 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Nieprawidlowy format danych' }, { status: 400 });
+    return NextResponse.json({ error: 'Nieprawidłowy format danych' }, { status: 400 });
   }
 
   const { key, value } = body;
 
   if (!key || value === undefined || value === null) {
-    return NextResponse.json({ error: 'Klucz (key) i wartosc (value) sa wymagane' }, { status: 400 });
+    return NextResponse.json({ error: 'Klucz (key) i wartość (value) są wymagane' }, { status: 400 });
   }
 
   // Walidacja klucza
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
     const email = await getCurrentUserEmail();
     if (email !== SUPER_ADMIN_EMAIL) {
       return NextResponse.json(
-        { error: 'Zmiana tego ustawienia wymaga uprawnien super admina' },
+        { error: 'Zmiana tego ustawienia wymaga uprawnień super admina' },
         { status: 403 }
       );
     }
@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
     } catch (err) {
       console.error('Encryption error:', err);
       return NextResponse.json(
-        { error: 'Blad szyfrowania danych. Sprawdz konfiguracje ENCRYPTION_KEY.' },
+        { error: 'Błąd szyfrowania danych. Sprawdź konfigurację ENCRYPTION_KEY.' },
         { status: 500 }
       );
     }

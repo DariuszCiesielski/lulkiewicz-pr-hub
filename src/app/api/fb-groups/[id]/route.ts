@@ -23,7 +23,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   if (!(await verifyAdmin())) {
-    return NextResponse.json({ error: 'Brak uprawnien' }, { status: 403 });
+    return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
   const { id } = await params;
@@ -67,7 +67,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   if (!(await verifyAdmin())) {
-    return NextResponse.json({ error: 'Brak uprawnien' }, { status: 403 });
+    return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
   const { id } = await params;
@@ -77,7 +77,7 @@ export async function PATCH(
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Nieprawidlowy format danych' }, { status: 400 });
+    return NextResponse.json({ error: 'Nieprawidłowy format danych' }, { status: 400 });
   }
 
   // Sprawdz czy grupa istnieje i nie jest deleted
@@ -104,13 +104,13 @@ export async function PATCH(
         parsed.pathname.includes('/groups/');
       if (!isValid) {
         return NextResponse.json(
-          { error: 'Wymagany prawidlowy URL grupy Facebook (facebook.com/groups/...)' },
+          { error: 'Wymagany prawidłowy URL grupy Facebook (facebook.com/groups/...)' },
           { status: 400 }
         );
       }
     } catch {
       return NextResponse.json(
-        { error: 'Wymagany prawidlowy URL grupy Facebook (facebook.com/groups/...)' },
+        { error: 'Wymagany prawidłowy URL grupy Facebook (facebook.com/groups/...)' },
         { status: 400 }
       );
     }
@@ -143,7 +143,7 @@ export async function PATCH(
           } catch (err) {
             console.error('Encryption error:', err);
             return NextResponse.json(
-              { error: 'Blad szyfrowania danych. Sprawdz konfiguracje ENCRYPTION_KEY.' },
+              { error: 'Błąd szyfrowania danych. Sprawdź konfigurację ENCRYPTION_KEY.' },
               { status: 500 }
             );
           }
@@ -181,7 +181,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   if (!(await verifyAdmin())) {
-    return NextResponse.json({ error: 'Brak uprawnien' }, { status: 403 });
+    return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
   const { id } = await params;

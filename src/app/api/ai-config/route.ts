@@ -16,7 +16,7 @@ function maskApiKey(key: string): string {
 /** GET /api/ai-config — get active AI configuration with masked API key preview */
 export async function GET() {
   if (!(await verifyAdmin())) {
-    return NextResponse.json({ error: 'Brak uprawnien' }, { status: 403 });
+    return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
   const { data, error } = await getAdminClient()

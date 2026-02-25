@@ -10,7 +10,7 @@ type BulkAction = 'set_status' | 'set_developer' | 'soft_delete';
  */
 export async function PATCH(request: NextRequest) {
   if (!(await verifyAdmin())) {
-    return NextResponse.json({ error: 'Brak uprawnien' }, { status: 403 });
+    return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
   const adminClient = getAdminClient();
@@ -19,14 +19,14 @@ export async function PATCH(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Nieprawidlowy format danych' }, { status: 400 });
+    return NextResponse.json({ error: 'Nieprawidłowy format danych' }, { status: 400 });
   }
 
   const { ids, action, value } = body;
 
   // Walidacja
   if (!ids || !Array.isArray(ids) || ids.length === 0) {
-    return NextResponse.json({ error: 'Lista identyfikatorow (ids) jest wymagana' }, { status: 400 });
+    return NextResponse.json({ error: 'Lista identyfikatorów (ids) jest wymagana' }, { status: 400 });
   }
 
   if (!action) {
@@ -36,7 +36,7 @@ export async function PATCH(request: NextRequest) {
   const validActions: BulkAction[] = ['set_status', 'set_developer', 'soft_delete'];
   if (!validActions.includes(action)) {
     return NextResponse.json(
-      { error: `Nieprawidlowa akcja. Dozwolone: ${validActions.join(', ')}` },
+      { error: `Nieprawidłowa akcja. Dozwolone: ${validActions.join(', ')}` },
       { status: 400 }
     );
   }
@@ -47,7 +47,7 @@ export async function PATCH(request: NextRequest) {
     case 'set_status': {
       if (value !== 'active' && value !== 'paused') {
         return NextResponse.json(
-          { error: 'Wartosc statusu musi byc "active" lub "paused"' },
+          { error: 'Wartość statusu musi być "active" lub "paused"' },
           { status: 400 }
         );
       }

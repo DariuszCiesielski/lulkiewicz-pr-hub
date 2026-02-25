@@ -25,15 +25,15 @@ const DEFAULT_ACTOR_ID = 'curious_coder/facebook-post-scraper';
  * POST /api/fb/scrape/check-cookies — Lightweight pre-scrape cookie health check.
  *
  * Uruchamia minimalny Apify Actor run (scrapeUntil: today) i czeka na wynik.
- * Jesli aktor zwroci >0 postow, cookies sa wazne.
- * Jesli 0 postow lub blad, cookies prawdopodobnie wygasly.
+ * Jeśli aktor zwróci >0 postów, cookies są ważne.
+ * Jeśli 0 postów lub błąd, cookies prawdopodobnie wygasły.
  *
  * Body: { groupId: string }
  * Returns: { success: boolean, postsFound: number, error?: string }
  */
 export async function POST(request: Request) {
   if (!(await verifyAdmin())) {
-    return NextResponse.json({ error: 'Brak uprawnien' }, { status: 403 });
+    return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
   const adminClient = getAdminClient();
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     body = await request.json();
   } catch {
     return NextResponse.json(
-      { error: 'Nieprawidlowy format danych' },
+      { error: 'Nieprawidłowy format danych' },
       { status: 400 }
     );
   }
