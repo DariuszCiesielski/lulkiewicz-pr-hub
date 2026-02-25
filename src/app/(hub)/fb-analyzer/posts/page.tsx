@@ -1,10 +1,30 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
-  MessageSquare, ExternalLink, Search, Filter,
+  MessageSquare, ExternalLink, Search, Filter, Loader2,
 } from 'lucide-react';
-import { mockPosts, mockGroups } from '@/lib/mock/fb-mock-data';
+
+interface FbPost {
+  id: string;
+  group_id: string;
+  group_name: string;
+  author_name: string | null;
+  content: string | null;
+  posted_at: string | null;
+  post_url: string | null;
+  sentiment: 'positive' | 'negative' | 'neutral' | null;
+  relevance_score: number | null;
+  ai_snippet: string | null;
+  likes_count: number;
+  comments_count: number;
+  shares_count: number;
+}
+
+interface FbGroup {
+  id: string;
+  name: string;
+}
 
 const sentimentConfig = {
   positive: { label: 'Pozytywny', bg: 'rgba(34, 197, 94, 0.15)', color: '#22c55e' },
@@ -23,18 +43,62 @@ function formatDate(iso: string): string {
 }
 
 export default function FbPostsPage() {
+  const [posts, setPosts] = useState<FbPost[]>([]);
+  const [groups, setGroups] = useState<FbGroup[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterGroup, setFilterGroup] = useState('all');
   const [filterSentiment, setFilterSentiment] = useState('all');
+  const [relevantOnly, setRelevantOnly] = useState(false);
 
-  const filteredPosts = useMemo(() => {
-    return mockPosts.filter((post) => {
-      if (filterGroup !== 'all' && post.group_id !== filterGroup) return false;
-      if (filterSentiment !== 'all' && post.sentiment !== filterSentiment) return false;
-      if (searchQuery && !post.content.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-      return true;
-    });
-  }, [searchQuery, filterGroup, filterSentiment]);
+  const fetchPosts = useCallback(async () => {
+    try {
+      setError(null);
+      const params = new URLSearchParams();
+      if (filterGroup !== 'all') params.set('group_id', filterGroup);
+      if (filterSentiment !== 'all') params.set('sentiment', filterSentiment);
+      if (searchQuery.trim()) params.set('search', searchQuery.trim());
+      if (relevantOnly) params.set('relevant_only', 'true');
+
+      const res = await fetch(`/api/fb-posts?${params}`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Błąd (${res.status})`);
+      }
+      const data = await res.json();
+      setPosts(data as FbPost[]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Wystąpił błąd');
+    }
+  }, [filterGroup, filterSentiment, searchQuery, relevantOnly]);
+
+  const fetchGroups = useCallback(async () => {
+    try {
+      const res = await fetch('/api/fb-groups');
+      if (res.ok) {
+        const data = await res.json();
+        setGroups((data as FbGroup[]).map((g) => ({ id: g.id, name: g.name })));
+      }
+    } catch {
+      // Non-critical — group filter just won't populate
+    }
+  }, []);
+
+  useEffect(() => {
+    Promise.all([fetchPosts(), fetchGroups()]).finally(() => setLoading(false));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!loading) fetchPosts();
+  }, [filterGroup, filterSentiment, relevantOnly]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Debounce search — refetch 500ms after user stops typing
+  useEffect(() => {
+    if (loading) return;
+    const timer = setTimeout(() => fetchPosts(), 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -44,15 +108,17 @@ export default function FbPostsPage() {
         <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
           Posty
         </h1>
-        <span
-          className="rounded-full px-2 py-0.5 text-xs font-medium"
+        <button
+          onClick={() => setRelevantOnly((v) => !v)}
+          className="rounded-full px-2 py-0.5 text-xs font-medium cursor-pointer transition-opacity"
           style={{
-            backgroundColor: 'rgba(139, 92, 246, 0.15)',
-            color: '#8b5cf6',
+            backgroundColor: relevantOnly ? 'rgba(139, 92, 246, 0.25)' : 'rgba(139, 92, 246, 0.10)',
+            color: relevantOnly ? '#a78bfa' : '#8b5cf6',
+            opacity: relevantOnly ? 1 : 0.6,
           }}
         >
-          Tylko istotne
-        </span>
+          {relevantOnly ? '✓ Tylko istotne' : 'Tylko istotne'}
+        </button>
       </div>
 
       {/* Filters */}
@@ -88,7 +154,7 @@ export default function FbPostsPage() {
             }}
           >
             <option value="all">Wszystkie grupy</option>
-            {mockGroups.map((g) => (
+            {groups.map((g) => (
               <option key={g.id} value={g.id}>{g.name}</option>
             ))}
           </select>
@@ -113,13 +179,41 @@ export default function FbPostsPage() {
 
       {/* Results count */}
       <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>
-        Wyświetlono {filteredPosts.length} z {mockPosts.length} postów
+        {loading ? 'Ładowanie...' : `Wyświetlono ${posts.length} postów`}
       </p>
+
+      {/* Error */}
+      {error && (
+        <div className="rounded-lg border p-3 mb-4 text-sm" style={{ borderColor: '#ef4444', color: '#ef4444' }}>
+          {error}
+        </div>
+      )}
+
+      {/* Loading */}
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--text-muted)' }} />
+        </div>
+      )}
+
+      {/* Empty state */}
+      {!loading && posts.length === 0 && !error && (
+        <div className="text-center py-12">
+          <MessageSquare className="h-10 w-10 mx-auto mb-3" style={{ color: 'var(--text-muted)', opacity: 0.4 }} />
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            Brak postów{relevantOnly ? ' spełniających kryteria istotności' : ''}. Uruchom scrapowanie, żeby pobrać posty z grup FB.
+          </p>
+        </div>
+      )}
 
       {/* Post list */}
       <div className="space-y-3">
-        {filteredPosts.map((post) => {
-          const sentiment = sentimentConfig[post.sentiment];
+        {posts.map((post) => {
+          const sentimentKey = post.sentiment as keyof typeof sentimentConfig | null;
+          const sentiment = sentimentKey ? sentimentConfig[sentimentKey] : null;
+          // DB: relevance_score 0-10, UI: 0-1
+          const relevanceNorm = post.relevance_score != null ? post.relevance_score / 10 : null;
+
           return (
             <div
               key={post.id}
@@ -131,81 +225,109 @@ export default function FbPostsPage() {
             >
               {/* Content */}
               <p
-                className="text-sm mb-2 line-clamp-2"
+                className="text-sm mb-2 line-clamp-3"
                 style={{ color: 'var(--text-primary)' }}
               >
-                {post.content}
+                {post.content || '(brak treści)'}
               </p>
 
               {/* Meta row */}
               <div className="flex items-center gap-2 mb-2 flex-wrap">
                 <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                  {post.author_name}
+                  {post.author_name || 'Anonim'}
                 </span>
                 <span className="text-xs" style={{ color: 'var(--text-muted)' }}>·</span>
                 <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                  {formatDate(post.posted_at)}
+                  {post.posted_at ? formatDate(post.posted_at) : '—'}
                 </span>
                 <span className="text-xs" style={{ color: 'var(--text-muted)' }}>·</span>
                 <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
                   {post.group_name}
                 </span>
+                {(post.likes_count > 0 || post.comments_count > 0) && (
+                  <>
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>·</span>
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                      {post.likes_count > 0 && `${post.likes_count} reakcji`}
+                      {post.likes_count > 0 && post.comments_count > 0 && ', '}
+                      {post.comments_count > 0 && `${post.comments_count} komentarzy`}
+                    </span>
+                  </>
+                )}
               </div>
 
               {/* AI summary */}
-              <p
-                className="text-xs italic mb-3"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                AI: {post.ai_summary}
-              </p>
+              {post.ai_snippet && (
+                <p
+                  className="text-xs italic mb-3"
+                  style={{ color: 'var(--text-muted)' }}
+                >
+                  AI: {post.ai_snippet}
+                </p>
+              )}
 
               {/* Bottom row */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   {/* Sentiment badge */}
-                  <span
-                    className="rounded-full px-2 py-0.5 text-xs font-medium"
-                    style={{ backgroundColor: sentiment.bg, color: sentiment.color }}
-                  >
-                    {sentiment.label}
-                  </span>
+                  {sentiment && (
+                    <span
+                      className="rounded-full px-2 py-0.5 text-xs font-medium"
+                      style={{ backgroundColor: sentiment.bg, color: sentiment.color }}
+                    >
+                      {sentiment.label}
+                    </span>
+                  )}
 
                   {/* Relevance */}
-                  <div className="flex items-center gap-1">
-                    <div
-                      className="h-1.5 rounded-full"
-                      style={{
-                        width: '60px',
-                        backgroundColor: 'var(--border-primary)',
-                      }}
-                    >
+                  {relevanceNorm != null && (
+                    <div className="flex items-center gap-1">
                       <div
                         className="h-1.5 rounded-full"
                         style={{
-                          width: `${post.relevance_score * 100}%`,
-                          backgroundColor: post.relevance_score > 0.8 ? '#ef4444' :
-                            post.relevance_score > 0.6 ? '#f97316' : '#94a3b8',
+                          width: '60px',
+                          backgroundColor: 'var(--border-primary)',
                         }}
-                      />
+                      >
+                        <div
+                          className="h-1.5 rounded-full"
+                          style={{
+                            width: `${relevanceNorm * 100}%`,
+                            backgroundColor: relevanceNorm > 0.8 ? '#ef4444' :
+                              relevanceNorm > 0.6 ? '#f97316' : '#94a3b8',
+                          }}
+                        />
+                      </div>
+                      <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                        {Math.round(relevanceNorm * 100)}%
+                      </span>
                     </div>
-                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                      {Math.round(post.relevance_score * 100)}%
+                  )}
+
+                  {/* No analysis badge */}
+                  {!sentiment && !relevanceNorm && (
+                    <span
+                      className="rounded-full px-2 py-0.5 text-xs"
+                      style={{ backgroundColor: 'rgba(148, 163, 184, 0.10)', color: 'var(--text-muted)' }}
+                    >
+                      Oczekuje analizy
                     </span>
-                  </div>
+                  )}
                 </div>
 
                 {/* FB link */}
-                <a
-                  href={post.facebook_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-xs hover:opacity-80"
-                  style={{ color: 'var(--accent-primary)' }}
-                >
-                  <ExternalLink className="h-3 w-3" />
-                  Otwórz na FB
-                </a>
+                {post.post_url && (
+                  <a
+                    href={post.post_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-xs hover:opacity-80"
+                    style={{ color: 'var(--accent-primary)' }}
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    Otwórz na FB
+                  </a>
+                )}
               </div>
             </div>
           );
