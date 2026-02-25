@@ -5,6 +5,7 @@ import {
   Brain, Loader2, FileText, AlertTriangle,
 } from 'lucide-react';
 import FbAnalysisPanel from '@/components/fb/FbAnalysisPanel';
+import { FB_DEFAULT_PROMPT } from '@/lib/ai/fb-default-prompt';
 
 interface FbGroup {
   id: string;
@@ -32,12 +33,12 @@ export default function FbAnalyzePage() {
     try {
       setGroupsError(null);
       const res = await fetch('/api/fb-groups');
-      if (!res.ok) throw new Error('Blad ladowania grup');
+      if (!res.ok) throw new Error('Błąd ładowania grup');
       const data: FbGroup[] = await res.json();
       // Only active groups (API already filters deleted_at IS NULL)
       setGroups(data.filter((g) => g.status === 'active'));
     } catch (err) {
-      setGroupsError(err instanceof Error ? err.message : 'Blad ladowania grup');
+      setGroupsError(err instanceof Error ? err.message : 'Błąd ładowania grup');
     } finally {
       setLoadingGroups(false);
     }
@@ -48,7 +49,7 @@ export default function FbAnalyzePage() {
   const fetchPrompt = useCallback(async () => {
     try {
       const res = await fetch('/api/prompts');
-      if (!res.ok) throw new Error('Blad ladowania promptow');
+      if (!res.ok) throw new Error('Błąd ładowania promptów');
       const data: PromptTemplate[] = await res.json();
       const fbPrompt = data.find((p) => p.section_key === '_fb_post_analysis');
       setPromptText(fbPrompt?.system_prompt || null);
@@ -79,7 +80,7 @@ export default function FbAnalyzePage() {
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--text-muted)' }} />
           <span className="ml-2 text-sm" style={{ color: 'var(--text-muted)' }}>
-            Ladowanie grup...
+            Ładowanie grup...
           </span>
         </div>
       </div>
@@ -135,7 +136,7 @@ export default function FbAnalyzePage() {
               Brak aktywnych grup
             </p>
             <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-              Dodaj grupy w zakladce Grupy, aby rozpoczac analize AI postow.
+              Dodaj grupy w zakładce Grupy, aby rozpocząć analizę AI postów.
             </p>
           </div>
         </div>
@@ -189,7 +190,7 @@ export default function FbAnalyzePage() {
         ) : (
           <textarea
             readOnly
-            value={promptText || '(Prompt nie znaleziony — zostanie uzyty domyslny)'}
+            value={promptText || FB_DEFAULT_PROMPT}
             rows={8}
             className="w-full rounded-md border p-3 text-xs font-mono resize-none"
             style={{
@@ -200,8 +201,14 @@ export default function FbAnalyzePage() {
           />
         )}
 
+        {!loadingPrompt && !promptText && (
+          <p className="text-xs mt-1 italic" style={{ color: 'var(--text-muted)' }}>
+            (prompt domyślny — edytuj na stronie Prompty, aby ustawić własny)
+          </p>
+        )}
+
         <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
-          Ten prompt jest uzywany do analizy kazdego postu. Edytuj na stronie Prompty.
+          Ten prompt jest używany do analizy każdego postu. Edytuj na stronie Prompty.
         </p>
       </div>
     </div>
