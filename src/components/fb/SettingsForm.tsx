@@ -8,6 +8,28 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const SUPER_ADMIN_EMAIL = 'dariusz.ciesielski.71@gmail.com';
 
+// Default AI instructions per developer — used when no custom instruction is saved
+const DEFAULT_DEVELOPER_INSTRUCTIONS: Record<string, string> = {
+  Robyg: `Monitoruj posty pod kątem wizerunku Robyg jako dewelopera. Zwróć uwagę na:
+- Skargi na jakość wykonania mieszkań i części wspólnych (usterki, wady budowlane)
+- Problemy z zarządcą wyznaczonym przez Robyg
+- Opóźnienia w oddawaniu etapów inwestycji
+- Kwestie gwarancyjne — zwłaszcza powtarzające się usterki (windy, parkingi, elewacje)
+- Negatywne porównania z innymi deweloperami
+- Pozytywne opinie i pochwały (ważne dla komunikacji PR)
+- Inicjatywy mieszkańców (petycje, pozwy grupowe, spotkania z deweloperem)
+- Problemy wspólne dla wielu osiedli Robyg (mogą wskazywać na systemowe błędy)`,
+};
+
+const GENERIC_DEVELOPER_INSTRUCTION = `Monitoruj posty dotyczące tego dewelopera. Zwróć uwagę na:
+- Skargi na jakość wykonania budynków i mieszkań
+- Problemy z administracją i zarządcą nieruchomości
+- Opóźnienia w realizacji inwestycji lub naprawach
+- Kwestie gwarancyjne i pogwarancyjne
+- Opinie o obsłudze klienta dewelopera
+- Powtarzające się problemy na wielu osiedlach
+- Pozytywne opinie i pochwały`;
+
 export default function SettingsForm() {
   const { user } = useAuth();
   const isSuperAdmin = user?.email === SUPER_ADMIN_EMAIL;
@@ -445,6 +467,7 @@ export default function SettingsForm() {
                 key={developer}
                 developer={developer}
                 value={developerInstructions[developer] || ''}
+                defaultValue={DEFAULT_DEVELOPER_INSTRUCTIONS[developer] || GENERIC_DEVELOPER_INSTRUCTION}
                 saving={saving}
                 onSave={(value) =>
                   saveSetting(`developer_instruction:${developer}`, value, `Instrukcja (${developer})`)
@@ -565,22 +588,27 @@ function StatusBadge({ configured }: { configured: boolean }) {
 function DeveloperInstructionField({
   developer,
   value,
+  defaultValue,
   saving,
   onSave,
 }: {
   developer: string;
   value: string;
+  defaultValue: string;
   saving: string | null;
   onSave: (value: string) => void;
 }) {
-  const [localValue, setLocalValue] = useState(value);
+  // Show default instruction when no saved value exists
+  const effectiveValue = value || defaultValue;
+  const [localValue, setLocalValue] = useState(effectiveValue);
   const savingKey = `developer_instruction:${developer}`;
+  // Changed when different from saved DB value (empty string if unsaved)
   const hasChanged = localValue !== value;
 
   // Sync with parent state when value prop changes (after re-fetch)
   useEffect(() => {
-    setLocalValue(value);
-  }, [value]);
+    setLocalValue(value || defaultValue);
+  }, [value, defaultValue]);
 
   return (
     <div>
@@ -590,8 +618,7 @@ function DeveloperInstructionField({
       <textarea
         value={localValue}
         onChange={(e) => setLocalValue(e.target.value)}
-        rows={3}
-        placeholder="Opisz co AI ma szukać w postach grup tego dewelopera..."
+        rows={5}
         className="w-full rounded-md border p-3 text-xs resize-none"
         style={{
           borderColor: 'var(--border-primary)',
