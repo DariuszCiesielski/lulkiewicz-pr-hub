@@ -1,31 +1,64 @@
 'use client';
 
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   BarChart3, Users, MessageSquare, AlertTriangle, Clock,
   TrendingUp, ArrowRight, Brain, ClipboardList, Plus,
-  Building2, FileText,
+  Building2, FileText, Loader2, Hash,
 } from 'lucide-react';
-import {
-  mockKpi, mockDeveloperSummaries, mockReports,
-} from '@/lib/mock/fb-mock-data';
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('pl-PL', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
+interface DashboardData {
+  kpi: {
+    totalGroups: number;
+    totalPosts: number;
+    relevantPosts: number;
+    negativePosts: number;
+    lastScrape: string | null;
+    avgRelevance: number;
+  };
+  developerSummaries: {
+    developer: string;
+    groups: number;
+    relevantPosts: number;
+    negativePosts: number;
+  }[];
+}
+
+function relativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const min = Math.floor(diff / 60_000);
+  if (min < 1) return 'przed chwilą';
+  if (min < 60) return `${min} min temu`;
+  const hrs = Math.floor(min / 60);
+  if (hrs < 24) return `${hrs} godz. temu`;
+  const days = Math.floor(hrs / 24);
+  return `${days} dn. temu`;
 }
 
 export default function FbDashboardPage() {
-  const kpiTiles = [
-    { label: 'Monitorowane grupy', value: mockKpi.totalGroups, icon: Users, color: '#3b82f6' },
-    { label: 'Istotne posty', value: mockKpi.relevantPosts, icon: MessageSquare, color: '#8b5cf6' },
-    { label: 'Negatywne', value: mockKpi.negativePosts, icon: AlertTriangle, color: '#ef4444' },
-    { label: 'Ostatni scrape', value: mockKpi.lastScrape, icon: Clock, color: '#22c55e' },
-    { label: 'Śr. relevance', value: `${mockKpi.avgRelevance}%`, icon: TrendingUp, color: '#f97316' },
-  ];
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchDashboard = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await fetch('/api/fb-dashboard');
+      if (!res.ok) throw new Error(`Błąd ${res.status}: ${res.statusText}`);
+      const json: DashboardData = await res.json();
+      setData(json);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Nie udało się pobrać danych');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchDashboard();
+  }, [fetchDashboard]);
 
   const quickActions = [
     { href: '/fb-analyzer/posts', label: 'Przeglądaj posty', icon: MessageSquare, color: '#8b5cf6' },
@@ -35,6 +68,58 @@ export default function FbDashboardPage() {
   ];
 
   const devColors = ['#3b82f6', '#8b5cf6'];
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-5xl flex items-center justify-center py-24">
+        <Loader2
+          className="h-8 w-8 animate-spin"
+          style={{ color: 'var(--text-muted)' }}
+        />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-5xl">
+        <div
+          className="rounded-lg border p-6 text-center"
+          style={{
+            borderColor: 'rgba(239, 68, 68, 0.3)',
+            backgroundColor: 'rgba(239, 68, 68, 0.05)',
+          }}
+        >
+          <AlertTriangle className="h-8 w-8 mx-auto mb-2" style={{ color: '#ef4444' }} />
+          <p className="text-sm font-medium mb-1" style={{ color: '#ef4444' }}>
+            Błąd ładowania dashboardu
+          </p>
+          <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>
+            {error}
+          </p>
+          <button
+            onClick={fetchDashboard}
+            className="rounded-md px-4 py-2 text-sm text-white transition-colors hover:opacity-90"
+            style={{ backgroundColor: 'var(--accent-primary)' }}
+          >
+            Spróbuj ponownie
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const kpi = data!.kpi;
+  const developerSummaries = data!.developerSummaries;
+
+  const kpiTiles = [
+    { label: 'Monitorowane grupy', value: kpi.totalGroups, icon: Users, color: '#3b82f6' },
+    { label: 'Wszystkie posty', value: kpi.totalPosts, icon: Hash, color: '#6366f1' },
+    { label: 'Istotne posty', value: kpi.relevantPosts, icon: MessageSquare, color: '#8b5cf6' },
+    { label: 'Negatywne', value: kpi.negativePosts, icon: AlertTriangle, color: '#ef4444' },
+    { label: 'Ostatni scrape', value: kpi.lastScrape ? relativeTime(kpi.lastScrape) : '—', icon: Clock, color: '#22c55e' },
+    { label: 'Śr. relevance', value: `${kpi.avgRelevance}%`, icon: TrendingUp, color: '#f97316' },
+  ];
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -51,7 +136,7 @@ export default function FbDashboardPage() {
       </div>
 
       {/* KPI tiles */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
         {kpiTiles.map((tile) => {
           const Icon = tile.icon;
           return (
@@ -112,44 +197,50 @@ export default function FbDashboardPage() {
             </Link>
           </div>
           <div className="space-y-2">
-            {mockDeveloperSummaries.map((dev, i) => {
-              const devColor = devColors[i % devColors.length];
-              return (
-                <div
-                  key={dev.developer}
-                  className="flex items-center gap-3 rounded-md px-3 py-2.5"
-                  style={{ backgroundColor: 'var(--bg-primary)' }}
-                >
+            {developerSummaries.length === 0 ? (
+              <p className="text-sm text-center py-4" style={{ color: 'var(--text-muted)' }}>
+                Brak danych o deweloperach
+              </p>
+            ) : (
+              developerSummaries.map((dev, i) => {
+                const devColor = devColors[i % devColors.length];
+                return (
                   <div
-                    className="flex items-center justify-center rounded-lg p-2 flex-shrink-0"
-                    style={{ backgroundColor: `${devColor}15` }}
+                    key={dev.developer}
+                    className="flex items-center gap-3 rounded-md px-3 py-2.5"
+                    style={{ backgroundColor: 'var(--bg-primary)' }}
                   >
-                    <Building2 className="h-4 w-4" style={{ color: devColor }} />
+                    <div
+                      className="flex items-center justify-center rounded-lg p-2 flex-shrink-0"
+                      style={{ backgroundColor: `${devColor}15` }}
+                    >
+                      <Building2 className="h-4 w-4" style={{ color: devColor }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                        {dev.developer}
+                      </p>
+                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                        {dev.relevantPosts} istotnych · {dev.groups} {dev.groups === 1 ? 'grupa' : 'grupy'}
+                      </p>
+                    </div>
+                    <span
+                      className="rounded-full px-2 py-0.5 text-xs font-medium flex-shrink-0"
+                      style={{
+                        backgroundColor: dev.negativePosts > 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(34, 197, 94, 0.15)',
+                        color: dev.negativePosts > 0 ? '#ef4444' : '#22c55e',
+                      }}
+                    >
+                      {dev.negativePosts} neg.
+                    </span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                      {dev.developer}
-                    </p>
-                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                      {dev.relevantPosts} istotnych · {dev.groups} grupa · Top: {dev.topIssue}
-                    </p>
-                  </div>
-                  <span
-                    className="rounded-full px-2 py-0.5 text-xs font-medium flex-shrink-0"
-                    style={{
-                      backgroundColor: dev.negativePosts > 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(34, 197, 94, 0.15)',
-                      color: dev.negativePosts > 0 ? '#ef4444' : '#22c55e',
-                    }}
-                  >
-                    {dev.negativePosts} neg.
-                  </span>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
 
-        {/* Recent reports */}
+        {/* Recent reports — empty state */}
         <div
           className="rounded-lg border p-4"
           style={{
@@ -169,41 +260,11 @@ export default function FbDashboardPage() {
               Wszystkie <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
-          <div className="space-y-2">
-            {mockReports.map((r) => {
-              const statusColor = r.status === 'completed' ? '#22c55e' : '#eab308';
-              return (
-                <div
-                  key={r.id}
-                  className="flex items-center gap-3 rounded-md px-3 py-2.5"
-                  style={{ backgroundColor: 'var(--bg-primary)' }}
-                >
-                  <div
-                    className="flex items-center justify-center rounded-lg p-2 flex-shrink-0"
-                    style={{ backgroundColor: `${statusColor}15` }}
-                  >
-                    <FileText className="h-4 w-4" style={{ color: statusColor }} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
-                      {r.title}
-                    </p>
-                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                      {formatDate(r.created_at)}
-                    </p>
-                  </div>
-                  <span
-                    className="rounded-full px-2 py-0.5 text-xs font-medium flex-shrink-0"
-                    style={{
-                      backgroundColor: `${statusColor}15`,
-                      color: statusColor,
-                    }}
-                  >
-                    {r.status === 'completed' ? 'Gotowy' : 'Szkic'}
-                  </span>
-                </div>
-              );
-            })}
+          <div className="text-center py-8">
+            <FileText className="h-8 w-8 mx-auto mb-2" style={{ color: 'var(--text-muted)', opacity: 0.4 }} />
+            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+              Brak raportów. Generowanie raportów będzie dostępne wkrótce.
+            </p>
           </div>
         </div>
       </div>
