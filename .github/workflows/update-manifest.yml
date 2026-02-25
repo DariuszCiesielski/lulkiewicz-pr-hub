@@ -1,0 +1,207 @@
+# update-manifest.yml
+# Dodaj ten plik do .github/workflows/ w KAŻDYM projekcie
+# Wymaga ustawienia sekretu PROJECT_MASTER_TOKEN w repo/org
+#
+# TOKEN: Personal Access Token z uprawnieniami:
+#   - repo (full control) — do repository_dispatch na project-master-data
+# Ustaw w: Settings → Secrets → Actions → PROJECT_MASTER_TOKEN
+
+name: Update Project Manifest
+on:
+  push:
+    branches: [main]
+
+jobs:
+  update-manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Analyze project
+        id: analyze
+        run: |
+          set -e
+
+          # --- Framework detection ---
+          FRAMEWORK="unknown"
+          for f in next.config.js next.config.mjs next.config.ts; do
+            [ -f "$f" ] && FRAMEWORK="next.js" && break
+          done
+          [ -f "nuxt.config.ts" ] && FRAMEWORK="nuxt"
+          [ -f "astro.config.mjs" ] && FRAMEWORK="astro"
+          [ -f "remix.config.js" ] && FRAMEWORK="remix"
+          [ -f "vite.config.ts" ] || [ -f "vite.config.js" ] && [ "$FRAMEWORK" = "unknown" ] && FRAMEWORK="vite"
+
+          # --- Language ---
+          LANGUAGE="javascript"
+          [ -f "tsconfig.json" ] && LANGUAGE="typescript"
+
+          # --- Database ---
+          DATABASE="none"
+          [ -d "supabase" ] && DATABASE="supabase"
+          [ -f "prisma/schema.prisma" ] && DATABASE="prisma"
+          [ -f "drizzle.config.ts" ] && DATABASE="drizzle"
+
+          # --- Styling ---
+          STYLING="unknown"
+          [ -f "tailwind.config.js" ] || [ -f "tailwind.config.ts" ] && STYLING="tailwind"
+
+          # --- Dependencies count ---
+          DEPS=0
+          if [ -f "package.json" ]; then
+            DEPS=$(python3 -c "
+          import json
+          with open('package.json') as f:
+              d = json.load(f)
+          print(len(d.get('dependencies',{}))+len(d.get('devDependencies',{})))
+          " 2>/dev/null || echo "0")
+          fi
+
+          # --- Feature detection ---
+          detect_feature() {
+            local patterns="$@"
+            for pattern in $patterns; do
+              if grep -rl "$pattern" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" --include="*.json" --include="*.sql" --include="*.yml" --include="*.yaml" . 2>/dev/null | grep -v node_modules | grep -v .git | head -1 > /dev/null 2>&1; then
+                echo "true"
+                return
+              fi
+            done
+            echo "false"
+          }
+
+          find_evidence() {
+            local patterns="$@"
+            local evidence="[]"
+            local files=""
+            for pattern in $patterns; do
+              found=$(grep -rl "$pattern" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" . 2>/dev/null | grep -v node_modules | grep -v .git | head -3 || true)
+              if [ -n "$found" ]; then
+                files="$files $found"
+              fi
+            done
+            if [ -n "$files" ]; then
+              echo "$files" | tr ' ' '\n' | sort -u | head -5 | python3 -c "
+          import sys, json
+          files = [l.strip().lstrip('./') for l in sys.stdin if l.strip()]
+          print(json.dumps(files))
+          "
+            else
+              echo "[]"
+            fi
+          }
+
+          AUTH=$(detect_feature "@supabase/ssr" "next-auth" "clerk" "@auth/")
+          AUTH_EV=$(find_evidence "@supabase/ssr" "next-auth" "clerk")
+
+          PAYMENTS=$(detect_feature "stripe" "STRIPE_" "lemonsqueezy")
+          PAYMENTS_EV=$(find_evidence "stripe" "STRIPE_")
+
+          LANDING="false"
+          LANDING_EV="[]"
+          if find . -path "*/marketing/*" -name "*.tsx" 2>/dev/null | grep -v node_modules | head -1 > /dev/null 2>&1; then
+            LANDING="true"
+            LANDING_EV=$(find . -path "*/marketing/*" -name "*.tsx" | grep -v node_modules | head -3 | python3 -c "import sys,json; print(json.dumps([l.strip().lstrip('./') for l in sys.stdin if l.strip()]))")
+          fi
+
+          MULTI_TENANT=$(detect_feature "organization" "org-switcher" "orgId" "multi-tenant")
+          MULTI_TENANT_EV=$(find_evidence "organization_members" "org-switcher")
+
+          I18N=$(detect_feature "next-intl" "i18next" "react-intl")
+          I18N_EV=$(find_evidence "next-intl" "i18next")
+
+          ANALYTICS=$(detect_feature "posthog" "plausible" "gtag" "@vercel/analytics")
+          ANALYTICS_EV=$(find_evidence "posthog" "plausible" "analytics")
+
+          ONBOARDING=$(detect_feature "onboarding" "welcome-wizard" "setup-wizard")
+          ONBOARDING_EV=$(find_evidence "onboarding" "wizard")
+
+          TESTS="false"
+          TESTS_EV="[]"
+          for td in __tests__ tests test; do
+            if [ -d "$td" ]; then
+              TESTS="true"
+              TESTS_EV=$(find . -path "*/$td/*" -name "*.test.*" -o -path "*/$td/*" -name "*.spec.*" 2>/dev/null | head -3 | python3 -c "import sys,json; print(json.dumps([l.strip().lstrip('./') for l in sys.stdin if l.strip()]))")
+              break
+            fi
+          done
+          for cf in jest.config.js jest.config.ts vitest.config.ts vitest.config.js; do
+            [ -f "$cf" ] && TESTS="true" && break
+          done
+
+          CICD="false"
+          CICD_EV="[]"
+          if [ -d ".github/workflows" ]; then
+            CICD="true"
+            CICD_EV=$(ls .github/workflows/*.yml 2>/dev/null | head -3 | python3 -c "import sys,json; print(json.dumps([l.strip() for l in sys.stdin if l.strip()]))")
+          fi
+
+          SEO=$(detect_feature "sitemap" "robots.ts" "robots.txt" "generateMetadata")
+          SEO_EV=$(find_evidence "sitemap" "robots" "generateMetadata")
+
+          # --- Routes & Components count ---
+          ROUTES=$(find . -path "*/app/*" -name "page.tsx" -o -name "page.js" 2>/dev/null | grep -v node_modules | wc -l | tr -d ' ')
+          COMPONENTS=$(find . -path "*/components/*" \( -name "*.tsx" -o -name "*.jsx" \) 2>/dev/null | grep -v node_modules | wc -l | tr -d ' ')
+
+          # --- ENV vars ---
+          ENV_VARS="[]"
+          for envfile in .env.example .env.local.example .env.template; do
+            if [ -f "$envfile" ]; then
+              ENV_VARS=$(grep -E "^[A-Z_]+=" "$envfile" | cut -d= -f1 | python3 -c "import sys,json; print(json.dumps([l.strip() for l in sys.stdin if l.strip()]))")
+              break
+            fi
+          done
+
+          # --- Commit message (sanitize for JSON) ---
+          COMMIT_MSG=$(echo "${{ github.event.head_commit.message }}" | head -1 | python3 -c "import sys,json; print(json.dumps(sys.stdin.readline().strip()))")
+
+          # --- Build final JSON ---
+          cat > /tmp/auto_data.json << ENDJSON
+          {
+            "last_push": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "last_push_message": $COMMIT_MSG,
+            "branch_default": "main",
+            "tech_stack": {
+              "framework": "$FRAMEWORK",
+              "language": "$LANGUAGE",
+              "database": "$DATABASE",
+              "styling": "$STYLING"
+            },
+            "dependencies_count": $DEPS,
+            "detected_features": {
+              "auth": {"detected": $AUTH, "evidence": $AUTH_EV},
+              "payments": {"detected": $PAYMENTS, "evidence": $PAYMENTS_EV},
+              "landing_page": {"detected": $LANDING, "evidence": $LANDING_EV},
+              "multi_tenant": {"detected": $MULTI_TENANT, "evidence": $MULTI_TENANT_EV},
+              "i18n": {"detected": $I18N, "evidence": $I18N_EV},
+              "analytics": {"detected": $ANALYTICS, "evidence": $ANALYTICS_EV},
+              "onboarding": {"detected": $ONBOARDING, "evidence": $ONBOARDING_EV},
+              "testing": {"detected": $TESTS, "evidence": $TESTS_EV},
+              "ci_cd": {"detected": $CICD, "evidence": $CICD_EV},
+              "seo": {"detected": $SEO, "evidence": $SEO_EV}
+            },
+            "routes_count": $ROUTES,
+            "components_count": $COMPONENTS,
+            "env_vars": $ENV_VARS
+          }
+          ENDJSON
+
+          # Validate JSON
+          python3 -c "import json; json.load(open('/tmp/auto_data.json'))" || { echo "Invalid JSON!"; cat /tmp/auto_data.json; exit 1; }
+
+          # Set output
+          echo "auto_data=$(cat /tmp/auto_data.json | python3 -c 'import sys,json; print(json.dumps(json.load(sys.stdin)))')" >> $GITHUB_OUTPUT
+
+      - name: Dispatch to central repo
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.PROJECT_MASTER_TOKEN }}
+          repository: ${{ github.repository_owner }}/project-master-data
+          event-type: manifest-update
+          client-payload: >-
+            {
+              "project_slug": "${{ github.event.repository.name }}",
+              "repo": "${{ github.repository }}",
+              "auto_data": ${{ steps.analyze.outputs.auto_data }}
+            }
