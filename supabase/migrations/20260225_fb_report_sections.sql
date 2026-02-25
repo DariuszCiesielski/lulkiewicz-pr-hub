@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS fb_report_sections (
   title TEXT NOT NULL,
   content_markdown TEXT NOT NULL DEFAULT '',
   is_edited BOOLEAN NOT NULL DEFAULT false,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ
 );
 
 CREATE INDEX IF NOT EXISTS idx_fb_report_sections_report ON fb_report_sections(report_id);
