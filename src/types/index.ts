@@ -1,6 +1,6 @@
 export type UserRole = 'admin' | 'user';
 
-export type ToolId = 'email-analyzer' | 'fb-analyzer' | 'social-media' | 'article-generator' | 'cold-mailing' | 'campaign-analyzer';
+export type ToolId = 'email-analyzer' | 'fb-analyzer' | 'social-media' | 'article-generator' | 'cold-mailing' | 'campaign-analyzer' | 'website-builder';
 
 export interface AllowedUser {
   id: string;

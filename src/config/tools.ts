@@ -72,4 +72,14 @@ export const TOOLS: ToolConfig[] = [
     active: false,
     comingSoon: true,
   },
+  {
+    id: 'website-builder',
+    name: 'Kreator Stron WWW',
+    description: 'Tworzenie profesjonalnych stron internetowych z AI',
+    icon: 'Globe',
+    color: '#14b8a6',
+    href: process.env.NEXT_PUBLIC_WEBSITE_BUILDER_URL || 'http://localhost:3001',
+    active: false,
+    comingSoon: true,
+  },
 ];

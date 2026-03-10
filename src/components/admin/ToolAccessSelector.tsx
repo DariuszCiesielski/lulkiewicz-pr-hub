@@ -9,6 +9,7 @@ const TOOL_NAMES: Record<ToolId, string> = {
   'article-generator': 'Generator Artykułów',
   'cold-mailing': 'Cold Mailing',
   'campaign-analyzer': 'Analizator Kampanii',
+  'website-builder': 'Kreator Stron WWW',
 };
 
 const ALL_TOOLS: ToolId[] = Object.keys(TOOL_NAMES) as ToolId[];
