@@ -15,7 +15,7 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
+          cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
           supabaseResponse = NextResponse.next({
@@ -36,7 +36,7 @@ export async function updateSession(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   // Protected routes — redirect unauthenticated to /login
-  const protectedPaths = ['/dashboard', '/admin', '/settings', '/email-analyzer'];
+  const protectedPaths = ['/dashboard', '/admin', '/settings', '/email-analyzer', '/feedback'];
   const isProtected = protectedPaths.some((p) => path.startsWith(p));
 
   if (!user && isProtected) {

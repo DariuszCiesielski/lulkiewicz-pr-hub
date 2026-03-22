@@ -1,0 +1,116 @@
+{
+  "version": "1.0.0",
+  "project": {
+    "name": "Lulkiewicz PR Hub",
+    "stack": "Next.js 16.1.6, React 19.2.3, TypeScript, Supabase, Tailwind CSS",
+    "language": "pl",
+    "context": "Hub narzędziowy agencji PR. 2 moduły: Email Analyzer (audyt komunikacji administracji osiedli) + FB Analyzer (monitoring grup FB).\\n\\nStack: Next.js 16.1.6, React 19.2.3, TypeScript, Supabase, Tailwind CSS"
+  },
+  "roles": {
+    "designer": {
+      "primary_model": "gemini-2.5-pro",
+      "fallback_models": [
+        "claude-opus"
+      ],
+      "invoke_method": "invoke-gemini.sh"
+    },
+    "planner": {
+      "primary_model": "claude-sonnet",
+      "fallback_models": [
+        "gemini-2.5-pro"
+      ],
+      "invoke_method": "invoke-claude.sh"
+    },
+    "architect": {
+      "primary_model": "claude-sonnet",
+      "fallback_models": [
+        "gemini-2.5-pro"
+      ],
+      "invoke_method": "invoke-claude.sh"
+    },
+    "coder": {
+      "primary_model": "codex",
+      "fallback_models": [
+        "claude-sonnet"
+      ],
+      "invoke_method": "ai-bridge"
+    },
+    "reviewer": {
+      "primary_model": "claude-sonnet",
+      "fallback_models": [
+        "gemini-2.5-pro"
+      ],
+      "invoke_method": "invoke-claude.sh"
+    },
+    "debugger": {
+      "primary_model": "claude-sonnet",
+      "fallback_models": [
+        "gemini-2.5-pro"
+      ],
+      "invoke_method": "invoke-claude.sh"
+    },
+    "auditor": {
+      "primary_model": "gemini-2.5-pro",
+      "fallback_models": [
+        "claude-sonnet"
+      ],
+      "invoke_method": "invoke-gemini.sh"
+    },
+    "tester": {
+      "primary_model": "playwright-mcp",
+      "fallback_models": [
+        "claude-opus"
+      ],
+      "invoke_method": "playwright"
+    }
+  },
+  "defaults": {
+    "mode": "mixed",
+    "max_attempts": 3,
+    "step_timeout_seconds": 600,
+    "approval_gates": [
+      "designed",
+      "architected"
+    ]
+  },
+  "health_check": {
+    "timeout_seconds": 30,
+    "retry_on_429_seconds": 60
+  },
+  "supervisor": {
+    "enabled": false,
+    "model": "gemini-2.5-flash",
+    "rules": {
+      "max_fix_loop_iterations": 3,
+      "step_timeout_minutes": 10,
+      "abort_on_critical_audit": true
+    }
+  },
+  "escalation": {
+    "enabled": true,
+    "max_escalations_per_step": 1,
+    "chains": {
+      "anthropic": [
+        "claude-haiku",
+        "claude-sonnet",
+        "claude-opus"
+      ],
+      "google": [
+        "gemini-2.5-flash",
+        "gemini-2.5-pro"
+      ],
+      "openai": [
+        "gpt-5-mini",
+        "gpt-5.2",
+        "gpt-5.4"
+      ]
+    }
+  },
+  "degradation": {
+    "gemini_unavailable": "fallback_to_claude",
+    "ollama_unavailable": "fallback_to_codex",
+    "codex_unavailable": "fallback_to_claude",
+    "playwright_unavailable": "skip_visual_tests",
+    "all_external_down": "claude_only_mode"
+  }
+}

@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, Mail, Shield, Settings, X, Inbox, MessageSquare, Brain, FileText, Cog, ClipboardList, BarChart3, Users, Share2, Send } from 'lucide-react';
+import { LayoutDashboard, Mail, Shield, X, Inbox, MessageSquare, Brain, FileText, Cog, ClipboardList, BarChart3, Users, Share2, Send, Lightbulb } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import type { LucideIcon } from 'lucide-react';
 
@@ -31,6 +31,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/feedback', label: 'Propozycje rozwoju', icon: Lightbulb, color: '#f59e0b' },
   {
     href: '/email-analyzer',
     label: 'Analizator Email',
