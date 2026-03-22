@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-10)
 
 **Core value:** Hub narzędziowy — AI analizuje maile (email-analyzer) i posty z grup FB (fb-analyzer) dla audytu komunikacji administracji osiedli
-**Current focus:** Milestone v1.1 — FB Analyzer. Phases 7-10 COMPLETE. Phase 12 (FB Reports) 6/8 tasks done. Analysis Profiles v2 COMPLETE. Default developer AI instructions added. Mock data removed — all FB pages use real Supabase data.
+**Current focus:** Milestone v1.1 — FB Analyzer. Phases 7-10 + 12 ALL COMPLETE. Analysis Profiles v2 COMPLETE. Feedback page added. Mock data removed — all FB pages use real Supabase data.
 
 ## Current Position
 
-Phase: Phase 10 (AI Sentiment Analysis) — COMPLETE
-Plan: 3 of 3
-Status: All plans COMPLETE. Phase 10 done. v1.0.10 tagged & deployed.
-Last activity: 2026-02-25 — Vercel Pro upgrade (maxDuration 300s, AI timeout 240s), report generation fixes, DOCX table fix
+Phase: Phase 12 (FB Reports) — COMPLETE (8/8 tasks)
+Plan: All plans COMPLETE
+Status: v1.1 FB Analyzer feature-complete. Feedback page ready (pending SQL migration + content review).
+Last activity: 2026-03-22 — Phase 12 integration verification, Polish diacritics fix, FB DOCX filename, feedback page (AI Crew)
 
 ### Side Task: Analysis Profiles v2 (DB-driven)
 Status: ALL 6 PHASES COMPLETE
@@ -252,10 +252,11 @@ organizations, organization_members, **mailboxes** (extended: +8 cols, sync_stat
 
 ## Session Continuity
 
-Last session: 2026-02-25
-Stopped at: v1.1.1 deployed — FB Reports (phase 12) 6/8 tasks, default developer AI instructions, Vercel Pro.
-Resume file: docs/HANDOFF-2026-02-25-G.md
-Next step: /gsd:discuss-phase 11 (FB Dashboard Analytics) or finish phase 12 remaining 2 tasks
+Last session: 2026-03-22
+Stopped at: Phase 12 COMPLETE (8/8), feedback page ready (pending migration), Polish diacritics + DOCX fixes pushed.
+Resume file: .ai/handoffs/handoff-2026-03-22-0720-feedback-page.md
+Next step: 1) SQL migration client_feedback 2) Review treści feedback page 3) Operacyjne uruchomienie (cookies, 57 grup, scrape) 4) Faza 11 po decyzji klienta
 Version tag: v1.1.1
-SQL migration 20260223_10_01 APPLIED (paused status + metadata JSONB on fb_analysis_jobs)
-SQL migration 20260225_case_analytics_prompts_update pending commit
+SQL migration 20260223_10_01 APPLIED
+SQL migration 20260225_case_analytics_prompts_update pending
+SQL migration 20260322_client_feedback PENDING (uruchomić w Supabase Dashboard)
