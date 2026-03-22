@@ -123,6 +123,7 @@ export default function FbReportDetailPage() {
         created_at: report.created_at,
         date_range_from: report.date_from,
         date_range_to: report.date_to,
+        developer: (report.summary_data?.developer as string) || null,
       };
       await exportReportToDocx(reportMeta, sections);
     } catch (err) {

@@ -7,7 +7,7 @@ export const maxDuration = 60;
 export async function GET() {
   const isAdmin = await verifyAdmin();
   if (!isAdmin) {
-    return NextResponse.json({ error: 'Brak uprawnien' }, { status: 403 });
+    return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
   const adminClient = getAdminClient();
@@ -28,7 +28,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const isAdmin = await verifyAdmin();
   if (!isAdmin) {
-    return NextResponse.json({ error: 'Brak uprawnien' }, { status: 403 });
+    return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
   }
 
   let body: {
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     body = await request.json();
   } catch {
     return NextResponse.json(
-      { error: 'Nieprawidlowy format danych' },
+      { error: 'Nieprawidłowy format danych' },
       { status: 400 }
     );
   }
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
 
   if (groupsError) {
     return NextResponse.json(
-      { error: `Blad pobierania grup: ${groupsError.message}` },
+      { error: `Błąd pobierania grup: ${groupsError.message}` },
       { status: 500 }
     );
   }
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
 
   if (groups.length === 0) {
     return NextResponse.json(
-      { error: 'Wszystkie grupy zostaly wylaczone' },
+      { error: 'Wszystkie grupy zostały wyłączone' },
       { status: 400 }
     );
   }
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error:
-          'Brak przeanalizowanych postow w wybranym zakresie dat. Uruchom najpierw analize AI.',
+          'Brak przeanalizowanych postów w wybranym zakresie dat. Uruchom najpierw analizę AI.',
       },
       { status: 400 }
     );
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
 
   if (insertError || !report) {
     return NextResponse.json(
-      { error: `Blad tworzenia raportu: ${insertError?.message}` },
+      { error: `Błąd tworzenia raportu: ${insertError?.message}` },
       { status: 500 }
     );
   }

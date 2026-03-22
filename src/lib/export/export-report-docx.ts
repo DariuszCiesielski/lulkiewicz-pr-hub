@@ -36,6 +36,7 @@ interface ReportMeta {
   template_type?: string;
   detail_level?: string;
   mailbox?: { display_name: string | null; email_address: string } | null;
+  developer?: string | null;
   date_range_from?: string | null;
   date_range_to?: string | null;
   created_at: string;
@@ -48,8 +49,24 @@ interface ReportMeta {
  * Polish chars preserved, special chars sanitized.
  */
 function generateDocxFilename(report: ReportMeta): string {
+  // FB report naming (has developer, no mailbox)
+  if (report.developer && !report.mailbox) {
+    const safeDeveloper = sanitizeForFilename(report.developer);
+    const parts = ['Raport_FB', safeDeveloper];
+
+    if (report.date_range_from && report.date_range_to) {
+      parts.push(formatDateShort(report.date_range_from));
+      parts.push(formatDateShort(report.date_range_to));
+    } else {
+      parts.push(formatDateShort(report.created_at));
+    }
+
+    return `${parts.join('_')}.docx`;
+  }
+
+  // Email report naming
   const levelLabel = report.detail_level === 'synthetic' ? 'syntetyczny' : 'standardowy';
-  const templateLabel = report.template_type === 'client' ? 'kliencki' : 'wewnetrzny';
+  const templateLabel = report.template_type === 'client' ? 'kliencki' : 'wewnętrzny';
 
   const mailboxName = report.mailbox?.display_name || report.mailbox?.email_address || 'skrzynka';
   const safeMailbox = sanitizeForFilename(mailboxName);
