@@ -252,11 +252,11 @@ organizations, organization_members, **mailboxes** (extended: +8 cols, sync_stat
 
 ## Session Continuity
 
-Last session: 2026-03-22
-Stopped at: Phase 12 COMPLETE (8/8), feedback page ready (pending migration), Polish diacritics + DOCX fixes pushed.
-Resume file: .ai/handoffs/handoff-2026-03-22-0720-feedback-page.md
-Next step: 1) SQL migration client_feedback 2) Review treści feedback page 3) Operacyjne uruchomienie (cookies, 57 grup, scrape) 4) Faza 11 po decyzji klienta
+Last session: 2026-03-23
+Stopped at: All migrations verified APPLIED. Pilotażowy test dołączania do grup FB via Playwright — prośba wysłana do grupy Słoneczna Morena, oczekuje na zatwierdzenie admina.
+Resume file: .ai/handoffs/handoff-2026-03-23-2000-fb-group-join-test.md
+Next step: 1) Sprawdzić wynik testu dołączenia do grupy 2) Operacyjne uruchomienie FB (cookies, 57 grup, scrape) 3) Faza 11 po decyzji klienta
 Version tag: v1.1.1
 SQL migration 20260223_10_01 APPLIED
-SQL migration 20260225_case_analytics_prompts_update pending
-SQL migration 20260322_client_feedback PENDING (uruchomić w Supabase Dashboard)
+SQL migration 20260225_case_analytics_prompts_update APPLIED
+SQL migration 20260322_client_feedback APPLIED
