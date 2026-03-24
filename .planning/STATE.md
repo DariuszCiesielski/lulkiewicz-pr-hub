@@ -252,11 +252,11 @@ organizations, organization_members, **mailboxes** (extended: +8 cols, sync_stat
 
 ## Session Continuity
 
-Last session: 2026-03-23
-Stopped at: All migrations verified APPLIED. Pilotażowy test dołączania do grup FB via Playwright — prośba wysłana do grupy Słoneczna Morena, oczekuje na zatwierdzenie admina.
-Resume file: .ai/handoffs/handoff-2026-03-23-2000-fb-group-join-test.md
-Next step: 1) Sprawdzić wynik testu dołączenia do grupy 2) Operacyjne uruchomienie FB (cookies, 57 grup, scrape) 3) Faza 11 po decyzji klienta
-Version tag: v1.1.1
+Last session: 2026-03-24
+Stopped at: E2E test FB Analyzer PASSED (scrape 123 postów + AI analiza + raport). Apify v1.1 compatibility fix. 3 grupy FB z dostępem (Słoneczna Morena zaakceptowana, City Sfera + Życzliwa Praga oczekują).
+Resume file: .ai/handoffs/handoff-2026-03-24-2230-apify-v11-fix-e2e-test.md
+Next step: 1) Sprawdzić status prośb City Sfera + Życzliwa Praga 2) Dołączać do kolejnych grup (3-5/dzień) 3) Bulk scrape po uzyskaniu dostępu do więcej grup
+Version tag: v1.1.2
 SQL migration 20260223_10_01 APPLIED
 SQL migration 20260225_case_analytics_prompts_update APPLIED
 SQL migration 20260322_client_feedback APPLIED
