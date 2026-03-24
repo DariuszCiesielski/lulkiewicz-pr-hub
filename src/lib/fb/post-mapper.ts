@@ -78,10 +78,14 @@ export function mapApifyPostToFbPost(
   }
 
   // posted_at: parsuj createdAt do ISO, fallback null
+  // Apify v1.1 zwraca Unix timestamp w sekundach (np. 1774384764), nie milisekundach
   let postedAt: string | null = null;
   if (raw.createdAt) {
     try {
-      postedAt = new Date(raw.createdAt as string).toISOString();
+      const ts = typeof raw.createdAt === 'number'
+        ? raw.createdAt * (raw.createdAt < 1e12 ? 1000 : 1)  // sekundy → ms
+        : raw.createdAt;
+      postedAt = new Date(ts as number | string).toISOString();
     } catch {
       postedAt = null;
     }

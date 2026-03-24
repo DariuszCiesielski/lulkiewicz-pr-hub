@@ -124,7 +124,7 @@ export async function POST(request: Request) {
 
       const input: ApifyActorInput = {
         cookie: config.cookies,
-        'scrapeGroupPosts.groupUrl': config.groupUrl,
+        urls: [config.groupUrl],
         scrapeUntil,
         sortType: 'new_posts',
         minDelay: 3,

@@ -158,8 +158,8 @@ export interface ApifyCookieObject {
 
 export interface ApifyActorInput {
   cookie: ApifyCookieObject[];
-  'scrapeGroupPosts.groupUrl': string;
-  scrapeUntil: string;  // yyyy-M-dd (BEZ leading zero!)
+  urls: string[];              // v1.1: array of Facebook URLs (groups, pages, profiles)
+  scrapeUntil: string;         // yyyy-M-dd (BEZ leading zero!)
   sortType: 'new_posts';
   minDelay: number;
   maxDelay: number;

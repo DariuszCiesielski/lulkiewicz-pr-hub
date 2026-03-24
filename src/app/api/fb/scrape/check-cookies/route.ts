@@ -119,11 +119,11 @@ export async function POST(request: Request) {
   // 3. Buduj minimalny input — scrapeUntil: today (najlzejszy mozliwy run)
   const input: ApifyActorInput = {
     cookie: cookies,
-    'scrapeGroupPosts.groupUrl': group.facebook_url as string,
+    urls: [group.facebook_url as string],
     scrapeUntil: formatApifyDate(new Date()), // today — minimal window
     sortType: 'new_posts',
-    minDelay: 1,
-    maxDelay: 2,
+    minDelay: 3,
+    maxDelay: 10,
     proxy: { useApifyProxy: true },
   };
 

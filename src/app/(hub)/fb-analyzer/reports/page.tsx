@@ -22,6 +22,7 @@ interface FbGroup {
   name: string;
   developer: string | null;
   status: string;
+  total_posts: number;
 }
 
 function formatDate(iso: string): string {
@@ -45,8 +46,8 @@ export default function FbReportsPage() {
   const [selectedDeveloper, setSelectedDeveloper] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
-  const [groups, setGroups] = useState<{ id: string; name: string }[]>([]);
-  const [excludedGroupIds, setExcludedGroupIds] = useState<Set<string>>(new Set());
+  const [groups, setGroups] = useState<{ id: string; name: string; totalPosts: number }[]>([]);
+  const [includedGroupIds, setIncludedGroupIds] = useState<Set<string>>(new Set());
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingMessage, setGeneratingMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -92,21 +93,25 @@ export default function FbReportsPage() {
     }
   }, [isAdmin, fetchReports]);
 
-  // When developer changes, update groups list
+  // When developer changes, update groups list (only groups with posts)
   useEffect(() => {
     if (!selectedDeveloper) {
       setGroups([]);
+      setIncludedGroupIds(new Set());
       return;
     }
     const devGroups = allGroupsRef.current
       .filter((g) => g.developer === selectedDeveloper && g.status === 'active')
-      .map((g) => ({ id: g.id, name: g.name }));
+      .map((g) => ({ id: g.id, name: g.name, totalPosts: g.total_posts || 0 }))
+      .sort((a, b) => b.totalPosts - a.totalPosts);
     setGroups(devGroups);
-    setExcludedGroupIds(new Set());
+    // Domyślnie zaznacz tylko grupy z postami
+    const withPosts = devGroups.filter((g) => g.totalPosts > 0).map((g) => g.id);
+    setIncludedGroupIds(new Set(withPosts));
   }, [selectedDeveloper]);
 
-  const toggleGroupExclusion = (groupId: string) => {
-    setExcludedGroupIds((prev) => {
+  const toggleGroupInclusion = (groupId: string) => {
+    setIncludedGroupIds((prev) => {
       const next = new Set(prev);
       if (next.has(groupId)) {
         next.delete(groupId);
@@ -117,7 +122,10 @@ export default function FbReportsPage() {
     });
   };
 
-  const selectedCount = groups.length - excludedGroupIds.size;
+  const selectAllGroups = () => setIncludedGroupIds(new Set(groups.map((g) => g.id)));
+  const deselectAllGroups = () => setIncludedGroupIds(new Set());
+
+  const selectedCount = includedGroupIds.size;
 
   const handleDelete = async (e: React.MouseEvent, reportId: string) => {
     e.preventDefault();
@@ -134,7 +142,7 @@ export default function FbReportsPage() {
   };
 
   const handleGenerate = async () => {
-    if (!selectedDeveloper || !dateFrom || !dateTo) return;
+    if (!selectedDeveloper || !dateFrom || !dateTo || includedGroupIds.size === 0) return;
     setIsGenerating(true);
     setError(null);
     setGeneratingMessage('Tworzenie raportu...');
@@ -148,7 +156,7 @@ export default function FbReportsPage() {
           developer: selectedDeveloper,
           dateFrom,
           dateTo,
-          excludeGroupIds: [...excludedGroupIds],
+          groupIds: [...includedGroupIds],
         }),
       });
 
@@ -247,6 +255,34 @@ export default function FbReportsPage() {
             backgroundColor: 'var(--bg-secondary)',
           }}
         >
+          {/* Date presets */}
+          <div className="flex gap-2">
+            {[
+              { label: 'Ostatnie 7 dni', days: 7 },
+              { label: 'Ostatnie 30 dni', days: 30 },
+              { label: 'Ostatnie 90 dni', days: 90 },
+            ].map((preset) => (
+              <button
+                key={preset.days}
+                type="button"
+                onClick={() => {
+                  const to = new Date();
+                  const from = new Date(Date.now() - preset.days * 24 * 60 * 60 * 1000);
+                  setDateFrom(from.toISOString().split('T')[0]);
+                  setDateTo(to.toISOString().split('T')[0]);
+                }}
+                className="text-xs rounded-md border px-2.5 py-1 hover:opacity-80"
+                style={{
+                  borderColor: 'var(--border-primary)',
+                  color: 'var(--text-secondary)',
+                  backgroundColor: 'var(--bg-primary)',
+                }}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+
           <div className="grid grid-cols-3 gap-3">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
@@ -307,9 +343,29 @@ export default function FbReportsPage() {
           {/* Groups checklist */}
           {selectedDeveloper && groups.length > 0 && (
             <div>
-              <p className="text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>
-                Grupy ({selectedCount}/{groups.length} zaznaczonych):
-              </p>
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                  Grupy ({selectedCount}/{groups.length} zaznaczonych):
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={selectAllGroups}
+                    className="text-xs px-2 py-0.5 rounded hover:opacity-80"
+                    style={{ color: 'var(--accent-primary)' }}
+                  >
+                    Zaznacz wszystkie
+                  </button>
+                  <button
+                    type="button"
+                    onClick={deselectAllGroups}
+                    className="text-xs px-2 py-0.5 rounded hover:opacity-80"
+                    style={{ color: 'var(--text-muted)' }}
+                  >
+                    Odznacz wszystkie
+                  </button>
+                </div>
+              </div>
               <div
                 className="max-h-48 overflow-y-auto rounded-md border p-2 space-y-1"
                 style={{
@@ -321,15 +377,20 @@ export default function FbReportsPage() {
                   <label
                     key={group.id}
                     className="flex items-center gap-2 text-sm cursor-pointer hover:opacity-80"
-                    style={{ color: 'var(--text-primary)' }}
+                    style={{
+                      color: group.totalPosts > 0 ? 'var(--text-primary)' : 'var(--text-muted)',
+                    }}
                   >
                     <input
                       type="checkbox"
-                      checked={!excludedGroupIds.has(group.id)}
-                      onChange={() => toggleGroupExclusion(group.id)}
+                      checked={includedGroupIds.has(group.id)}
+                      onChange={() => toggleGroupInclusion(group.id)}
                       className="rounded"
                     />
                     {group.name}
+                    <span className="text-xs ml-auto" style={{ color: 'var(--text-muted)' }}>
+                      {group.totalPosts > 0 ? `${group.totalPosts} postów` : 'brak postów'}
+                    </span>
                   </label>
                 ))}
               </div>
@@ -362,7 +423,7 @@ export default function FbReportsPage() {
           )}
           <button
             onClick={handleGenerate}
-            disabled={isGenerating || !selectedDeveloper || !dateFrom || !dateTo}
+            disabled={isGenerating || !selectedDeveloper || !dateFrom || !dateTo || includedGroupIds.size === 0}
             className="rounded-md px-4 py-2 text-sm text-white hover:opacity-90 disabled:opacity-50"
             style={{ backgroundColor: 'var(--accent-primary)' }}
           >

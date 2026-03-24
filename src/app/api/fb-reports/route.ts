@@ -35,7 +35,8 @@ export async function POST(request: NextRequest) {
     developer?: string;
     dateFrom?: string;
     dateTo?: string;
-    excludeGroupIds?: string[];
+    groupIds?: string[];
+    excludeGroupIds?: string[];  // backward compat
   };
   try {
     body = await request.json();
@@ -77,15 +78,19 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // 2. Filter out excluded groups
-  const excludeSet = new Set(body.excludeGroupIds || []);
-  const groups = allGroups.filter(
-    (g: { id: string }) => !excludeSet.has(g.id)
-  );
+  // 2. Filter groups — preferuj jawną listę groupIds, fallback na excludeGroupIds
+  let groups: { id: string; name: string }[];
+  if (body.groupIds && body.groupIds.length > 0) {
+    const includeSet = new Set(body.groupIds);
+    groups = allGroups.filter((g: { id: string }) => includeSet.has(g.id));
+  } else {
+    const excludeSet = new Set(body.excludeGroupIds || []);
+    groups = allGroups.filter((g: { id: string }) => !excludeSet.has(g.id));
+  }
 
   if (groups.length === 0) {
     return NextResponse.json(
-      { error: 'Wszystkie grupy zostały wyłączone' },
+      { error: 'Nie wybrano żadnych grup' },
       { status: 400 }
     );
   }

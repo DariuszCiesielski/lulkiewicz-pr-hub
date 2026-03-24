@@ -22,7 +22,9 @@ export async function startActorRun(
   actorId: string,
   input: ApifyActorInput,
 ): Promise<{ runId: string; datasetId: string }> {
-  const res = await fetch(`${APIFY_BASE}/acts/${actorId}/runs`, {
+  // Apify API wymaga username~actorname (tilde), nie username/actorname (slash)
+  const normalizedActorId = actorId.replace('/', '~');
+  const res = await fetch(`${APIFY_BASE}/acts/${normalizedActorId}/runs`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
